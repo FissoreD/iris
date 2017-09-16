@@ -2,7 +2,7 @@ image: ralfjung/opam-ci:latest
 
 iris-coq8.5.3:
   tags:
-  - coq
+  - fp-timing
   script:
   # prepare
   - . build/opam-ci.sh 'coq 8.5.3' 'coq-mathcomp-ssreflect 1.6.1'
@@ -16,8 +16,6 @@ iris-coq8.5.3:
     paths:
     - opamroot/
   only:
-  - master
-  - ci
   - iris-3.0
   artifacts:
     paths:
@@ -25,7 +23,7 @@ iris-coq8.5.3:
 
 iris-coq8.6:
   tags:
-  - coq
+  - fp-timing
   script:
   # prepare
   - . build/opam-ci.sh 'coq 8.6' 'coq-mathcomp-ssreflect 1.6.1'
@@ -36,6 +34,4 @@ iris-coq8.6:
     paths:
     - opamroot/
   only:
-  - master
-  - ci
   - iris-3.0
