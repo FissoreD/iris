@@ -6,8 +6,8 @@ This is the Coq development of the [Iris Project](http://iris-project.org).
 
 This version is known to compile with:
 
- - Coq 8.6.1 / 8.7.0 / 8.7.1
- - Ssreflect 1.6.4
+ - Coq 8.6.1 / 8.7.0 / 8.7.1 / 8.8.0 / 8.8.1
+ - Ssreflect 1.6.4 / 1.7.0
  - [std++](https://gitlab.mpi-sws.org/robbertkrebbers/coq-stdpp) 1.1.0
 
 If you need to work with Coq 8.5, please check out the
