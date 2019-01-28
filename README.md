@@ -1,6 +1,8 @@
-# IRIS COQ DEVELOPMENT
+# IRIS COQ DEVELOPMENT (3.1 branch)
 
-This is the Coq development of the [Iris Project](http://iris-project.org).
+This is the 3.1 branch of the Coq development of the
+[Iris Project](http://iris-project.org).  For the latest version,
+[please switch to the master branch](https://gitlab.mpi-sws.org/iris/iris/).
 
 ## Prerequisites
 
