@@ -63,6 +63,20 @@ Section cmra_instances.
     - iIntros "$".
   Qed.
 
+  Global Instance merge_unital_id_free (a : A) :
+    IdFree a →
+    IsIncludedMergeUnital a a M False True | 5.
+  Proof.
+    split.
+    - rewrite /IsIncludedMerge; iIntros "#H✓". iSplit; last eauto.
+      iDestruct 1 as "[%e #He]". iIntros "!>". iStopProof. rewrite bi.intuitionistically_elim.
+      split => n x Hx. uPred.unseal. repeat (rewrite /uPred_holds /=).
+      rewrite /IdFree in H. move => [Hn Ha]. eapply (H e).
+      * eapply cmra_validN_le => //. lia.
+      * eapply (dist_le n); last lia. rewrite -Ha //.
+    - eauto 10.
+  Qed.
+
   Global Instance merge_unital_last_resort (a1 a2 : A) (P_lt P_le : uPred M):
     IsIncludedMerge a1 a2 M P_lt →
     MakeOr P_lt (a1 ≡ a2)%I P_le →
@@ -140,7 +154,7 @@ Section numbers.
     - iIntros "%". iExists (a2 - a1)%positive. iPureIntro. fold_leibniz. rewrite pos_op_plus. lia.
   Qed.
   Global Instance positive_included_merge_unital (a1 a2 : positive) : 
-    IsIncludedMergeUnital a1 a2 M ⌜a1 < a2⌝%positive%I ⌜(a1 ≤ a2)%positive⌝%I.
+    IsIncludedMergeUnital a1 a2 M ⌜a1 < a2⌝%positive%I ⌜(a1 ≤ a2)%positive⌝%I | 20.
   Proof.
     apply: Build_IsIncludedMergeUnital.
     iIntros "_"; iSplit.
@@ -164,7 +178,7 @@ Section numbers.
       apply Qp_lt_sum in H as [q' ->].
       by iExists q'.
   Qed.
-  Global Instance frac_included_merge_unital (q1 q2 : Qp) : IsIncludedMergeUnital q1 q2 M ⌜q1 < q2⌝%Qp%I ⌜q1 ≤ q2⌝%Qp%I.
+  Global Instance frac_included_merge_unital (q1 q2 : Qp) : IsIncludedMergeUnital q1 q2 M ⌜q1 < q2⌝%Qp%I ⌜q1 ≤ q2⌝%Qp%I | 20.
   Proof.
     apply: Build_IsIncludedMergeUnital.
     iIntros "_"; iSplit.
@@ -216,7 +230,7 @@ Section numbers.
   Qed.
   Global Instance dfrac_own_included_merge_unital (q1 q2 : Qp) Pq Pq' : 
     IsIncludedMergeUnital q1 q2 M Pq Pq' → 
-    IsIncludedMergeUnital (DfracOwn q1) (DfracOwn q2) M Pq Pq'.
+    IsIncludedMergeUnital (DfracOwn q1) (DfracOwn q2) M Pq Pq' | 20.
   Proof.
     case => Hpq Hpq'. split; first apply _.
     rewrite dfrac_validI Hpq'.
