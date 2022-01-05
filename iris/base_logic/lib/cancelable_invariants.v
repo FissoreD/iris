@@ -2,6 +2,7 @@ From iris.algebra Require Export frac.
 From iris.bi.lib Require Import fractional.
 From iris.proofmode Require Import proofmode.
 From iris.base_logic.lib Require Export invariants.
+From iris.base_logic Require Import validity_tactics.
 From iris.prelude Require Import options.
 Import uPred.
 
@@ -47,7 +48,7 @@ Section proofs.
   Proof. split; [done|]. apply _. Qed.
 
   Lemma cinv_own_valid γ q1 q2 : cinv_own γ q1 -∗ cinv_own γ q2 -∗ ⌜q1 + q2 ≤ 1⌝%Qp.
-  Proof. rewrite -frac_valid -uPred.discrete_valid. apply (own_valid_2 γ q1 q2). Qed.
+  Proof. iIntros "H1 H2". by iCombineOwn "H1 H2" as "[H %]". Qed.
 
   Lemma cinv_own_1_l γ q : cinv_own γ 1 -∗ cinv_own γ q -∗ False.
   Proof.

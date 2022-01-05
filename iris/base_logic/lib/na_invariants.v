@@ -1,6 +1,7 @@
 From iris.algebra Require Import gset coPset.
 From iris.proofmode Require Import proofmode.
 From iris.base_logic.lib Require Export invariants.
+From iris.base_logic Require Import validity_tactics.
 From iris.prelude Require Import options.
 Import uPred.
 
