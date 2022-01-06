@@ -387,6 +387,7 @@ Section optional.
 
 End optional.
 
+
 From iris.algebra Require Import csum.
 
 Section csum.
@@ -632,6 +633,7 @@ Global Instance prod_included_merge_ucmra {X Y : ucmra} (x1 x2 : X) (y1 y2 : Y) 
   IsIncluded _ (x1, y1) (x2, y2) P.
 Proof. simple eapply prod_included_merge. Qed.
 
+
 From iris.algebra Require Import excl.
 
 Section excl.
@@ -659,6 +661,7 @@ Section excl.
   Qed.
 
 End excl.
+
 
 From iris.algebra Require Import agree.
 
@@ -711,6 +714,7 @@ Section agree.
   Qed.
 
 End agree.
+
 
 From iris.algebra Require Import gmap.
 
@@ -766,6 +770,7 @@ Section gmap.
 
 End gmap.
 
+
 From iris.algebra Require Import reservation_map.
 
 Section reservation_map.
@@ -775,38 +780,28 @@ Section reservation_map.
   Implicit Types k : positive.
   Implicit Types P : uPred M.
 
-  Lemma reservation_op_validI x y :
-    ✓ (x ⋅ y) ⊢@{uPredI M} ✓ (reservation_map_data_proj x ⋅ reservation_map_data_proj y) ∧ ✓ (reservation_map_token_proj x ⋅ reservation_map_token_proj y).
+  Lemma reservation_validI x : (* other direction does not hold since the disjointness criteria is not mentioned here *)
+    ✓ x ⊢@{uPredI M} ✓ (reservation_map_data_proj x) ∧ ✓ (reservation_map_token_proj x).
   Proof.
-    destruct x as [xm xE].
-    destruct y as [ym yE].
-    split => n. uPred.unseal => // a Ha /=.
-    rewrite /uPred_holds /= reservation_map_validN_eq.
-    rewrite {1}/op /cmra_op /=.
-    destruct xE as [E1|]; destruct yE as [E2|] => //=.
-    rewrite {1}/op /cmra_op /=.
-    destruct (decide (E1 ## E2)) => //.
-    move => [H1 H2].
-    split => //.
-    rewrite /uPred_holds /=.
-    rewrite /op /cmra_op /=.
-    rewrite decide_True //.
+    split => n y Hy. uPred.unseal => /=.
+    repeat (rewrite /uPred_holds /=). rewrite reservation_map_validN_eq /=.
+    destruct x as [m [E|]] => //=. 
+    case; split; first done. exact I.
   Qed.
+
+  Lemma reservation_op x y : x ⋅ y = ReservationMap (reservation_map_data_proj x ⋅ reservation_map_data_proj y) (reservation_map_token_proj x ⋅ reservation_map_token_proj y).
+  Proof. done. Qed.
 
   Lemma reservation_equivI x y :
     x ≡ y ⊣⊢@{uPredI M} (reservation_map_data_proj x ≡ reservation_map_data_proj y) ∧ (reservation_map_token_proj x ≡ reservation_map_token_proj y).
   Proof. split => n. uPred.unseal => //. Qed.
 
-  Lemma reservation_token_valid_combineI E1 E2 : 
-    ✓ (reservation_map_token (A := A) E1 ⋅ reservation_map_token E2) ⊢@{uPredI M} ⌜E1 ## E2⌝.
-  Proof. rewrite reservation_op_validI /= bi.and_elim_r is_valid_merge; eauto. Qed.
-
   Global Instance combine_reservation_token E1 E2 :
     IsValidOp M (reservation_map_token (A := A) (E1 ∪ E2)) (reservation_map_token E1) (reservation_map_token E2) ⌜E1 ## E2⌝.
   Proof.
     split.
-    - rewrite reservation_token_valid_combineI; eauto.
-    - rewrite reservation_token_valid_combineI. iIntros "%".
+    - rewrite reservation_op reservation_validI /= !is_valid_merge. iIntros "[_ #$]".
+    - rewrite reservation_op reservation_validI /= !is_valid_merge. iIntros "[_ %]".
       rewrite reservation_map_token_union //.
   Qed.
 
@@ -837,14 +832,9 @@ Section reservation_map.
   Proof.
     rewrite /IsIncluded.
     iIntros (HP) "H✓"; iSplit.
-    - iIntros "[%m #Hm]". iRevert "H✓".
-      destruct m as [m mE].
-      iRewrite "Hm".
-      rewrite reservation_op_validI /=.
-      rewrite reservation_equivI /=.
-      destruct mE as [E|]; last by iIntros "[_ %]".
-      rewrite !is_valid_merge.
-      iIntros "[_ %]".
+    - iDestruct 1 as ([m mE]) "#Hm". iRevert "H✓".
+      iRewrite "Hm". rewrite reservation_op /= reservation_validI /= reservation_equivI /=.
+      destruct mE as [E|]; iIntros "[_ %]"; last done.
       iApply HP; first done.
       iExists (CoPset E).
       iDestruct "Hm" as "[_ $]".
@@ -863,10 +853,9 @@ Section reservation_map.
     iRevert "H✓". iApply bi.wand_iff_trans. iSplit.
     - iIntros "[%m #Hm]".
       destruct m as [m mE].
-      rewrite reservation_equivI /=.
-      iDestruct "Hm" as "[Hkm _]".
+      rewrite reservation_equivI /= bi.and_elim_l.
       rewrite gmap_equivI.
-      iSpecialize ("Hkm" $! k).
+      iSpecialize ("Hm" $! k).
       rewrite lookup_op !lookup_singleton.
       by iExists (m !! k).
     - iIntros "[%mb Hmb]".
@@ -875,10 +864,11 @@ Section reservation_map.
         iExists (reservation_map_data k b).
         rewrite reservation_equivI /= !right_id singleton_op //.
       * rewrite right_id option_equivI. iRewrite "Hmb".
-        iExists (ReservationMap ε ε). by rewrite right_id.
+        iExists ε. by rewrite right_id.
   Qed.
 
 End reservation_map.
+
 
 From iris.algebra Require Import view.
 
@@ -889,6 +879,7 @@ Section view.
   Implicit Types P : uPred M.
   Implicit Types v : viewR rel.
 
+  (* embed the view relation in the logic, so we can state and work with it without dropping down to the model *)
   Program Definition rel_holds_for a b : uPred M := UPred _ (λ n _, rel n a b) _.
   Next Obligation.
     move => /= a b n1 n2 x1 x2 Hb Hx Hn.
@@ -925,10 +916,11 @@ Section view.
       rewrite /uPred_cmra_valid_def /= /validN /cmra_validN /= /view_validN_instance /=.
       split.
       * case => Hdq [a' [Ha1 Ha2]].
+        repeat (rewrite /uPred_holds /=).
         exists a'.
-        split => //=.
-        split => //=.
-        rewrite /uPred_holds /= Ha1 /op /cmra_op /= /view_op_instance /= right_id left_id //.
+        split; first done.
+        split; last done.
+        rewrite Ha1 /op /cmra_op /= /view_op_instance /= right_id left_id //.
       * repeat (rewrite /uPred_holds /=). naive_solver.
     - uPred.unseal. split => n y Hy //=.
       repeat (rewrite /uPred_holds /=). naive_solver.
@@ -938,29 +930,14 @@ Section view.
     v1 ≡ v2 ⊣⊢@{uPredI M} view_auth_proj v1 ≡ view_auth_proj v2 ∧ view_frag_proj v1 ≡ view_frag_proj v2.
   Proof. uPred.unseal; split => n y Hy //. Qed.
 
-  Lemma view_frag_valid_op_gen b b1 b2 :
-    ((∃ a, rel_holds_for a (b1 ⋅ b2)) ⊢ b ≡ b1 ⋅ b2) → (* generic views do not require the fragment to be valid! *)
-    IsValidOp M (view_frag (rel := rel) b) (◯V b1) (◯V b2) (∃ a, rel_holds_for a b).
-  Proof.
-    move => Hb.
-    split; rewrite -view_frag_op.
-    - iIntros "#H !>".
-      rewrite view_validI //=.
-      iDestruct "H" as "[_ #H]".
-      iAssert (b ≡ b1 ⋅ b2)%I as "Hb"; first by iApply Hb.
-      iDestruct "H" as "[%a H]".
-      iExists a. by iRewrite "Hb".
-    - rewrite view_validI /=.
-      rewrite Hb.
-      iIntros "[_ Heq]". by iRewrite "Heq".
-  Qed.
-
   Global Instance view_frag_valid_op b b1 b2 P :
-    IsOp b b1 b2 → (* generic views do not require the fragment to be valid! *)
+    IsOp b b1 b2 → (* generic views do not require the fragment to be valid! So this will usually not be enough *)
     IsValidOp M (view_frag (rel := rel) b) (◯V b1) (◯V b2) (∃ a, rel_holds_for a b).
   Proof.
-    intros. eapply view_frag_valid_op_gen.
-    rewrite /IsOp in H. rewrite H. eauto.
+    rewrite /IsOp => Hb; split.
+    - rewrite -view_frag_op view_validI /=.
+      iDestruct 1 as "[_ [%a #Ha]]". rewrite -Hb. eauto.
+    - rewrite Hb view_frag_op. eauto.
   Qed.
 
   Lemma view_auth_dfrac_op_validI dq1 dq2 a1 a2 : ✓ (view_auth (rel := rel) dq1 a1 ⋅ ●V{dq2} a2) ⊣⊢@{uPredI M} ✓ (dq1 ⋅ dq2) ∧ (a1 ≡ a2) ∧ rel_holds_for a2 ε.
@@ -999,6 +976,7 @@ Section view.
 End view.
 
 Global Arguments rel_holds_for {A B M} rel _ _.
+
 
 From iris.algebra Require Import auth.
 
@@ -1042,6 +1020,7 @@ Section auth.
   Qed.
 End auth.
 
+
 From iris.algebra Require Import frac_auth.
 
 Section frac_auth.
@@ -1061,6 +1040,7 @@ Section frac_auth.
   Qed.
 End frac_auth.
 
+
 From iris.algebra Require Import excl_auth.
 
 Section excl_auth.
@@ -1074,6 +1054,7 @@ Section excl_auth.
     IsValidOp M (◯ (Some ea)) (◯E a1) (◯E a2) P.
   Proof. apply auth_frag_valid_op. Qed.
 End excl_auth.
+
 
 From iris.algebra.lib Require Import gmap_view.
 
@@ -1114,22 +1095,19 @@ Section gmap_view.
     IsValidOp _ dq dq1 dq2 P →
     IsValidOp _ (gmap_view_frag k dq v1) (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) (P ∧ v1 ≡ v2).
   Proof.
-    intros.
-    eapply is_valid_op_weaken; first eapply view_frag_valid_op_gen.
-    - iDestruct 1 as (m) "Hm".
+    intros; split.
+    - rewrite view_validI /=.
+      iDestruct 1 as "[_ [%m Hm]]".
+      rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
+      iDestruct "Hm" as "[%v3 (#Hv3 & Hv3' & _)]".
+      rewrite to_agree_op_simple is_valid_merge bi.and_elim_l agree_equivI bi.intuitionistically_and.
+      eauto.
+    - rewrite view_validI /=.
+      iDestruct 1 as "[_ [%m Hm]]".
       rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
       iDestruct "Hm" as "[%v3 (Hv3 & Hv3' & _)]".
-      rewrite to_agree_op_simple is_valid_op.
-      iDestruct "Hv3" as "[Heq _]". iRewrite "Heq".
-      iRewrite "Hv3'". rewrite agree_idemp //.
-    - rewrite view_validI /=.
-      iIntros "[[_ [%m Hm]] _]".
-      rewrite singleton_op -pair_op.
-      rewrite gmap_view_rel_holds_singleton /=.
-      iDestruct "Hm" as "[%v3 (#Hv3 & #Hv3' & %)]".
-      rewrite to_agree_op_simple bi.and_elim_l agree_equivI. rewrite is_valid_merge.
-      rewrite bi.intuitionistically_elim.
-      iFrame "#".
+      rewrite to_agree_op_simple is_valid_op bi.and_elim_l agree_equivI.
+      iRewrite "Hv3". iRewrite "Hv3'". rewrite -gmap_view_frag_op //.
   Qed.
 
   Global Instance gmap_view_auth_valid_op dq dq1 dq2 P m1 m2 :
