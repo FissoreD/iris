@@ -20,10 +20,10 @@ Proof.
 Qed.
 
 Lemma is_included_auth {A : ucmra} (a1 a2 : A) dq γ `{!inG Σ $ authUR A} (P : iProp Σ) :
-  IsIncludedMerge _ a1 a2 P →
+  IsIncluded _ a1 a2 P →
   own γ (●{dq} a2) -∗ own γ (◯ a1) -∗ □ P.
 Proof.
-  rewrite /IsIncludedMerge => HP.
+  rewrite /IsIncluded => HP.
   iIntros "Ha1 Ha2".
   iCombine "Ha1 Ha2" as "Ha".
   rewrite own_valid auth_both_dfrac_validI.
@@ -64,7 +64,7 @@ Qed.
 Lemma tac_auth_included {A : ucmra} i1 i2 (a1 a2 : A) dq p1 p2 γ `{!inG Σ $ authUR A} (P G : iProp Σ) Δ :
   envs_lookup i1 Δ = Some (p1, own γ (●{dq} a1)) →
   envs_lookup i2 (envs_delete true i1 p1 Δ) = Some (p2, own γ (◯ a2)) →
-  IsIncludedMerge _ a2 a1 P →
+  IsIncluded _ a2 a1 P →
   envs_entails Δ (□ P -∗ G)%I →
   envs_entails Δ G.
 Proof.

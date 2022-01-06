@@ -14,10 +14,10 @@ Definition includedI {M : ucmra} {A : cmra} (a b : A) : uPred M
 
 Notation "a ≼ b" := (includedI a b) : bi_scope.
 
-Class IsIncludedMerge {A : cmra} M (a1 a2 : A) (P : uPred M) := 
+Class IsIncluded {A : cmra} M (a1 a2 : A) (P : uPred M) := 
   is_included_merge : ✓ a2 ⊢ a1 ≼ a2 ∗-∗ □ P.
 
-Global Hint Mode IsIncludedMerge ! ! ! ! - : typeclass_instances.
+Global Hint Mode IsIncluded ! ! ! ! - : typeclass_instances.
 
 (* this is weaker than having a unit! Consider min_natR, agreeR *)
 Class HasRightId {A : cmra} (a : A) :=
@@ -25,12 +25,12 @@ Class HasRightId {A : cmra} (a : A) :=
 
 Global Hint Mode HasRightId ! ! : typeclass_instances.
 
-Class IsIncludedMergeUnital {A : cmra} M (a1 a2 : A) (P_lt P_le : uPred M) := {
-  included_merge_from_unital : IsIncludedMerge M a1 a2 P_lt;
-  is_included_merge_unital : ✓ a2 ⊢ (□ P_lt ∨ a1 ≡ a2) ∗-∗ □ P_le;
+Class IsIncludedOrEq {A : cmra} M (a1 a2 : A) (P_lt P_le : uPred M) := {
+  is_included_or_included : IsIncluded M a1 a2 P_lt;
+  is_included_or_eq_merge : ✓ a2 ⊢ (□ P_lt ∨ a1 ≡ a2) ∗-∗ □ P_le;
 }.
 
-Global Hint Mode IsIncludedMergeUnital ! ! ! ! - - : typeclass_instances.
+Global Hint Mode IsIncludedOrEq ! ! ! ! - - : typeclass_instances.
 
 
 Section proper.
@@ -65,37 +65,37 @@ Section proper.
     iFrame "#". by rewrite -HP.
   Qed.
 
-  Global Instance included_merge_proper : 
-    Proper ((≡) ==> (≡) ==> (≡) ==> (iff)) (IsIncludedMerge (A := A) M).
+  Global Instance is_included_proper : 
+    Proper ((≡) ==> (≡) ==> (≡) ==> (iff)) (IsIncluded (A := A) M).
   Proof. solve_proper. Qed.
-  Lemma included_merge_weaken a1 a2 P1 P2 :
-    IsIncludedMerge M a1 a2 P1 →
+  Lemma is_included_weaken a1 a2 P1 P2 :
+    IsIncluded M a1 a2 P1 →
     (✓ a2 ⊢ □ P1 ∗-∗ □ P2) →
-    IsIncludedMerge M a1 a2 P2.
+    IsIncluded M a1 a2 P2.
   Proof.
-    rewrite /IsIncludedMerge => HP1a HP1P2.
+    rewrite /IsIncluded => HP1a HP1P2.
     iIntros "#H✓". iApply bi.wand_iff_trans.
     - by iApply HP1a.
     - by iApply HP1P2.
   Qed.
 
-  Global Instance included_merge_unital_proper : 
-    Proper ((≡) ==> (≡) ==> (≡) ==> (≡) ==> (iff)) (IsIncludedMergeUnital (A := A) M).
+  Global Instance is_included_or_eq_proper : 
+    Proper ((≡) ==> (≡) ==> (≡) ==> (≡) ==> (iff)) (IsIncludedOrEq (A := A) M).
   Proof.
     move => a1 a1' Ha1 a2 a2' Ha2 P1' P1 HP1 P2' P2 HP2.
     split; case => H1 H2; split.
-    - revert H1; apply included_merge_proper => //.
+    - revert H1; apply is_included_proper => //.
     - rewrite -Ha2 -Ha1 -HP1 -HP2 //.
-    - revert H1; apply included_merge_proper => //.
+    - revert H1; apply is_included_proper => //.
     - rewrite Ha2 Ha1 HP1 HP2 //.
   Qed.
-  Lemma included_merge_unital_weaken a1 a2 P1 P2 P3 P4 :
-    IsIncludedMergeUnital M a1 a2 P1 P2 →
+  Lemma is_included_or_eq_weaken a1 a2 P1 P2 P3 P4 :
+    IsIncludedOrEq M a1 a2 P1 P2 →
     (✓ a2 ⊢ □ P1 ∗-∗ □ P3) →
     (✓ a2 ⊢ □ P2 ∗-∗ □ P4) →
-    IsIncludedMergeUnital M a1 a2 P3 P4.
+    IsIncludedOrEq M a1 a2 P3 P4.
   Proof.
-    case => HP1 HP1P2 HP1P3 HP2P4; split; first by eapply included_merge_weaken.
+    case => HP1 HP1P2 HP1P3 HP2P4; split; first by eapply is_included_weaken.
     iIntros "#H✓". 
     iApply bi.wand_iff_trans; last by iApply HP2P4.
     iApply bi.wand_iff_trans; last by iApply HP1P2.

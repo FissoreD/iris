@@ -27,20 +27,20 @@ Section cmra_instances.
   Proof. case; split; rewrite comm //. Qed.
 
   Lemma is_included_merge' a1 a2 P :
-    IsIncludedMerge M a1 a2 P →
+    IsIncluded M a1 a2 P →
     a1 ≼ a2 ⊢ ✓ a2 -∗ □ P.
   Proof.
-    rewrite /IsIncludedMerge => ->.
+    rewrite /IsIncluded => ->.
     iIntros "Ha1 HP".
     by iApply "HP".
   Qed.
 
   Global Instance unital_from_right_id a1 a2 P :
     HasRightId a2 →
-    IsIncludedMerge M a1 a2 P →
-    IsIncludedMergeUnital M a1 a2 P P | 100.
+    IsIncluded M a1 a2 P →
+    IsIncludedOrEq M a1 a2 P P | 100.
   Proof.
-    rewrite /IsIncludedMerge => [[e He]] HP.
+    rewrite /IsIncluded => [[e He]] HP.
     split; first done.
     rewrite HP {HP}.
     iIntros "HaP"; iSplit; last by iIntros "$".
@@ -52,11 +52,11 @@ Section cmra_instances.
 
   Global Instance merge_unital_id_free (a : A) :
     IdFree a →
-    IsIncludedMergeUnital M a a False True | 5. 
+    IsIncludedOrEq M a a False True | 5. 
     (* this instance should have higher priority than custom IncludedMergeUnital instances *)
   Proof.
     split; last eauto 10.
-    rewrite /IsIncludedMerge; iIntros "#H✓". iSplit; last eauto.
+    rewrite /IsIncluded; iIntros "#H✓". iSplit; last eauto.
     iDestruct 1 as "[%e #He]". iIntros "!>". (* now drop down to the model *)
     iStopProof. rewrite bi.intuitionistically_elim.
     split => n x Hx. uPred.unseal. repeat (rewrite /uPred_holds /=).
@@ -64,9 +64,9 @@ Section cmra_instances.
   Qed.
 
   Global Instance merge_unital_last_resort a1 a2 P1 P2:
-    IsIncludedMerge M a1 a2 P1 →
+    IsIncluded M a1 a2 P1 →
     MakeOr P1 (a1 ≡ a2)%I P2 →
-    IsIncludedMergeUnital M a1 a2 P1 P2 | 999.
+    IsIncludedOrEq M a1 a2 P1 P2 | 999.
   Proof.
     rewrite /MakeOr => HP1 <-.
     split; first done. 
@@ -100,9 +100,9 @@ Section numbers.
   Global Instance nat_valid_op (a a1 a2 : nat) : 
     IsOp a a1 a2 → IsValidOp M a a1 a2 True | 10.
   Proof. apply from_isop. Qed.
-  Global Instance nat_included_merge (a1 a2 : nat) : IsIncludedMerge M a1 a2 ⌜a1 ≤ a2⌝.
+  Global Instance nat_included_merge (a1 a2 : nat) : IsIncluded M a1 a2 ⌜a1 ≤ a2⌝.
   Proof.
-    rewrite /IsIncludedMerge.
+    rewrite /IsIncluded.
     iIntros "_"; iSplit. 
     - by iDestruct 1 as %?%nat_included.
     - iIntros "%". iExists (a2 - a1). iPureIntro. fold_leibniz. rewrite nat_op. lia.
@@ -111,9 +111,9 @@ Section numbers.
   Global Instance nat_max_valid_op (a a1 a2 : max_nat) :
     IsOp a a1 a2 → IsValidOp M a a1 a2 True | 10.
   Proof. apply from_isop. Qed.
-  Global Instance nat_max_included_merge (a1 a2 : nat) : IsIncludedMerge M (MaxNat a1) (MaxNat a2) ⌜a1 ≤ a2⌝.
+  Global Instance nat_max_included_merge (a1 a2 : nat) : IsIncluded M (MaxNat a1) (MaxNat a2) ⌜a1 ≤ a2⌝.
   Proof.
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%max_nat_included.
     - iIntros "%". iExists (MaxNat a2). rewrite max_nat_op. iPureIntro. fold_leibniz. f_equal. lia.
   Qed.
@@ -121,9 +121,9 @@ Section numbers.
   Global Instance nat_min_valid_op (a a1 a2 : min_nat) :
     IsOp a a1 a2 → IsValidOp M a a1 a2 True.
   Proof. apply from_isop. Qed.
-  Global Instance nat_min_included_merge (a1 a2 : nat) : IsIncludedMerge M (MinNat a1) (MinNat a2) ⌜a2 ≤ a1⌝.
+  Global Instance nat_min_included_merge (a1 a2 : nat) : IsIncluded M (MinNat a1) (MinNat a2) ⌜a2 ≤ a1⌝.
   Proof.
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%min_nat_included.
     - iIntros "%". iExists (MinNat a2). rewrite min_nat_op_min. iPureIntro. fold_leibniz. f_equal. lia.
   Qed.
@@ -133,16 +133,16 @@ Section numbers.
   Global Instance positive_valid_op (a a1 a2 : positive) :
     IsOp a a1 a2 → IsValidOp M a a1 a2 True.
   Proof. apply from_isop. Qed.
-  Global Instance positive_included_merge (a1 a2 : positive) : IsIncludedMerge M a1 a2 ⌜(a1 < a2)%positive⌝.
+  Global Instance positive_included_merge (a1 a2 : positive) : IsIncluded M a1 a2 ⌜(a1 < a2)%positive⌝.
   Proof. 
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%pos_included.
     - iIntros "%". iExists (a2 - a1)%positive. iPureIntro. fold_leibniz. rewrite pos_op_plus. lia.
   Qed.
   Global Instance positive_included_merge_unital (a1 a2 : positive) : 
-    IsIncludedMergeUnital M a1 a2 ⌜(a1 < a2)%positive⌝ ⌜(a1 ≤ a2)%positive⌝ | 20.
+    IsIncludedOrEq M a1 a2 ⌜(a1 < a2)%positive⌝ ⌜(a1 ≤ a2)%positive⌝ | 20.
   Proof.
-    apply: Build_IsIncludedMergeUnital.
+    apply: Build_IsIncludedOrEq.
     iIntros "_"; iSplit.
     - iIntros "[%|->]"; eauto with lia.
     - iIntros "%H".
@@ -155,15 +155,15 @@ Section numbers.
     rewrite /IsOp; split; last by rewrite H; eauto.
     by iDestruct 1 as %?%frac_valid.
   Qed.
-  Global Instance frac_included_merge (q1 q2 : Qp) : IsIncludedMerge M q1 q2 ⌜(q1 < q2)%Qp⌝.
+  Global Instance frac_included_merge (q1 q2 : Qp) : IsIncluded M q1 q2 ⌜(q1 < q2)%Qp⌝.
   Proof. 
-    rewrite /IsIncludedMerge. iIntros "_" ; iSplit.
+    rewrite /IsIncluded. iIntros "_" ; iSplit.
     - by iDestruct 1 as %?%frac_included.
     - iIntros "%". apply Qp_lt_sum in H as [q' ->]. eauto.
   Qed.
-  Global Instance frac_included_merge_unital (q1 q2 : Qp) : IsIncludedMergeUnital M q1 q2 ⌜(q1 < q2)%Qp⌝ ⌜(q1 ≤ q2)%Qp⌝ | 20.
+  Global Instance frac_included_merge_unital (q1 q2 : Qp) : IsIncludedOrEq M q1 q2 ⌜(q1 < q2)%Qp⌝ ⌜(q1 ≤ q2)%Qp⌝ | 20.
   Proof.
-    apply: Build_IsIncludedMergeUnital.
+    apply: Build_IsIncludedOrEq.
     iIntros "_"; iSplit.
     - iIntros "[%|->]"; eauto. iPureIntro. by apply Qp_lt_le_incl.
     - iIntros "%H".
@@ -194,18 +194,18 @@ Section numbers.
   Proof. split; eauto. Qed.
 
   Global Instance dfrac_own_included_merge (q1 q2 : Qp) Pq : 
-    IsIncludedMerge M q1 q2 Pq → 
-    IsIncludedMerge M (DfracOwn q1) (DfracOwn q2) Pq.
+    IsIncluded M q1 q2 Pq → 
+    IsIncluded M (DfracOwn q1) (DfracOwn q2) Pq.
   Proof. 
-    rewrite /IsIncludedMerge dfrac_validI -frac_validI => ->.
+    rewrite /IsIncluded dfrac_validI -frac_validI => ->.
     iApply bi.wand_iff_trans. iSplit.
     - iDestruct 1 as %?%dfrac_own_included. iPureIntro. by apply frac_included.
     - iDestruct 1 as %[q' ->]%frac_included%Qp_lt_sum.
       by iExists (DfracOwn q').
   Qed.
   Global Instance dfrac_own_included_merge_unital (q1 q2 : Qp) Pq Pq' : 
-    IsIncludedMergeUnital M q1 q2 Pq Pq' → 
-    IsIncludedMergeUnital M (DfracOwn q1) (DfracOwn q2) Pq Pq' | 20.
+    IsIncludedOrEq M q1 q2 Pq Pq' → 
+    IsIncludedOrEq M (DfracOwn q1) (DfracOwn q2) Pq Pq' | 20.
   Proof.
     case => Hpq Hpq'. split; first apply _.
     rewrite dfrac_validI -frac_validI Hpq'.
@@ -214,23 +214,23 @@ Section numbers.
     - iIntros "[Hpq|->]"; eauto.
   Qed.
   Global Instance dfrac_own_disc_included_merge (q : Qp) :
-    IsIncludedMerge M (DfracOwn q) DfracDiscarded False.
+    IsIncluded M (DfracOwn q) DfracDiscarded False.
   Proof.
-    rewrite /IsIncludedMerge.
+    rewrite /IsIncluded.
     iIntros "_". iSplit => //.
     iIntros "[%dq %Hdq]". destruct dq => //=.
   Qed.
   Global Instance dfrac_disc_own_included_merge (q : Qp) :
-    IsIncludedMerge M DfracDiscarded (DfracOwn q) False.
+    IsIncluded M DfracDiscarded (DfracOwn q) False.
   Proof.
-    rewrite /IsIncludedMerge.
+    rewrite /IsIncluded.
     iIntros "_". iSplit => //.
     iIntros "[%dq %Hdq]". destruct dq => //=.
   Qed.
   Global Instance dfrac_disc_disc_included_merge :
-    IsIncludedMerge M DfracDiscarded DfracDiscarded True.
+    IsIncluded M DfracDiscarded DfracDiscarded True.
   Proof.
-    rewrite /IsIncludedMerge.
+    rewrite /IsIncluded.
     iIntros "_". iSplit => //.
     iIntros "_". by iExists DfracDiscarded.
   Qed.
@@ -248,9 +248,9 @@ Section sets.
   Global Instance set_is_valid_op X Y Z :
     IsOp X Y Z → IsValidOp M X Y Z True | 10.
   Proof. apply from_isop. Qed.
-  Global Instance set_included_merge (a1 a2 : gset K) : IsIncludedMerge M a1 a2 ⌜a1 ⊆ a2⌝.
+  Global Instance set_included_merge (a1 a2 : gset K) : IsIncluded M a1 a2 ⌜a1 ⊆ a2⌝.
   Proof. 
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gset_included. 
     - iIntros "%". iExists a2. iPureIntro. set_solver.
   Qed.
@@ -269,9 +269,9 @@ Section sets.
   Global Instance set_disj_valid_op_emp_r X Y :
     IsValidOp M (GSet X) (GSet ∅) (GSet X) True | 10.
   Proof. apply is_valid_op_comm, _. Qed.
-  Global Instance disj_set_included_merge (a1 a2 : gset K) : IsIncludedMerge M (GSet a1) (GSet a2) ⌜a1 ⊆ a2⌝.
+  Global Instance disj_set_included_merge (a1 a2 : gset K) : IsIncluded M (GSet a1) (GSet a2) ⌜a1 ⊆ a2⌝.
   Proof. 
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gset_disj_included. 
     - iIntros "%".
       iExists (GSet (a2 ∖ a1)).
@@ -290,9 +290,9 @@ Section multisets.
   Global Instance multiset_is_valid_op X Y Z :
     IsOp X Y Z → IsValidOp M X Y Z True | 10.
   Proof. apply from_isop. Qed.
-  Global Instance multiset_included_merge X Y : IsIncludedMerge M X Y ⌜X ⊆ Y⌝.
+  Global Instance multiset_included_merge X Y : IsIncluded M X Y ⌜X ⊆ Y⌝.
   Proof. 
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gmultiset_included. 
     - iIntros "%". iExists (Y ∖ X). iPureIntro. fold_leibniz. rewrite gmultiset_op. multiset_solver.
   Qed.
@@ -308,9 +308,9 @@ Section coPsets.
   Global Instance coPset_is_valid_op X Y Z :
     IsOp X Y Z → IsValidOp M X Y Z True | 10.
   Proof. apply from_isop. Qed.
-  Global Instance coPset_included_merge X Y : IsIncludedMerge M X Y ⌜X ⊆ Y⌝.
+  Global Instance coPset_included_merge X Y : IsIncluded M X Y ⌜X ⊆ Y⌝.
   Proof. 
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%coPset_included. 
     - iIntros "%". iExists Y. iPureIntro. set_solver.
   Qed.
@@ -329,9 +329,9 @@ Section coPsets.
   Global Instance coPset_disj_valid_op_unit_r X Y :
     IsValidOp M (CoPset X) (CoPset ∅) (CoPset X) True | 10.
   Proof. apply is_valid_op_comm, _. Qed.
-  Global Instance disj_coPset_included_merge X Y : IsIncludedMerge M (CoPset X) (CoPset Y) ⌜X ⊆ Y⌝.
+  Global Instance disj_coPset_included_merge X Y : IsIncluded M (CoPset X) (CoPset Y) ⌜X ⊆ Y⌝.
   Proof. 
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%coPset_disj_included. 
     - iIntros "%".
       iExists (CoPset (Y ∖ X)).
@@ -353,10 +353,10 @@ Section optional.
     by rewrite Ha option_equivI.
   Qed.
   Global Instance option_included_merge a1 a2 P1 P2 :
-    IsIncludedMergeUnital M a1 a2 P1 P2 →
-    IsIncludedMerge M (Some a1) (Some a2) P2 | 100.
+    IsIncludedOrEq M a1 a2 P1 P2 →
+    IsIncluded M (Some a1) (Some a2) P2 | 100.
   Proof.
-    rewrite /IsIncludedMerge option_validI => [[HP1 HP2]].
+    rewrite /IsIncluded option_validI => [[HP1 HP2]].
     iIntros "#Ha2".
     iAssert (_)%I as "HP_le"; first by iApply (HP2 with "Ha2").
     iApply bi.wand_iff_trans; last done.
@@ -373,15 +373,15 @@ Section optional.
       + iRewrite "Hr". by iExists None.
   Qed.
   Global Instance option_none_excl_included_merge (ma : optionUR A) :
-    IsIncludedMerge M None ma True.
+    IsIncluded M None ma True.
   Proof.
-    rewrite /IsIncludedMerge. iIntros "_". iSplit; first by eauto.
+    rewrite /IsIncluded. iIntros "_". iSplit; first by eauto.
     iIntros "_". iExists ma. by rewrite left_id.
   Qed.
   Global Instance option_some_none_excl_included_merge a :
-    IsIncludedMerge M (Some a) None False.
+    IsIncluded M (Some a) None False.
   Proof.
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit; last done.
+    rewrite /IsIncluded. iIntros "_"; iSplit; last done.
     iDestruct 1 as ([c|]) "Hc"; by rewrite option_equivI.
   Qed.
 
@@ -422,10 +422,10 @@ Section csum.
     IsValidOp M (CsumBot) (Cinr (A := B) a) (Cinl (B := A) b) False.
   Proof. split; rewrite /op /= /cmra_op /= csum_validI; eauto. Qed.
   Global Instance sum_inl_included_merge a1 a2 P :
-    IsIncludedMerge _ a1 a2 P →
-    IsIncludedMerge _ (Cinl (B := B) a1) (Cinl (B := B) a2) P | 100.
+    IsIncluded _ a1 a2 P →
+    IsIncluded _ (Cinl (B := B) a1) (Cinl (B := B) a2) P | 100.
   Proof.
-    rewrite /IsIncludedMerge => HaP.
+    rewrite /IsIncluded => HaP.
     iIntros "#H✓"; iSplit.
     - iDestruct 1 as (c) "#Hc".
       rewrite csum_equivI csum_validI.
@@ -439,8 +439,8 @@ Section csum.
       by iExists (Cinl _).
   Qed.
   Global Instance sum_inl_included_merge_unital a1 a2 P1 P2 :
-    IsIncludedMergeUnital _ a1 a2 P1 P2 →
-    IsIncludedMergeUnital _ (Cinl (B := B) a1) (Cinl (B := B) a2) P1 P2 | 100.
+    IsIncludedOrEq _ a1 a2 P1 P2 →
+    IsIncludedOrEq _ (Cinl (B := B) a1) (Cinl (B := B) a2) P1 P2 | 100.
   Proof.
     case => HP_lt HP_le; split; first apply _.
     rewrite csum_validI HP_le.
@@ -448,10 +448,10 @@ Section csum.
     iSplit; iIntros "[$|H]"; iRight; rewrite csum_equivI //.
   Qed.
   Global Instance sum_inr_included_merge b1 b2 P :
-    IsIncludedMerge _ b1 b2 P →
-    IsIncludedMerge _ (Cinr (A := A) b1) (Cinr (A := A) b2) P | 100.
+    IsIncluded _ b1 b2 P →
+    IsIncluded _ (Cinr (A := A) b1) (Cinr (A := A) b2) P | 100.
   Proof.
-    rewrite /IsIncludedMerge => HaP.
+    rewrite /IsIncluded => HaP.
     iIntros "#H✓"; iSplit.
     - iDestruct 1 as (c) "#Hc".
       rewrite csum_equivI csum_validI.
@@ -466,8 +466,8 @@ Section csum.
       by iExists (Cinr c).
   Qed.
   Global Instance sum_inr_included_merge_unital b1 b2 P1 P2 :
-    IsIncludedMergeUnital _ b1 b2 P1 P2 →
-    IsIncludedMergeUnital _ (Cinr (A := A) b1) (Cinr (A := A) b2) P1 P2 | 100.
+    IsIncludedOrEq _ b1 b2 P1 P2 →
+    IsIncludedOrEq _ (Cinr (A := A) b1) (Cinr (A := A) b2) P1 P2 | 100.
   Proof.
     case => HP_lt HP_le; split; first apply _.
     rewrite csum_validI HP_le.
@@ -475,15 +475,15 @@ Section csum.
     iSplit; iIntros "[$|H]"; iRight; rewrite csum_equivI //.
   Qed.
   Global Instance sum_inl_inr_included_merge a b :
-    IsIncludedMerge M (Cinl a) (Cinr b) False | 100.
+    IsIncluded M (Cinl a) (Cinr b) False | 100.
   Proof.
-    rewrite /IsIncludedMerge; iIntros "_"; iSplit; last done.
+    rewrite /IsIncluded; iIntros "_"; iSplit; last done.
     iDestruct 1 as ([c|c|]) "#Hc"; rewrite csum_equivI //.
   Qed.
   Global Instance sum_inr_inl_included_merge a b :
-    IsIncludedMerge M (Cinr b) (Cinl a) False | 100.
+    IsIncluded M (Cinr b) (Cinl a) False | 100.
   Proof.
-    rewrite /IsIncludedMerge; iIntros "_"; iSplit; last done.
+    rewrite /IsIncluded; iIntros "_"; iSplit; last done.
     iDestruct 1 as ([c|c|]) "#Hc"; rewrite csum_equivI //.
   Qed.
   Global Instance csum_right_id_l a :
@@ -534,12 +534,12 @@ Section prod.
   Qed.
 
   Global Instance prod_included_merge x1 x2 y1 y2 P1 P2 P :
-    IsIncludedMerge _ x1 x2 P1 →
-    IsIncludedMerge _ y1 y2 P2 →
+    IsIncluded _ x1 x2 P1 →
+    IsIncluded _ y1 y2 P2 →
     MakeAnd P1 P2 P →
-    IsIncludedMerge _ (x1, y1) (x2, y2) P.
+    IsIncluded _ (x1, y1) (x2, y2) P.
   Proof.
-    rewrite /IsIncludedMerge /MakeAnd => HP1 HP2 <-.
+    rewrite /IsIncluded /MakeAnd => HP1 HP2 <-.
     rewrite bi.intuitionistically_and prod_validI /=.
     rewrite prod_includedI.
     iIntros "[#Hx✓ #Hy✓]"; iSplit.
@@ -559,15 +559,15 @@ Section prod.
      The naive way of doing things would give (q < q' ∧ p < p') ∨ (q = q' ∧ p = p'). We would like to get q ≤ q' and p ≤ p' directly,
       while still allowing the user to look into the disjunction if required. *)
   Global Instance prod_included_merge_unital x1 x2 y1 y2 P1_lt P1_le P2_lt P2_le P_lt P_le P_le' P_lt_case P_lt_case' P_case :
-    IsIncludedMergeUnital M x1 x2 P1_lt P1_le → 
-    IsIncludedMergeUnital _ y1 y2 P2_lt P2_le →
+    IsIncludedOrEq M x1 x2 P1_lt P1_le → 
+    IsIncludedOrEq _ y1 y2 P2_lt P2_le →
     MakeAnd P1_le P2_le P_le' →
     MakeAnd P1_lt P2_lt P_lt →
     TCIf (HasRightId x2) (TCEq P_lt_case' True%I) (TCEq P_lt_case' P1_lt) →
     TCIf (HasRightId y2) (TCEq P_lt_case P_lt_case') (MakeAnd P_lt_case' P2_lt P_lt_case) →
     MakeOr P_lt_case (x1 ≡ x2 ∧ y1 ≡ y2)%I P_case → (* MakeOr will simplify True ∨ P ⊣⊢ True *)
     MakeAnd P_le' P_case P_le →
-    IsIncludedMergeUnital _ (x1, y1) (x2, y2) P_lt P_le.
+    IsIncludedOrEq _ (x1, y1) (x2, y2) P_lt P_le.
   Proof.
     rewrite /MakeAnd /MakeOr /HasRightId => HP1 HP2 HP1P2 HP1P2' HTC1 HTC2 HPcase HPle.
     split.
@@ -580,7 +580,7 @@ Section prod.
     iAssert (✓ y2 ∗ ✓ x2)%I as "[H✓y2 H✓x2]"; first by eauto.
     case: HP1 => + HP1. rewrite {1}HP1.
     case: HP2 => + HP2. rewrite {1}HP2.
-    rewrite /IsIncludedMerge => HP1' HP2'.
+    rewrite /IsIncluded => HP1' HP2'.
     iSplit.
     - iIntros "[#[Hc1 Hc2]|#[Hc1 Hc2]] !>"; iSplit; [iSplit | | iSplit | by eauto].
       + iApply bi.intuitionistically_elim. iApply "H✓x". eauto.
@@ -626,10 +626,10 @@ Section prod.
 End prod. 
 (* extra instance because TC resolution gets confused for ucmras :( *)
 Global Instance prod_included_merge_ucmra {X Y : ucmra} (x1 x2 : X) (y1 y2 : Y) {M} P1 P2 P :
-  IsIncludedMerge M x1 x2 P1 →
-  IsIncludedMerge M y1 y2 P2 →
+  IsIncluded M x1 x2 P1 →
+  IsIncluded M y1 y2 P2 →
   MakeAnd P1 P2 P →
-  IsIncludedMerge _ (x1, y1) (x2, y2) P.
+  IsIncluded _ (x1, y1) (x2, y2) P.
 Proof. simple eapply prod_included_merge. Qed.
 
 From iris.algebra Require Import excl.
@@ -643,16 +643,16 @@ Section excl.
     IsValidOp M ExclBot e1 e2 False.
   Proof. split; rewrite excl_validI /=; eauto. Qed.
   Global Instance excl_included_merge e1 e2 :
-    IsIncludedMerge M e1 e2 False.
+    IsIncluded M e1 e2 False.
   Proof.
-    rewrite /IsIncludedMerge. rewrite excl_validI. destruct e2 as [o2|]; last eauto.
+    rewrite /IsIncluded. rewrite excl_validI. destruct e2 as [o2|]; last eauto.
     iIntros "_". iSplit; last eauto. iDestruct 1 as (c) "Hc".
     rewrite /op /cmra_op /= /excl_op_instance excl_equivI //.
   Qed.
   Global Instance excl_included_merge_unital o1 o2 :
-    IsIncludedMergeUnital M (Excl o1) (Excl o2) False (o1 ≡ o2).
+    IsIncludedOrEq M (Excl o1) (Excl o2) False (o1 ≡ o2).
   Proof.
-    apply: Build_IsIncludedMergeUnital.
+    apply: Build_IsIncludedOrEq.
     iIntros "_"; iSplit.
     - iIntros "[[]|#H] !>". rewrite excl_equivI //.
     - iIntros "#H". iRewrite "H". eauto.
@@ -685,9 +685,9 @@ Section agree.
     - iFrame "H". iRewrite -"Heq". iRewrite "H". rewrite agree_idemp //.
   Qed.
   Global Instance agree_included_merge_direct o1 o2 :
-    IsIncludedMerge M (to_agree o1) (to_agree o2) (o1 ≡ o2) | 10.
+    IsIncluded M (to_agree o1) (to_agree o2) (o1 ≡ o2) | 10.
   Proof.
-    rewrite /IsIncludedMerge.
+    rewrite /IsIncluded.
     iIntros "_". iSplit. 
     - iDestruct 1 as (c) "H2". iDestruct (internal_eq_sym with "H2") as "H".
       rewrite to_agree_op_simple. iDestruct "H" as "[Heq1 Heq2]".
@@ -697,9 +697,9 @@ Section agree.
       iExists (to_agree o2). by rewrite agree_idemp.
   Qed.
   Global Instance agree_included_merge_abstract o1 (a : agree O) :
-    IsIncludedMerge M (to_agree o1) a (a ≡ to_agree o1) | 20.
+    IsIncluded M (to_agree o1) a (a ≡ to_agree o1) | 20.
   Proof.
-    rewrite /IsIncludedMerge.
+    rewrite /IsIncluded.
     iIntros "H✓". iSplit. 
     - iDestruct 1 as (c) "#H2".
       iRevert "H✓".
@@ -735,17 +735,17 @@ Section gmap.
     IsOp m m1 m2 → IsValidOp M m m1 m2 True | 10.
   Proof. apply from_isop. Qed.
   Global Instance gmap_included_merge m1 m2 : 
-    IsIncludedMerge M m1 m2 (∃ m, ∀ i, m2 !! i ≡ m1 !! i ⋅ m !! i) | 100.
+    IsIncluded M m1 m2 (∃ m, ∀ i, m2 !! i ≡ m1 !! i ⋅ m !! i) | 100.
   Proof. 
-    rewrite /IsIncludedMerge. iIntros "_"; iSplit.
+    rewrite /IsIncluded. iIntros "_"; iSplit.
     - iIntros "[%m #Hm] !>". iExists (m).
       iIntros (i). rewrite gmap_equivI -lookup_op. iApply "Hm".
     - iIntros "[%m #Hm]". iExists (m). rewrite gmap_equivI. iIntros (i). rewrite lookup_op. iApply "Hm".
   Qed.
   Global Instance gmap_included_merge_singleton m k a : 
-    IsIncludedMerge M {[ k := a ]} m (∃ a', m !! k ≡ Some a' ∧ Some a ≼ Some a' )%I | 50. (* if m !! k would reduce, we could do better *)
+    IsIncluded M {[ k := a ]} m (∃ a', m !! k ≡ Some a' ∧ Some a ≼ Some a' )%I | 50. (* if m !! k would reduce, we could do better *)
   Proof.
-    eapply included_merge_weaken; [iSolveTC | ].
+    eapply is_included_weaken; [iSolveTC | ].
     iIntros "#H✓"; iSplit.
     - iIntros "[%m' #Hm] !>".
       iSpecialize ("Hm" $! k). rewrite lookup_singleton //.
@@ -832,10 +832,10 @@ Section reservation_map.
   Qed.
 
   Global Instance reservation_token_included_merge E1 E2 P :
-    IsIncludedMerge _ (CoPset E1) (CoPset E2) P →
-    IsIncludedMerge _ (reservation_map_token (A := A) E1) (reservation_map_token E2) P.
+    IsIncluded _ (CoPset E1) (CoPset E2) P →
+    IsIncluded _ (reservation_map_token (A := A) E1) (reservation_map_token E2) P.
   Proof.
-    rewrite /IsIncludedMerge.
+    rewrite /IsIncluded.
     iIntros (HP) "H✓"; iSplit.
     - iIntros "[%m #Hm]". iRevert "H✓".
       destruct m as [m mE].
@@ -855,10 +855,10 @@ Section reservation_map.
   Qed.
 
   Global Instance reservation_data_included_merge k b1 b2 P :
-    IsIncludedMerge _ (Some b1) (Some b2) P →
-    IsIncludedMerge _ (reservation_map_data k b1) (reservation_map_data k b2) P.
+    IsIncluded _ (Some b1) (Some b2) P →
+    IsIncluded _ (reservation_map_data k b1) (reservation_map_data k b2) P.
   Proof.
-    rewrite /IsIncludedMerge option_validI.
+    rewrite /IsIncluded option_validI.
     iIntros (HP) "H✓". rewrite reservation_map_data_validI HP.
     iRevert "H✓". iApply bi.wand_iff_trans. iSplit.
     - iIntros "[%m #Hm]".
