@@ -1,6 +1,7 @@
 From iris.algebra Require Import cmra.
 From iris.base_logic Require Import own.
 From iris.proofmode Require Import proofmode.
+From iris.prelude Require Import options.
 
 Class IsValidOp {A : cmra} M (a a1 a2 : A) (P : uPred M) := {
   is_valid_merge : ✓ (a1 ⋅ a2) ⊢ □ P ;

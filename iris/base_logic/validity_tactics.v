@@ -1,7 +1,7 @@
-(* contains lemmas and tactics *)
 From iris.algebra Require Import cmra proofmode_classes auth frac_auth.
 From iris.proofmode Require Import proofmode environments.
 From iris.base_logic Require Import own proofmode_classes proofmode_instances.
+From iris.prelude Require Import options.
 
 (* base lemmas to use the validity typeclasses *)
 
@@ -31,11 +31,6 @@ Proof.
   iApply (HP with "H✓").
   iExists c. iApply "Hc".
 Qed.
-(*
-Lemma is_included_frac_auth {A : cmra} (a1 a2 : A) q γ `{!inG Σ $ frac_authUR A} (P_lt P_le : iProp Σ) :
-  IsIncludedMergeUnital _ (q, a1) (1%Qp, a2) P_lt P_le →
-  own γ (●F a2) -∗ own γ (◯F{q} a1) -∗ □ P_le.
-Proof. move => HP. apply is_included_auth, _. Qed. *)
 
 
 (* now their coq tactic variants, for applying them to IPM proofs *)
@@ -78,24 +73,7 @@ Proof.
     iApply (is_included_auth with "Ha1 Ha2") => //. }
   iApply (HΔ with "HΔ") => //.
 Qed.
-(*
-Lemma tac_frac_auth_included {A : cmra} i1 i2 (a1 a2 : A) q p1 p2 γ `{!inG Σ $ frac_authUR A} (P_lt P_le G : iProp Σ) Δ :
-  envs_lookup i1 Δ = Some (p1, own γ (●F a1)) →
-  envs_lookup i2 (envs_delete true i1 p1 Δ) = Some (p2, own γ (◯F{q} a2)) →
-  IsIncludedMergeUnital _ (q, a2) (1%Qp, a1) P_lt P_le →
-  envs_entails Δ (□ P_le -∗ G)%I →
-  envs_entails Δ G.
-Proof.
-  rewrite envs_entails_eq => Hi1 Hi2 HaP HΔ.
-  iIntros "HΔ".
-  iAssert (□ P_le)%I as "#HP".
-  { erewrite envs_lookup_sound => //.
-    erewrite envs_lookup_sound => //.
-    rewrite !bi.intuitionistically_if_elim.
-    iDestruct "HΔ" as "(Ha1 & Ha2 & _)".
-    iApply (is_included_frac_auth with "Ha1 Ha2") => //. }
-  iApply (HΔ with "HΔ") => //.
-Qed. *)
+
 
 Ltac iCombineOwn_tac' Hs_raw destructstr := 
   let Hs := words Hs_raw in
@@ -115,14 +93,6 @@ Ltac iCombineOwn_tac' Hs_raw destructstr :=
       first 
       [
 (*      lazymatch pr with
-      | (own ?γ (●F _), own ?γ (◯F{?q} _)) =>  *)
-(*          eapply (tac_frac_auth_included (INamed H0n) (INamed H1n));
-          [ reflexivity| reflexivity| iSolveTC | ];
-          iIntros destructstr
-      | (*(own ?γ (◯F{?q} _), own ?γ (●F _)) => *)
-          eapply (tac_frac_auth_included (INamed H1n) (INamed H0n));
-          [ reflexivity| reflexivity| iSolveTC | ];
-          iIntros destructstr 
       | (*(own ?γ (● _), own ?γ (◯ _)) => *) *)
           eapply (tac_auth_included (INamed H0n) (INamed H1n));
           [ reflexivity| reflexivity| iSolveTC | ];

@@ -1,6 +1,7 @@
 From iris.algebra Require Import cmra proofmode_classes.
 From iris.proofmode Require Import proofmode.
 From iris.base_logic Require Import own proofmode_classes.
+From iris.prelude Require Import options.
 
 Set Default Proof Using "Type".
 
