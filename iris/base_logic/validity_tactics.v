@@ -6,7 +6,7 @@ From iris.base_logic Require Import own proofmode_classes proofmode_instances.
 (* base lemmas to use the validity typeclasses *)
 
 Lemma own_valid_op {A : cmra} (a a1 a2 : A) γ `{!inG Σ A} (P : iProp Σ) :
-  IsValidOp a a1 a2 _ P →
+  IsValidOp _ a a1 a2 P →
   own γ a1 -∗ own γ a2 -∗ own γ a ∗ □ P.
 Proof.
   case => HP Ha.
@@ -20,7 +20,7 @@ Proof.
 Qed.
 
 Lemma is_included_auth {A : ucmra} (a1 a2 : A) dq γ `{!inG Σ $ authUR A} (P : iProp Σ) :
-  IsIncludedMerge a1 a2 _ P →
+  IsIncludedMerge _ a1 a2 P →
   own γ (●{dq} a2) -∗ own γ (◯ a1) -∗ □ P.
 Proof.
   rewrite /IsIncludedMerge => HP.
@@ -31,11 +31,11 @@ Proof.
   iApply (HP with "H✓").
   iExists c. iApply "Hc".
 Qed.
-
+(*
 Lemma is_included_frac_auth {A : cmra} (a1 a2 : A) q γ `{!inG Σ $ frac_authUR A} (P_lt P_le : iProp Σ) :
-  IsIncludedMergeUnital (q, a1) (1%Qp, a2) _ P_lt P_le →
+  IsIncludedMergeUnital _ (q, a1) (1%Qp, a2) P_lt P_le →
   own γ (●F a2) -∗ own γ (◯F{q} a1) -∗ □ P_le.
-Proof. move => HP. apply is_included_auth, _. Qed.
+Proof. move => HP. apply is_included_auth, _. Qed. *)
 
 
 (* now their coq tactic variants, for applying them to IPM proofs *)
@@ -43,7 +43,7 @@ Proof. move => HP. apply is_included_auth, _. Qed.
 Lemma tac_own_valid_op {A : cmra} i1 i2 (a a1 a2 : A) p1 p2 γ `{!inG Σ A} (P G : iProp Σ) Δ :
   envs_lookup i1 Δ = Some (p1, own γ a1) →
   envs_lookup i2 (envs_delete true i1 p1 Δ) = Some (p2, own γ a2) →
-  IsValidOp a a1 a2 _ P →
+  IsValidOp _ a a1 a2 P →
   envs_entails (envs_delete true i2 p2 (envs_delete true i1 p1 Δ)) ((own γ a ∗ □ P) -∗ G)%I →
   envs_entails Δ G.
 Proof.
@@ -64,7 +64,7 @@ Qed.
 Lemma tac_auth_included {A : ucmra} i1 i2 (a1 a2 : A) dq p1 p2 γ `{!inG Σ $ authUR A} (P G : iProp Σ) Δ :
   envs_lookup i1 Δ = Some (p1, own γ (●{dq} a1)) →
   envs_lookup i2 (envs_delete true i1 p1 Δ) = Some (p2, own γ (◯ a2)) →
-  IsIncludedMerge a2 a1 _ P →
+  IsIncludedMerge _ a2 a1 P →
   envs_entails Δ (□ P -∗ G)%I →
   envs_entails Δ G.
 Proof.
@@ -78,11 +78,11 @@ Proof.
     iApply (is_included_auth with "Ha1 Ha2") => //. }
   iApply (HΔ with "HΔ") => //.
 Qed.
-
+(*
 Lemma tac_frac_auth_included {A : cmra} i1 i2 (a1 a2 : A) q p1 p2 γ `{!inG Σ $ frac_authUR A} (P_lt P_le G : iProp Σ) Δ :
   envs_lookup i1 Δ = Some (p1, own γ (●F a1)) →
   envs_lookup i2 (envs_delete true i1 p1 Δ) = Some (p2, own γ (◯F{q} a2)) →
-  IsIncludedMergeUnital (q, a2) (1%Qp, a1) _ P_lt P_le →
+  IsIncludedMergeUnital _ (q, a2) (1%Qp, a1) P_lt P_le →
   envs_entails Δ (□ P_le -∗ G)%I →
   envs_entails Δ G.
 Proof.
@@ -95,7 +95,7 @@ Proof.
     iDestruct "HΔ" as "(Ha1 & Ha2 & _)".
     iApply (is_included_frac_auth with "Ha1 Ha2") => //. }
   iApply (HΔ with "HΔ") => //.
-Qed.
+Qed. *)
 
 Ltac iCombineOwn_tac' Hs_raw destructstr := 
   let Hs := words Hs_raw in
@@ -116,14 +116,14 @@ Ltac iCombineOwn_tac' Hs_raw destructstr :=
       [
 (*      lazymatch pr with
       | (own ?γ (●F _), own ?γ (◯F{?q} _)) =>  *)
-          eapply (tac_frac_auth_included (INamed H0n) (INamed H1n));
+(*          eapply (tac_frac_auth_included (INamed H0n) (INamed H1n));
           [ reflexivity| reflexivity| iSolveTC | ];
           iIntros destructstr
       | (*(own ?γ (◯F{?q} _), own ?γ (●F _)) => *)
           eapply (tac_frac_auth_included (INamed H1n) (INamed H0n));
           [ reflexivity| reflexivity| iSolveTC | ];
-          iIntros destructstr
-      | (*(own ?γ (● _), own ?γ (◯ _)) => *)
+          iIntros destructstr 
+      | (*(own ?γ (● _), own ?γ (◯ _)) => *) *)
           eapply (tac_auth_included (INamed H0n) (INamed H1n));
           [ reflexivity| reflexivity| iSolveTC | ];
           iIntros destructstr

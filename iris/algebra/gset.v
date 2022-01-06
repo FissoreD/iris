@@ -1,5 +1,5 @@
 From stdpp Require Export sets gmap mapset.
-From iris.algebra Require Export cmra.
+From iris.algebra Require Export cmra proofmode_classes.
 From iris.algebra Require Import updates local_updates big_op.
 From iris.prelude Require Import options.
 
@@ -63,6 +63,15 @@ Section gset.
     - rewrite big_opS_empty. done.
     - unfold_leibniz. rewrite big_opS_insert // IH //.
   Qed.
+  Global Instance gset_is_op_unit_l X :
+    IsOp X ∅ X | 10.
+  Proof. rewrite /IsOp. set_solver. Qed.
+  Global Instance gset_is_op_unit_r X :
+    IsOp X X ∅ | 10.
+  Proof. rewrite /IsOp. set_solver. Qed.
+  Global Instance gset_is_op X Y :
+    IsOp (X ∪ Y) X Y | 20.
+  Proof. done. Qed.
 
   (** Add support [X ≼ Y] to [set_solver]. (We get support for [⋅] for free
   because it is definitionally equal to [∪]). *)
