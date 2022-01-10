@@ -1053,7 +1053,7 @@ Section gmap_view.
     rewrite /gmap_view.gmap_view_rel_raw /=. split.
     - move => /map_Forall_lookup Hm k dq a n' x' Hx' Hn Hx'' /Hm /= => [[v [Hv1 [Hv2 Hv3]]]].
       exists v. rewrite Hv3. split; eauto using dist_le'.
-    - intros. apply map_Forall_lookup => k [dq a] /= /H0 {H0} H0'.
+    - move => H0. apply map_Forall_lookup => k [dq a] /= /H0 {H0} H0'.
       destruct (H0' n x) as [v Hv]; eauto.
   Qed.
 
@@ -1076,7 +1076,7 @@ Section gmap_view.
     IsValidOp _ dq dq1 dq2 P →
     IsValidOp _ (gmap_view_frag k dq v1) (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) (P ∧ v1 ≡ v2).
   Proof.
-    intros; split.
+    move => H0; split.
     - rewrite view_validI /=.
       iDestruct 1 as "[_ [%m Hm]]".
       rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
