@@ -160,7 +160,7 @@ Section numbers.
   Proof. 
     rewrite /IsIncluded. iIntros "_" ; iSplit.
     - by iDestruct 1 as %?%frac_included.
-    - iIntros "%". apply Qp_lt_sum in H as [q' ->]. eauto.
+    - iIntros "%H". apply Qp_lt_sum in H as [q' ->]. eauto.
   Qed.
   Global Instance frac_included_merge_unital (q1 q2 : Qp) : IsIncludedOrEq M q1 q2 ⌜(q1 < q2)%Qp⌝ ⌜(q1 ≤ q2)%Qp⌝ | 20.
   Proof.
@@ -209,7 +209,7 @@ Section numbers.
     case => Hpq Hpq'. split; first apply _.
     rewrite dfrac_validI -frac_validI Hpq'.
     iApply bi.wand_iff_trans. iSplit.
-    - iIntros "[Hpq|%]"; eauto. iRight. case: H => -> //.
+    - iIntros "[Hpq|%H]"; eauto. iRight. case: H => -> //.
     - iIntros "[Hpq|->]"; eauto.
   Qed.
   Global Instance dfrac_own_disc_included_merge (q : Qp) :
@@ -942,7 +942,7 @@ Section view.
       rewrite {2}/op /= /cmra_op /= /view_op_instance /= !right_id //.
     - rewrite view_validI /=.
       iDestruct 1 as (a) "Ha". rewrite to_agree_op_simple !agree_equivI /= right_id.
-      iDestruct "Ha" as "([$ #Heq] & _ & H & %)".
+      iDestruct "Ha" as "([$ #Heq] & _ & H & $)".
       iRewrite "Heq". eauto.
   Qed.
 
@@ -996,13 +996,9 @@ Section auth.
     IsValidOp M dq dq1 dq2 Pq →
     IsValidOp M (●{dq} a1) (●{dq1} a1) (●{dq2} a2) (Pq ∧ a1 ≡ a2).
   Proof.
-    move => Hq; split.
-    - rewrite auth_auth_dfrac_op_validI is_valid_merge.
-      iIntros "(#$ & _ & #$)".
-    - rewrite auth_auth_dfrac_op_validI is_valid_op.
-      iIntros "(-> & _ & #Ha)".
-      iRewrite -"Ha".
-      rewrite -auth_auth_dfrac_op //.
+    move => Hq. eapply is_valid_op_weaken. 
+    - rewrite /auth_auth. iSolveTC. 
+    - iIntros "[_ #($ & $ & _)]".
   Qed.
 End auth.
 
@@ -1068,9 +1064,9 @@ Section gmap_view.
     apply (anti_symm _).
     - iIntros "Hm". destruct dv as [dq av] => /=.
       iApply ("Hm" $! k dq av). rewrite lookup_singleton //.
-    - iDestruct 1 as "[%a (Ha1 & Ha2 & %)]".
+    - iDestruct 1 as "[%a (Ha1 & Ha2 & %Hka)]".
       iIntros (i). destruct (decide (k = i)) as [->|Hneq].
-      * rewrite lookup_singleton /= H0 {H0 i}.
+      * rewrite lookup_singleton /= Hka {Hka i}.
         iIntros (dq av Hdq). case: Hdq => -> /=.
         iExists _. eauto. 
       * rewrite lookup_singleton_ne //.
