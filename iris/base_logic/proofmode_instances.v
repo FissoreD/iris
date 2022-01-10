@@ -21,7 +21,7 @@ Section cmra_instances.
 
   Lemma from_isop a a1 a2 :
     IsOp a a1 a2 → IsValidOp M a a1 a2 True.
-  Proof. rewrite /IsOp; split; [ | rewrite H]; eauto. Qed.
+  Proof. rewrite /IsOp => H; split; [ | rewrite H]; eauto. Qed.
 
   Lemma is_valid_op_comm a a1 a2 P :
     IsValidOp M a a1 a2 P → IsValidOp M a a2 a1 P.
@@ -153,7 +153,7 @@ Section numbers.
   Global Instance frac_valid_op (q q1 q2 : Qp) :
     IsOp q q1 q2 → IsValidOp M q q1 q2 ⌜q1 + q2 ≤ 1⌝%Qp%I.
   Proof.
-    rewrite /IsOp; split; last by rewrite H; eauto.
+    rewrite /IsOp => H; split; last by rewrite H; eauto.
     by iDestruct 1 as %?%frac_valid.
   Qed.
   Global Instance frac_included_merge (q1 q2 : Qp) : IsIncluded M q1 q2 ⌜(q1 < q2)%Qp⌝.
@@ -174,11 +174,9 @@ Section numbers.
   Global Instance dfrac_valid_op_carry (q q1 q2 : Qp) Pq :
     IsValidOp M q q1 q2 Pq → IsValidOp M (DfracOwn q) (DfracOwn q1) (DfracOwn q2) Pq.
   Proof.
-    split.
-    - rewrite /op /cmra_op /=. rewrite dfrac_validI -frac_validI.
-      destruct H as [H _] => //.
-    - destruct H as [_ H].
-      rewrite /op /cmra_op /= dfrac_validI -frac_validI H.
+    move => [H1 H2]; split.
+    - rewrite /op /cmra_op /=. rewrite dfrac_validI -frac_validI //.
+    - rewrite /op /cmra_op /= dfrac_validI -frac_validI H2.
       iIntros "->" => //.
   Qed.
 
@@ -259,10 +257,8 @@ Section sets.
   Global Instance set_disj_is_valid_op X Y :
     IsValidOp M (GSet (X ∪ Y)) (GSet X) (GSet Y) ⌜X ## Y⌝ | 20.
   Proof.
-    split.
-    - by iDestruct 1 as %?%gset_disj_valid_op.
-    - iDestruct 1 as %?%gset_disj_valid_op.
-      by rewrite gset_disj_union.
+    split; iDestruct 1 as %?%gset_disj_valid_op; first done.
+    by rewrite gset_disj_union.
   Qed.
   Global Instance set_disj_valid_op_emp_l X Y :
     IsValidOp M (GSet X) (GSet X) (GSet ∅) True | 10.
@@ -319,10 +315,8 @@ Section coPsets.
   Global Instance coPset_disj_is_valid_op X Y :
     IsValidOp M (CoPset (X ∪ Y)) (CoPset X) (CoPset Y) ⌜X ## Y⌝ | 20.
   Proof.
-    split.
-    - by iDestruct 1 as %?%coPset_disj_valid_op.
-    - iDestruct 1 as %?%coPset_disj_valid_op.
-      by rewrite coPset_disj_union.
+    split; iDestruct 1 as %?%coPset_disj_valid_op; first done.
+    by rewrite coPset_disj_union.
   Qed.
   Global Instance coPset_disj_valid_op_unit_l X Y :
     IsValidOp M (CoPset X) (CoPset X) (CoPset ∅) True | 10.
@@ -348,11 +342,7 @@ Section optional.
 
   Global Instance option_some_valid_op a a1 a2 P :
     IsValidOp M a a1 a2 P → IsValidOp M (Some a) (Some a1) (Some a2) P.
-  Proof.
-    case => HP Ha.
-    split; rewrite -Some_op option_validI //.
-    by rewrite Ha option_equivI.
-  Qed.
+  Proof. case => HP Ha. split; rewrite -Some_op option_validI // Ha option_equivI //. Qed.
   Global Instance option_included_merge a1 a2 P1 P2 :
     IsIncludedOrEq M a1 a2 P1 P2 →
     IsIncluded M (Some a1) (Some a2) P2 | 100.
@@ -402,8 +392,7 @@ Section csum.
     IsValidOp _ (Cinl a) (Cinl (B := B) a1) (Cinl (B := B) a2) P.
   Proof.
     case => HP Ha. 
-    split; rewrite -Cinl_op csum_validI //.
-    rewrite Ha.
+    split; rewrite -Cinl_op csum_validI // Ha.
     iIntros "Ha".
     by iRewrite "Ha".
   Qed.
@@ -412,8 +401,7 @@ Section csum.
     IsValidOp _ (Cinr b) (Cinr (A := A) b1) (Cinr (A := A) b2) P.
   Proof.
     case => HP Ha. 
-    split; rewrite -Cinr_op csum_validI //.
-    rewrite Ha.
+    split; rewrite -Cinr_op csum_validI // Ha.
     iIntros "Ha".
     by iRewrite "Ha".
   Qed.
@@ -795,7 +783,7 @@ Section reservation_map.
 
   Lemma reservation_equivI x y :
     x ≡ y ⊣⊢@{uPredI M} (reservation_map_data_proj x ≡ reservation_map_data_proj y) ∧ (reservation_map_token_proj x ≡ reservation_map_token_proj y).
-  Proof. split => n. uPred.unseal => //. Qed.
+  Proof. by uPred.unseal. Qed.
 
   Global Instance combine_reservation_token E1 E2 :
     IsValidOp M (reservation_map_token (A := A) (E1 ∪ E2)) (reservation_map_token E1) (reservation_map_token E2) ⌜E1 ## E2⌝.
@@ -821,7 +809,7 @@ Section reservation_map.
     IsValidOp _ (reservation_map_data k b) (reservation_map_data k b1) (reservation_map_data k b2) P.
   Proof.
     split; rewrite -reservation_map_data_op reservation_map_data_validI.
-    - apply H. 
+    - rewrite is_valid_merge //.
     - rewrite is_valid_op.
       iIntros "Heq".
       by iRewrite "Heq".
@@ -929,7 +917,7 @@ Section view.
 
   Lemma view_equivI v1 v2 :
     v1 ≡ v2 ⊣⊢@{uPredI M} view_auth_proj v1 ≡ view_auth_proj v2 ∧ view_frag_proj v1 ≡ view_frag_proj v2.
-  Proof. uPred.unseal; split => n y Hy //. Qed.
+  Proof. by uPred.unseal. Qed.
 
   Global Instance view_frag_valid_op b b1 b2 P :
     IsOp b b1 b2 → (* generic views do not require the fragment to be valid! So this will usually not be enough *)
@@ -962,8 +950,7 @@ Section view.
     IsValidOp M dq dq1 dq2 Pq →
     IsValidOp M (view_auth (rel := rel) dq a1) (●V{dq1} a1) (●V{dq2} a2) (Pq ∧ a1 ≡ a2 ∧ rel_holds_for a2 ε)%I.
   Proof.
-    intros.
-    split.
+    move => Hq; split.
     - rewrite view_auth_dfrac_op_validI is_valid_merge.
       iIntros "(#$ & #$ & #$)".
     - rewrite view_auth_dfrac_op_validI is_valid_op.
@@ -990,15 +977,14 @@ Section auth.
     IsValidOp M a a1 a2 P →
     IsValidOp M (◯ a) (◯ a1) (◯ a2) P.
   Proof.
-    move => HPa.
-    split; rewrite -auth_frag_op auth_frag_validI //.
+    move => HPa. split; rewrite -auth_frag_op auth_frag_validI //.
     - rewrite is_valid_merge //.
     - rewrite is_valid_op.
       iIntros "H".
       by iRewrite "H".
   Qed.
   Lemma auth_rel_holds a1 a2 : rel_holds_for auth_view_rel a1 a2 ⊣⊢@{uPredI M} a2 ≼ a1 ∧ ✓ a1.
-  Proof. split => n. rewrite /includedI. uPred.unseal => //. Qed.
+  Proof. rewrite /includedI. by uPred.unseal. Qed.
   Lemma auth_auth_dfrac_op_validI dq1 dq2 a1 a2 : ✓ (●{dq1} a1 ⋅ ●{dq2} a2) ⊣⊢@{uPredI M} ✓ (dq1 ⋅ dq2) ∧ ✓ a2 ∧ (a1 ≡ a2).
   Proof.
     rewrite view_auth_dfrac_op_validI auth_rel_holds.
@@ -1010,8 +996,7 @@ Section auth.
     IsValidOp M dq dq1 dq2 Pq →
     IsValidOp M (●{dq} a1) (●{dq1} a1) (●{dq2} a2) (Pq ∧ a1 ≡ a2).
   Proof.
-    intros.
-    split.
+    move => Hq; split.
     - rewrite auth_auth_dfrac_op_validI is_valid_merge.
       iIntros "(#$ & _ & #$)".
     - rewrite auth_auth_dfrac_op_validI is_valid_op.
@@ -1073,8 +1058,7 @@ Section gmap_view.
     - move => /map_Forall_lookup Hm k dq a n' x' Hx' Hn Hx'' /Hm /= => [[v [Hv1 [Hv2 Hv3]]]].
       exists v. rewrite Hv3. split; eauto using dist_le'.
     - intros. apply map_Forall_lookup => k [dq a] /= /H0 {H0} H0'.
-      specialize (H0' n x).
-      destruct H0' as [v Hv] => //. eauto.
+      destruct (H0' n x) as [v Hv]; eauto.
   Qed.
 
   Lemma gmap_view_rel_holds_singleton k dv m :
