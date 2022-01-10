@@ -1003,7 +1003,7 @@ Section auth.
 End auth.
 
 
-From iris.algebra Require Import frac_auth.
+From iris.algebra.lib Require Import frac_auth.
 
 Section frac_auth.
   Context {A : cmra} {M : ucmra}.
@@ -1023,7 +1023,7 @@ Section frac_auth.
 End frac_auth.
 
 
-From iris.algebra Require Import excl_auth.
+From iris.algebra.lib Require Import excl_auth.
 
 Section excl_auth.
   Context {A : ofe} {M : ucmra}.
@@ -1036,6 +1036,33 @@ Section excl_auth.
     IsValidOp M (◯ (Some ea)) (◯E a1) (◯E a2) P.
   Proof. apply auth_frag_valid_op. Qed.
 End excl_auth.
+
+
+From iris.algebra.lib Require Import dfrac_agree.
+
+Section dfrac_agree.
+  Context {A : ofe} {M : ucmra}.
+  Implicit Types a : A.
+  Implicit Types P : uPred M.
+
+  (* overcomes the typeclasses opaque instance on to_dfrac_agree *)
+
+  Global Instance dfrac_agree_valid_op q a q1 a1 q2 a2 P :
+    IsValidOp M (q, to_agree a) (q1, to_agree a1) (q2, to_agree a2) P →
+    IsValidOp M (to_dfrac_agree q a) (to_dfrac_agree q1 a1) (to_dfrac_agree q2 a2) P.
+  Proof. by rewrite /to_dfrac_agree. Qed.
+
+  Global Instance dfrac_agree_included q1 a1 q2 a2 P :
+    IsIncluded M (q1, to_agree a1) (q2, to_agree a2) P →
+    IsIncluded M (to_dfrac_agree q1 a1) (to_dfrac_agree q2 a2) P.
+  Proof. by rewrite /to_dfrac_agree. Qed.
+
+  Global Instance dfrac_agree_included_or_eq q1 a1 q2 a2 P1 P2 :
+    IsIncludedOrEq M (q1, to_agree a1) (q2, to_agree a2) P1 P2 →
+    IsIncludedOrEq M (to_dfrac_agree q1 a1) (to_dfrac_agree q2 a2) P1 P2.
+  Proof. by rewrite /to_dfrac_agree. Qed.
+
+End dfrac_agree.
 
 
 From iris.algebra.lib Require Import gmap_view.
