@@ -92,12 +92,12 @@ iris/base_logic/upred.v
 iris/base_logic/bi.v
 iris/base_logic/derived.v
 iris/base_logic/proofmode.v
-iris/base_logic/proofmode_classes.v
-iris/base_logic/proofmode_instances.v
-iris/base_logic/validity_tactics.v
 iris/base_logic/base_logic.v
 iris/base_logic/algebra.v
 iris/base_logic/bupd_alt.v
+iris/base_logic/lib/proofmode_classes.v
+iris/base_logic/lib/proofmode_instances.v
+iris/base_logic/lib/validity_tactics.v
 iris/base_logic/lib/iprop.v
 iris/base_logic/lib/own.v
 iris/base_logic/lib/saved_prop.v

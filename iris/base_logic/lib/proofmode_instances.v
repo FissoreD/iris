@@ -1,9 +1,103 @@
 From iris.algebra Require Import cmra proofmode_classes.
 From iris.proofmode Require Import proofmode.
-From iris.base_logic Require Import own proofmode_classes.
+From iris.base_logic.lib Require Import own proofmode_classes.
 From iris.prelude Require Import options.
 
 Set Default Proof Using "Type".
+
+
+Section proper.
+  Context {M : ucmra} {A : cmra}.
+  Implicit Types a : A.
+
+  Global Instance includedI_proper_1 : 
+    NonExpansive2 (includedI (M := M) (A := A)).
+  Proof. solve_proper. Qed.
+  Global Instance includedI_proper_2 : 
+    Proper ((≡) ==> (≡) ==> (≡)) (includedI (M := M) (A := A)).
+  Proof. solve_proper. Qed.
+
+  Global Instance is_valid_gives_proper :
+    Proper ((≡) ==> (≡) ==> (=) ==> (iff)) (IsValidGives (A := A) M).
+  Proof. solve_proper. Qed.
+  Lemma is_valid_gives_weaken a1 a2 P1 P2 :
+    IsValidGives M a1 a2 P1 →
+    (✓ (a1 ⋅ a2) ∗ □ P1 ⊢ P2) →
+    IsValidGives M a1 a2 P2.
+  Proof.
+    rewrite /IsValidGives => HP HP1P2.
+    iIntros "#H✓".
+    rewrite -HP1P2.
+    iFrame "#". by rewrite -HP.
+  Qed.
+  Lemma is_valid_gives_true a1 a2 : IsValidGives M a1 a2 True.
+  Proof. rewrite /IsValidGives; eauto. Qed.
+
+  Global Instance is_valid_op_proper :
+    Proper ((≡) ==> (≡) ==> (≡) ==> (=) ==> (iff)) (IsValidOp (A := A) M).
+  Proof.
+    move => a1 a1' Ha1 a2 a2' Ha2 a a' Ha P2' P2 ->.
+    split; case => H1 H2; split.
+    - by eapply is_valid_gives_proper.
+    - rewrite -Ha -Ha2 -Ha1 //.
+    - by eapply is_valid_gives_proper.
+    - rewrite Ha2 Ha Ha1 //.
+  Qed.
+  Lemma is_valid_op_weaken a a1 a2 P1 P2 :
+    IsValidOp M a a1 a2 P1 →
+    (✓ (a1 ⋅ a2) ∗ □ P1 ⊢ P2) →
+    IsValidOp M a a1 a2 P2.
+  Proof.
+    case => HP Ha HP1P2; split; last done.
+    by eapply is_valid_gives_weaken.
+  Qed.
+
+  Global Instance is_included_proper : 
+    Proper ((≡) ==> (≡) ==> (≡) ==> (iff)) (IsIncluded (A := A) M).
+  Proof. solve_proper. Qed.
+  Lemma is_included_weaken a1 a2 P1 P2 :
+    IsIncluded M a1 a2 P1 →
+    (✓ a2 ⊢ □ P1 ∗-∗ □ P2) →
+    IsIncluded M a1 a2 P2.
+  Proof.
+    rewrite /IsIncluded => HP1a HP1P2.
+    iIntros "#H✓". iApply bi.wand_iff_trans.
+    - by iApply HP1a.
+    - by iApply HP1P2.
+  Qed.
+
+  Global Instance is_included_or_eq_proper : 
+    Proper ((≡) ==> (≡) ==> (≡) ==> (≡) ==> (iff)) (IsIncludedOrEq (A := A) M).
+  Proof.
+    move => a1 a1' Ha1 a2 a2' Ha2 P1' P1 HP1 P2' P2 HP2.
+    split; case => H1 H2; split.
+    - revert H1; apply is_included_proper => //.
+    - rewrite -Ha2 -Ha1 -HP1 -HP2 //.
+    - revert H1; apply is_included_proper => //.
+    - rewrite Ha2 Ha1 HP1 HP2 //.
+  Qed.
+  Lemma is_included_or_eq_weaken a1 a2 P1 P2 P3 P4 :
+    IsIncludedOrEq M a1 a2 P1 P2 →
+    (✓ a2 ⊢ □ P1 ∗-∗ □ P3) →
+    (✓ a2 ⊢ □ P2 ∗-∗ □ P4) →
+    IsIncludedOrEq M a1 a2 P3 P4.
+  Proof.
+    case => HP1 HP1P2 HP1P3 HP2P4; split; first by eapply is_included_weaken.
+    iIntros "#H✓". 
+    iApply bi.wand_iff_trans; last by iApply HP2P4.
+    iApply bi.wand_iff_trans; last by iApply HP1P2.
+    iSplit; iIntros "[#HP|$]"; iLeft; by iApply HP1P3.
+  Qed.
+
+  Global Instance valid_gives_emp_valid a1 a2 P:
+    AsEmpValid (IsValidGives M a1 a2 P) (✓ (a1 ⋅ a2) -∗ □ P).
+  Proof.
+    rewrite /AsEmpValid /IsValidGives. split;
+    iIntros (HP) "H✓"; by iApply HP.
+  Qed.
+End proper.
+
+Global Hint Immediate is_valid_gives_true : core.
 
 
 Global Instance includedI_into_pure `{CmraDiscrete A} (a b : A) {M} : 
@@ -23,9 +117,13 @@ Section cmra_instances.
     IsOp a a1 a2 → IsValidOp M a a1 a2 True.
   Proof. rewrite /IsOp => H; split; [ | rewrite H]; eauto. Qed.
 
+  Lemma is_valid_gives_comm a1 a2 P :
+    IsValidGives M a1 a2 P → IsValidGives M a2 a1 P.
+  Proof. rewrite /IsValidGives comm //. Qed.
+
   Lemma is_valid_op_comm a a1 a2 P :
     IsValidOp M a a1 a2 P → IsValidOp M a a2 a1 P.
-  Proof. case; split; rewrite comm //. Qed.
+  Proof. case; split; rewrite /IsValidGives comm //. Qed.
 
   Lemma is_included_merge' a1 a2 P :
     IsIncluded M a1 a2 P →
@@ -175,14 +273,14 @@ Section numbers.
     IsValidOp M q q1 q2 Pq → IsValidOp M (DfracOwn q) (DfracOwn q1) (DfracOwn q2) Pq.
   Proof.
     move => [H1 H2]; split.
-    - rewrite /op /cmra_op /=. rewrite dfrac_validI -frac_validI //.
+    - rewrite /op /cmra_op /= /IsValidGives dfrac_validI /= -frac_validI //.
     - rewrite /op /cmra_op /= dfrac_validI -frac_validI H2.
       iIntros "->" => //.
   Qed.
 
   Global Instance dfrac_valid_op_with_discarded_r (q : Qp) :
     IsValidOp M (DfracOwn q ⋅ DfracDiscarded) (DfracOwn q) DfracDiscarded ⌜(q < 1)%Qp⌝.
-  Proof. split; [rewrite dfrac_validI | ]; eauto. Qed.
+  Proof. split; [rewrite /IsValidGives dfrac_validI | ]; eauto. Qed.
 
   Global Instance dfrac_valid_op_with_discarded_l (q : Qp) :
     IsValidOp M (DfracOwn q ⋅ DfracDiscarded) DfracDiscarded (DfracOwn q) ⌜(q < 1)%Qp⌝.
@@ -342,7 +440,7 @@ Section optional.
 
   Global Instance option_some_valid_op a a1 a2 P :
     IsValidOp M a a1 a2 P → IsValidOp M (Some a) (Some a1) (Some a2) P.
-  Proof. case => HP Ha. split; rewrite -Some_op option_validI // Ha option_equivI //. Qed.
+  Proof. case => HP Ha. split; rewrite /IsValidGives -Some_op option_validI // Ha option_equivI //. Qed.
   Global Instance option_included_merge a1 a2 P1 P2 :
     IsIncludedOrEq M a1 a2 P1 P2 →
     IsIncluded M (Some a1) (Some a2) P2 | 100.
@@ -392,7 +490,7 @@ Section csum.
     IsValidOp _ (Cinl a) (Cinl (B := B) a1) (Cinl (B := B) a2) P.
   Proof.
     case => HP Ha. 
-    split; rewrite -Cinl_op csum_validI // Ha.
+    split; rewrite /IsValidGives -Cinl_op csum_validI // Ha.
     iIntros "Ha".
     by iRewrite "Ha".
   Qed.
@@ -401,16 +499,16 @@ Section csum.
     IsValidOp _ (Cinr b) (Cinr (A := A) b1) (Cinr (A := A) b2) P.
   Proof.
     case => HP Ha. 
-    split; rewrite -Cinr_op csum_validI // Ha.
+    split; rewrite /IsValidGives -Cinr_op csum_validI // Ha.
     iIntros "Ha".
     by iRewrite "Ha".
   Qed.
   Global Instance sum_inl_inr_invalid_op a b :
     IsValidOp M (CsumBot) (Cinl (B := B) a) (Cinr (A := A) b) False.
-  Proof. split; rewrite /op /= /cmra_op /= csum_validI; eauto. Qed.
+  Proof. split; rewrite /IsValidGives /op /= /cmra_op /= csum_validI; eauto. Qed.
   Global Instance sum_inr_inl_invalid_op a b :
     IsValidOp M (CsumBot) (Cinr (A := B) a) (Cinl (B := A) b) False.
-  Proof. split; rewrite /op /= /cmra_op /= csum_validI; eauto. Qed.
+  Proof. split; rewrite /IsValidGives /op /= /cmra_op /= csum_validI; eauto. Qed.
   Global Instance sum_inl_included_merge a1 a2 P :
     IsIncluded _ a1 a2 P →
     IsIncluded _ (Cinl (B := B) a1) (Cinl (B := B) a2) P | 100.
@@ -506,8 +604,8 @@ Section prod.
     MakeAnd P1 P2 P →
     IsValidOp _ (x, y) (x1, y1) (x2, y2) P.
   Proof.
-    rewrite /MakeAnd => Hxs Hys HP. split; rewrite -pair_op prod_validI /=.
-    - rewrite !is_valid_merge -HP bi.intuitionistically_and //.
+    rewrite /MakeAnd => Hxs Hys HP. split; rewrite /IsValidGives -pair_op prod_validI /=.
+    - rewrite !is_valid_op_gives -HP bi.intuitionistically_and //.
     - rewrite prod_equivI /= !is_valid_op //.
   Qed.
 
@@ -632,7 +730,7 @@ Section excl.
 
   Global Instance excl_valid_op e1 e2 :
     IsValidOp M ExclBot e1 e2 False.
-  Proof. split; rewrite excl_validI /=; eauto. Qed.
+  Proof. split; rewrite /IsValidGives excl_validI /=; eauto. Qed.
   Global Instance excl_included_merge e1 e2 :
     IsIncluded M e1 e2 False.
   Proof.
@@ -661,7 +759,7 @@ Section agree.
   Global Instance agree_valid_op o1 o2 :
     IsValidOp M (to_agree o1) (to_agree o1) (to_agree o2) (o1 ≡ o2)%I.
   Proof.
-    split; rewrite agree_validI agree_equivI; first eauto.
+    split; rewrite /IsValidGives agree_validI agree_equivI; first eauto.
     iIntros "H".
     iRewrite "H".
     by rewrite agree_idemp.
@@ -788,9 +886,9 @@ Section reservation_map.
   Global Instance combine_reservation_token E1 E2 :
     IsValidOp M (reservation_map_token (A := A) (E1 ∪ E2)) (reservation_map_token E1) (reservation_map_token E2) ⌜E1 ## E2⌝.
   Proof.
-    split.
-    - rewrite reservation_op reservation_validI /= !is_valid_merge. iIntros "[_ #$]".
-    - rewrite reservation_op reservation_validI /= !is_valid_merge. iIntros "[_ %]".
+    split; rewrite /IsValidGives reservation_op reservation_validI /= !is_valid_op_gives.
+    - iIntros "[_ #$]".
+    - iIntros "[_ %]".
       rewrite reservation_map_token_union //.
   Qed.
 
@@ -808,8 +906,8 @@ Section reservation_map.
     IsValidOp _ b b1 b2 P →
     IsValidOp _ (reservation_map_data k b) (reservation_map_data k b1) (reservation_map_data k b2) P.
   Proof.
-    split; rewrite -reservation_map_data_op reservation_map_data_validI.
-    - rewrite is_valid_merge //.
+    split; rewrite /IsValidGives -reservation_map_data_op reservation_map_data_validI.
+    - rewrite is_valid_gives //.
     - rewrite is_valid_op.
       iIntros "Heq".
       by iRewrite "Heq".
@@ -924,7 +1022,7 @@ Section view.
     IsValidOp M (view_frag (rel := rel) b) (◯V b1) (◯V b2) (∃ a, rel_holds_for a b).
   Proof.
     rewrite /IsOp => Hb; split.
-    - rewrite -view_frag_op view_validI /=.
+    - rewrite /IsValidGives -view_frag_op view_validI /=.
       iDestruct 1 as "[_ [%a #Ha]]". rewrite -Hb. eauto.
     - rewrite Hb view_frag_op. eauto.
   Qed.
@@ -951,7 +1049,7 @@ Section view.
     IsValidOp M (view_auth (rel := rel) dq a1) (●V{dq1} a1) (●V{dq2} a2) (Pq ∧ a1 ≡ a2 ∧ rel_holds_for a2 ε)%I.
   Proof.
     move => Hq; split.
-    - rewrite view_auth_dfrac_op_validI is_valid_merge.
+    - rewrite /IsValidGives view_auth_dfrac_op_validI is_valid_gives.
       iIntros "(#$ & #$ & #$)".
     - rewrite view_auth_dfrac_op_validI is_valid_op.
       iIntros "(-> & Heq & _)".
@@ -977,8 +1075,8 @@ Section auth.
     IsValidOp M a a1 a2 P →
     IsValidOp M (◯ a) (◯ a1) (◯ a2) P.
   Proof.
-    move => HPa. split; rewrite -auth_frag_op auth_frag_validI //.
-    - rewrite is_valid_merge //.
+    move => HPa. split; rewrite /IsValidGives -auth_frag_op auth_frag_validI //.
+    - rewrite is_valid_gives //.
     - rewrite is_valid_op.
       iIntros "H".
       by iRewrite "H".
@@ -1000,6 +1098,20 @@ Section auth.
     - rewrite /auth_auth. iSolveTC. 
     - iIntros "[_ #($ & $ & _)]".
   Qed.
+
+  (* We do not provide IsValidOp for combinations of ● and ◯: instead, we provide IsValidGives *)
+  Global Instance auth_frag_is_valid_gives dq a1 a2 P :
+    IsIncluded M a2 a1 P →
+    IsValidGives _ (●{dq} a1) (◯ a2) P.
+  Proof.
+    rewrite /IsIncluded /IsValidGives auth_both_dfrac_validI => HP.
+    iIntros "(% & #Hle & #Ha)".
+    by iApply HP.
+  Qed.
+  Global Instance auth_frag_is_valid_gives_swap dq a1 a2 P :
+    IsIncluded M a2 a1 P →
+    IsValidGives _ (◯ a2) (●{dq} a1) P.
+  Proof. intros; eapply is_valid_gives_comm, _. Qed.
 End auth.
 
 
@@ -1020,6 +1132,15 @@ Section frac_auth.
     apply auth_frag_valid_op, option_some_valid_op.
     by eapply prod_valid_op.
   Qed.
+
+  Global Instance frac_auth_frag_is_valid_gives q a1 a2 P :
+    IsIncluded M (Some (q, a2)) (Some (1%Qp, a1)) P →
+    IsValidGives _ (●F a1) (◯F{q} a2) P.
+  Proof. eapply auth_frag_is_valid_gives. Qed.
+  Global Instance frac_auth_frag_is_valid_gives_swap q a1 a2 P :
+    IsIncluded M (Some (q, a2)) (Some (1%Qp, a1)) P →
+    IsValidGives _ (◯F{q} a2) (●F a1) P.
+  Proof. intros; eapply is_valid_gives_comm, _. Qed.
 End frac_auth.
 
 
@@ -1035,6 +1156,15 @@ Section excl_auth.
     IsValidOp M (Some ea) (Excl' a1) (Excl' a2) P →
     IsValidOp M (◯ (Some ea)) (◯E a1) (◯E a2) P.
   Proof. apply auth_frag_valid_op. Qed.
+
+  Global Instance excl_auth_frag_is_valid_gives a1 a2 P :
+    IsIncluded M (Excl' a2) (Excl' a1) P →
+    IsValidGives _ (●E a1) (◯E a2) P.
+  Proof. eapply auth_frag_is_valid_gives. Qed.
+  Global Instance excl_auth_frag_is_valid_gives_swap a1 a2 P :
+    IsIncluded M (Excl' a2) (Excl' a1) P →
+    IsValidGives _ (◯E a2) (●E a1) P.
+  Proof. intros; eapply is_valid_gives_comm, _. Qed.
 End excl_auth.
 
 
@@ -1104,11 +1234,11 @@ Section gmap_view.
     IsValidOp _ (gmap_view_frag k dq v1) (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) (P ∧ v1 ≡ v2).
   Proof.
     move => H0; split.
-    - rewrite view_validI /=.
+    - rewrite /IsValidGives view_validI /=.
       iDestruct 1 as "[_ [%m Hm]]".
       rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
       iDestruct "Hm" as "[%v3 (#Hv3 & Hv3' & _)]".
-      rewrite to_agree_op_simple is_valid_merge bi.and_elim_l agree_equivI bi.intuitionistically_and.
+      rewrite to_agree_op_simple is_valid_gives bi.and_elim_l agree_equivI bi.intuitionistically_and.
       eauto.
     - rewrite view_validI /=.
       iDestruct 1 as "[_ [%m Hm]]".
@@ -1127,5 +1257,15 @@ Section gmap_view.
     - iIntros "(_ & #$ & #$ & _ )".
   Qed.
 
+  Global Instance gmap_view_auth_frag_gives dq1 m k dq2 v :
+    IsValidGives M (gmap_view_auth dq1 m) (gmap_view_frag k dq2 v) (m !! k ≡ Some v).
+  Proof.
+    rewrite /IsValidGives view_validI /=.
+    iDestruct 1 as (m') "(Hm' & _ & Hr & _)".
+    iRevert "Hr". rewrite agree_equivI. iRewrite -"Hm'". clear m'.
+    rewrite left_id gmap_view_rel_holds_singleton.
+    iDestruct 1 as (v') "(Hv1 & Hv2 & ->)". simpl.
+    rewrite agree_equivI. by iRewrite "Hv1".
+  Qed.
 End gmap_view.
 

@@ -76,7 +76,7 @@ Qed.
 Lemma ownE_op E1 E2 : E1 ## E2 → ownE (E1 ∪ E2) ⊣⊢ ownE E1 ∗ ownE E2.
 Proof. intros. by rewrite /ownE -own_op coPset_disj_union. Qed.
 Lemma ownE_disjoint E1 E2 : ownE E1 ∗ ownE E2 ⊢ ⌜E1 ## E2⌝.
-Proof. iIntros "[H1 H2]". iCombineOwn "H1 H2" as "[_ #$]". Qed.
+Proof. iIntros "[H1 H2]". by iCombineOwn "H1 H2" gives %HE. Qed.
 Lemma ownE_op' E1 E2 : ⌜E1 ## E2⌝ ∧ ownE (E1 ∪ E2) ⊣⊢ ownE E1 ∗ ownE E2.
 Proof.
   iSplit; [iIntros "[% ?]"; by iApply ownE_op|].
@@ -94,7 +94,7 @@ Qed.
 Lemma ownD_op E1 E2 : E1 ## E2 → ownD (E1 ∪ E2) ⊣⊢ ownD E1 ∗ ownD E2.
 Proof. intros. by rewrite /ownD -own_op gset_disj_union. Qed.
 Lemma ownD_disjoint E1 E2 : ownD E1 ∗ ownD E2 ⊢ ⌜E1 ## E2⌝.
-Proof. iIntros "[H1 H2]". iCombineOwn "H1 H2" as "[_ #$]". Qed.
+Proof. iIntros "[H1 H2]". by iCombineOwn "H1 H2" gives %HE. Qed.
 Lemma ownD_op' E1 E2 : ⌜E1 ## E2⌝ ∧ ownD (E1 ∪ E2) ⊣⊢ ownD E1 ∗ ownD E2.
 Proof.
   iSplit; [iIntros "[% ?]"; by iApply ownD_op|].
