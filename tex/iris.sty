@@ -135,11 +135,11 @@
 
 \newcommand{\wtt}[2]{#1 : #2} % well-typed term
 
-\newcommand{\nequiv}[1]{\ensuremath{\mathrel{\stackrel{#1}{=}}}}
-\newcommand{\nincl}[1]{\ensuremath{\mathrel{\stackrel{#1}{\subseteq}}}}
-\newcommand{\notnequiv}[1]{\ensuremath{\mathrel{\stackrel{#1}{\neq}}}}
-\newcommand{\nequivset}[2]{\ensuremath{\mathrel{\stackrel{#1}{=}_{#2}}}}
-\newcommand{\nequivB}[1]{\ensuremath{\mathrel{\stackrel{#1}{\equiv}}}}
+\newcommand{\equivN}[1]{\ensuremath{\mathrel{\stackrel{#1}{=}}}}
+\newcommand{\inclN}[1]{\ensuremath{\mathrel{\stackrel{#1}{\subseteq}}}}
+\newcommand{\notequivN}[1]{\ensuremath{\mathrel{\stackrel{#1}{\neq}}}}
+\newcommand{\equivNset}[2]{\ensuremath{\mathrel{\stackrel{#1}{=}_{#2}}}}
+\newcommand{\equivNB}[1]{\ensuremath{\mathrel{\stackrel{#1}{\equiv}}}}
 \newcommand{\latert}{\mathord{\blacktriangleright}}
 \newcommand{\latertinj}{\textlog{next}}
 
@@ -280,7 +280,7 @@
 
 \newcommand{\later}{\mathop{{\triangleright}}}
 \newcommand*{\lateropt}[1]{\mathop{{\later}^{#1}}}
-\newcommand{\always}{\mathop{\boxempty}}
+\newcommand{\persistently}{\mathop{\boxempty}}
 \newcommand{\plainly}{\mathop{\blacksquare}}
 \newcommand{\pers}{\mathop{\boxdot}}
 
@@ -486,6 +486,10 @@
 \newcommand{\cinl}{\textsf{inl}}
 \newcommand{\cinr}{\textsf{inr}}
 
+% Option
+\newcommand{\optionm}[1]{\maybe[1]}
+\newcommand{\optionbot}{\bot}
+
 % STSs
 \newcommand{\STSCtx}{\textlog{StsCtx}}
 \newcommand{\STSInv}{\textlog{StsInv}}
@@ -527,5 +531,7 @@
 \newcommand*\BoxSlice[3]{\textlog{BoxSlice}(#1, #2, #3)}
 \newcommand*\ABox[3]{\textlog{Box}(#1, #2, #3)}
 
-\endinput
+%% Common logical fragments
+\newcommand{\pointsto}{\mapsto}
 
+\endinput

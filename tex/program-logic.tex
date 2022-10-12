@@ -188,7 +188,7 @@ Fancy updates satisfy the following basic proof rules:
 We can further define the notions of \emph{view shifts} and \emph{linear view shifts}:
 \begin{align*}
   \prop \vsW[\mask_1][\mask_2] \propB \eqdef{}& \prop \wand \pvs[\mask_1][\mask_2] \propB \\
-  \prop \vs[\mask_1][\mask_2] \propB \eqdef{}& \always(\prop \wand \pvs[\mask_1][\mask_2] \propB) \\
+  \prop \vs[\mask_1][\mask_2] \propB \eqdef{}& \persistently(\prop \wand \pvs[\mask_1][\mask_2] \propB) \\
   \prop \vs[\mask] \propB \eqdef{}& \prop \vs[\mask][\mask] \propB
 \end{align*}
 These two are useful when writing down specifications and for comparing with previous versions of Iris, but for reasoning, it is typically easier to just work directly with fancy updates.
@@ -203,7 +203,7 @@ Still, just to give an idea of what view shifts ``are'', here are some proof rul
   {\prop \vs[\mask_1][\mask_3] \propC}
 \and
 \inferH{vs-imp}
-  {\always{(\prop \Ra \propB)}}
+  {\persistently{(\prop \Ra \propB)}}
   {\prop \vs[\emptyset] \propB}
 \and
 \inferH{vs-mask-frame}
@@ -227,8 +227,8 @@ Still, just to give an idea of what view shifts ``are'', here are some proof rul
   {(\Exists \var. \prop) \vs[\mask_1][\mask_2] \propB}
 \and
 \inferHB{vs-always}
-  {\always\propB \proves \prop \vs[\mask_1][\mask_2] \propC}
-  {\prop \land \always{\propB} \vs[\mask_1][\mask_2] \propC}
+  {\persistently\propB \proves \prop \vs[\mask_1][\mask_2] \propC}
+  {\prop \land \persistently{\propB} \vs[\mask_1][\mask_2] \propC}
  \and
 \inferH{vs-false}
   {}
@@ -429,7 +429,7 @@ Then we have to show:
 It turns out that weakest precondition is actually quite convenient to work with, in particular when performing these proofs in Coq.
 Still, for a more traditional presentation, we can easily derive the notion of a Hoare triple:
 \[
-\hoare{\prop}{\expr}{\Ret\val.\propB}[\mask] \eqdef \always{(\prop \wand \wpre{\expr}[\mask]{\Ret\val.\propB})}
+\hoare{\prop}{\expr}{\Ret\val.\propB}[\mask] \eqdef \persistently{(\prop \wand \wpre{\expr}[\mask]{\Ret\val.\propB})}
 \]
 We assume the state interpretation $\stateinterp$ to be fixed by the context.
 
@@ -483,8 +483,8 @@ We only give some of the proof rules for Hoare triples here, since we usually do
   {\hoare{\Exists \var. \prop}{\expr}{\Ret\val.\propB}[\mask]}
 \and
 \inferHB{Ht-box}
-  {\always\propB \proves \hoare{\prop}{\expr}{\Ret\val.\propC}[\mask]}
-  {\hoare{\prop \land \always{\propB}}{\expr}{\Ret\val.\propC}[\mask]}
+  {\persistently\propB \proves \hoare{\prop}{\expr}{\Ret\val.\propC}[\mask]}
+  {\hoare{\prop \land \persistently{\propB}}{\expr}{\Ret\val.\propC}[\mask]}
 \end{mathparpagebreakable}
 
 \subsection{Invariant Namespaces}
@@ -520,7 +520,7 @@ We will overload the notation for invariant propositions for using namespaces in
 \[ \invM\namesp\prop \eqdef \Exists \iname \in \namecl\namesp. \invM\iname{\prop} \]
 We can now derive the following rules (this involves unfolding the definition of fancy updates):
 \begin{mathpar}
-  \axiomH{inv-persist}{\invM\namesp\prop \proves \always\invM\namesp\prop}
+  \axiomH{inv-persist}{\invM\namesp\prop \proves \persistently\invM\namesp\prop}
 
   \axiomH{inv-alloc}{\later\prop \proves \pvs[\emptyset] \invM\namesp\prop}
 
@@ -574,7 +574,7 @@ This accessor is ``idempotent'' in the sense that it does not actually change th
 \paragraph{Accessor-style invariants.}
 In fact, the user-visible notion of invariants $\knowInv\namesp\prop$ is defined via \ruleref{inv-open}:
 \begin{align*}
-  \knowInv\namesp\prop \eqdef \always\All\mask. \pvs[\mask][\mask\setminus\namesp] \later\prop * (\later\prop \vsW[\mask\setminus\namesp][\mask] \TRUE)
+  \knowInv\namesp\prop \eqdef \persistently\All\mask. \pvs[\mask][\mask\setminus\namesp] \later\prop * (\later\prop \vsW[\mask\setminus\namesp][\mask] \TRUE)
 \end{align*}
 All the invariant laws shown above for $\invM\namesp\prop$ also hold for $\knowInv\namesp\prop$, but we can also show some additional laws that would otherwise not hold:
 \begin{mathpar}
@@ -588,7 +588,7 @@ All the invariant laws shown above for $\invM\namesp\prop$ also hold for $\knowI
 
   \inferH{inv-alter}
   {}
-  {\later\always(\prop \wand \propB * (\propB \wand \prop)) \vdash \knowInv\namesp\prop \wand \knowInv\namesp\propB}
+  {\later\persistently(\prop \wand \propB * (\propB \wand \prop)) \vdash \knowInv\namesp\prop \wand \knowInv\namesp\propB}
 \end{mathpar}
 
 %%% Local Variables:

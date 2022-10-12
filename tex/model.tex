@@ -33,7 +33,7 @@ We are thus going to define the propositions as mapping camera elements to sets 
 
 \begin{align*}
 	\Sem{\vctx \proves t =_\type u : \Prop}_\venv &\eqdef
-	\Lam \any. \setComp{n}{\Sem{\vctx \proves t : \type}_\venv \nequiv{n} \Sem{\vctx \proves u : \type}_\venv} \\
+	\Lam \any. \setComp{n}{\Sem{\vctx \proves t : \type}_\venv \equivN{n} \Sem{\vctx \proves u : \type}_\venv} \\
 	\Sem{\vctx \proves \FALSE : \Prop}_\venv &\eqdef \Lam \any. \emptyset \\
 	\Sem{\vctx \proves \TRUE : \Prop}_\venv &\eqdef \Lam \any. \nat \\
 	\Sem{\vctx \proves \prop \land \propB : \Prop}_\venv &\eqdef
@@ -50,7 +50,7 @@ We are thus going to define the propositions as mapping camera elements to sets 
         \Lam \melt. \setComp{n}{ \Exists v \in \Sem{\type}. n \in \Sem{\vctx, \var : \type \proves \prop : \Prop}_{\mapinsert \var v \venv}(\melt) }
 \end{align*}
 \begin{align*}
-	\Sem{\vctx \proves \prop * \propB : \Prop}_\venv &\eqdef \Lam\melt. \setComp{n}{\begin{aligned}\Exists \meltB_1, \meltB_2. &\melt \nequiv{n} \meltB_1 \mtimes \meltB_2 \land {}\\& n \in \Sem{\vctx \proves \prop : \Prop}_\venv(\meltB_1) \land n \in \Sem{\vctx \proves \propB : \Prop}_\venv(\meltB_2)\end{aligned}}
+	\Sem{\vctx \proves \prop * \propB : \Prop}_\venv &\eqdef \Lam\melt. \setComp{n}{\begin{aligned}\Exists \meltB_1, \meltB_2. &\melt \equivN{n} \meltB_1 \mtimes \meltB_2 \land {}\\& n \in \Sem{\vctx \proves \prop : \Prop}_\venv(\meltB_1) \land n \in \Sem{\vctx \proves \propB : \Prop}_\venv(\meltB_2)\end{aligned}}
 \\
 	\Sem{\vctx \proves \prop \wand \propB : \Prop}_\venv &\eqdef
 	\Lam \melt. \setComp{n}{\begin{aligned}
@@ -58,7 +58,7 @@ We are thus going to define the propositions as mapping camera elements to sets 
             & m \in \Sem{\vctx \proves \prop : \Prop}_\venv(\meltB) \Ra {}\\& m \in \Sem{\vctx \proves \propB : \Prop}_\venv(\melt\mtimes\meltB)\end{aligned}} \\
         \Sem{\vctx \proves \ownM{\term} : \Prop}_\venv &\eqdef \Lam\meltB. \setComp{n}{\Sem{\vctx \proves \term : \textlog{M}}_\venv \mincl[n] \meltB}  \\
         \Sem{\vctx \proves \mval(\term) : \Prop}_\venv &\eqdef \Lam\any. \mval(\Sem{\vctx \proves \term : \textlog{M}}_\venv) \\
-	\Sem{\vctx \proves \always{\prop} : \Prop}_\venv &\eqdef \Lam\melt. \Sem{\vctx \proves \prop : \Prop}_\venv(\mcore\melt) \\
+	\Sem{\vctx \proves \persistently{\prop} : \Prop}_\venv &\eqdef \Lam\melt. \Sem{\vctx \proves \prop : \Prop}_\venv(\mcore\melt) \\
 	\Sem{\vctx \proves \plainly{\prop} : \Prop}_\venv &\eqdef \Lam\melt. \Sem{\vctx \proves \prop : \Prop}_\venv(\munit) \\
 	\Sem{\vctx \proves \later{\prop} : \Prop}_\venv &\eqdef \Lam\melt. \setComp{n}{n = 0 \lor n-1 \in \Sem{\vctx \proves \prop : \Prop}_\venv(\melt)}\\
         \Sem{\vctx \proves \upd\prop : \Prop}_\venv &\eqdef \Lam\melt. \setComp{n}{\begin{aligned}
