@@ -6,31 +6,31 @@ The model of Iris lives in the category of \emph{Ordered Families of Equivalence
 This definition varies slightly from the original one in~\cite{catlogic}.
 
 \begin{defn}
-  An \emph{ordered family of equivalences} (OFE) is a tuple $(\ofe, ({\equivN{n}} \subseteq \ofe \times \ofe)_{n \in \nat})$ satisfying
+  An \emph{ordered family of equivalences} (OFE) is a tuple $(\ofe, ({\dist{n}} \subseteq \ofe \times \ofe)_{n \in \nat})$ satisfying
   \begin{align*}
-    \All n. (\equivN{n}) ~& \text{is an equivalence relation} \tagH{ofe-equiv} \\
-    \All n, m.& n \geq m \Ra (\equivN{n}) \subseteq (\equivN{m}) \tagH{ofe-mono} \\
-    \All x, y.& x = y \Lra (\All n. x \equivN{n} y) \tagH{ofe-limit}
+    \All n. (\dist{n}) ~& \text{is an equivalence relation} \tagH{ofe-equiv} \\
+    \All n, m.& n \geq m \Ra (\dist{n}) \subseteq (\dist{m}) \tagH{ofe-mono} \\
+    \All x, y.& x = y \Lra (\All n. x \dist{n} y) \tagH{ofe-limit}
   \end{align*}
 \end{defn}
 
-The key intuition behind OFEs is that elements $x$ and $y$ are $n$-equivalent, notation $x \equivN{n} y$, if they are \emph{equivalent for $n$ steps of computation}, \ie if they cannot be distinguished by a program running for no more than $n$ steps.
-In other words, as $n$ increases, $\equivN{n}$ becomes more and more refined (\ruleref{ofe-mono})---and in the limit, it agrees with plain equality (\ruleref{ofe-limit}).
+The key intuition behind OFEs is that elements $x$ and $y$ are $n$-equivalent, notation $x \dist{n} y$, if they are \emph{equivalent for $n$ steps of computation}, \ie if they cannot be distinguished by a program running for no more than $n$ steps.
+In other words, as $n$ increases, $\dist{n}$ becomes more and more refined (\ruleref{ofe-mono})---and in the limit, it agrees with plain equality (\ruleref{ofe-limit}).
 
 Notice that OFEs are just a different presentation of bisected 1-bounded ultrametric spaces, where the family of equivalence relations gives rise to the distance function (two elements that are equal for $n$ steps are no more than $2^{-n}$ apart).
 
 \begin{defn}
   An element $x \in \ofe$ of an OFE is called \emph{discrete} if
-  \[ \All y \in \ofe. x \equivN{0} y \Ra x = y\]
+  \[ \All y \in \ofe. x \dist{0} y \Ra x = y\]
   An OFE $A$ is called \emph{discrete} if all its elements are discrete.
-  For a set $X$, we write $\Delta X$ for the discrete OFE with $x \equivN{n} x' \eqdef x = x'$
+  For a set $X$, we write $\Delta X$ for the discrete OFE with $x \dist{n} x' \eqdef x = x'$
 \end{defn}
 
 \begin{defn}
   A function $f : \ofe \to \ofeB$ between two OFEs is \emph{non-expansive} (written $f : \ofe \nfn \ofeB$) if
-  \[\All n, x \in \ofe, y \in \ofe. x \equivN{n} y \Ra f(x) \equivN{n} f(y) \]
+  \[\All n, x \in \ofe, y \in \ofe. x \dist{n} y \Ra f(x) \dist{n} f(y) \]
   It is \emph{contractive} if
-  \[ \All n, x \in \ofe, y \in \ofe. (\All m < n. x \equivN{m} y) \Ra f(x) \equivN{n} f(y) \]
+  \[ \All n, x \in \ofe, y \in \ofe. (\All m < n. x \dist{m} y) \Ra f(x) \dist{n} f(y) \]
 \end{defn}
 Intuitively, applying a non-expansive function to some data will not suddenly introduce differences between seemingly equal data.
 Elements that cannot be distinguished by programs within $n$ steps remain indistinguishable after applying $f$.
@@ -44,7 +44,7 @@ In particular:
 \begin{defn}
   Given two OFEs $\ofe$ and $\ofeB$, the set of non-expansive functions $\set{f : \ofe \nfn \ofeB}$ is itself an OFE with
   \begin{align*}
-    f \equivN{n} g \eqdef{}& \All x \in \ofe. f(x) \equivN{n} g(x)
+    f \dist{n} g \eqdef{}& \All x \in \ofe. f(x) \dist{n} g(x)
   \end{align*}
 \end{defn}
 
@@ -61,8 +61,8 @@ Moreover, if a propositions holds for some $n$, it also has to hold for all smal
 \begin{align*}
   \SProp \eqdef{}& \psetdown{\nat} \\
     \eqdef{}& \setComp{X \in \pset{\nat}}{ \All n, m. n \geq m \Ra n \in X \Ra m \in X } \\
-  X \equivN{n} Y \eqdef{}& \All m \leq n. m \in X \Lra m \in Y \\
-  X \inclN{n} Y \eqdef{}& \All m \leq n. m \in X \Ra m \in Y
+  X \dist{n} Y \eqdef{}& \All m \leq n. m \in X \Lra m \in Y \\
+  X \includedN{n} Y \eqdef{}& \All m \leq n. m \in X \Ra m \in Y
 \end{align*}
 
 \subsection{COFE}
@@ -70,13 +70,13 @@ Moreover, if a propositions holds for some $n$, it also has to hold for all smal
 COFEs are \emph{complete OFEs}, which means that we can take limits of arbitrary chains.
 
 \begin{defn}[Chain]
-  Given some set $\cofe$ and an indexed family $({\equivN{n}} \subseteq \cofe \times \cofe)_{n \in \nat}$ of equivalence relations, a \emph{chain} $c \in \Chains(\cofe)$ is a function $c : \nat \to \cofe$ such that $\All n, m. n \leq m \Ra c (m) \equivN{n} c (n)$.
+  Given some set $\cofe$ and an indexed family $({\dist{n}} \subseteq \cofe \times \cofe)_{n \in \nat}$ of equivalence relations, a \emph{chain} $c \in \Chains(\cofe)$ is a function $c : \nat \to \cofe$ such that $\All n, m. n \leq m \Ra c (m) \dist{n} c (n)$.
 \end{defn}
 
 \begin{defn}
   A \emph{complete ordered family of equivalences} (COFE) is a tuple $(\cofe : \OFEs,  \lim : \Chains(\cofe) \to \cofe)$ satisfying
   \begin{align*}
-    \All n, c.& \lim(c) \equivN{n} c(n) \tagH{cofe-compl}
+    \All n, c.& \lim(c) \dist{n} c(n) \tagH{cofe-compl}
   \end{align*}
 \end{defn}
 
@@ -167,11 +167,11 @@ Since Iris ensures that the global ghost state is valid, this means that we can 
     \All \melt.& \mcore\melt \in \monoid \Ra \mcore{\mcore\melt} = \mcore\melt \tagH{camera-core-idem} \\
     \All \melt, \meltB.& \mcore\melt \in \monoid \land \melt \mincl \meltB \Ra \mcore\meltB \in \monoid \land \mcore\melt \mincl \mcore\meltB \tagH{camera-core-mono} \\
     \All \melt, \meltB.& \mval(\melt \mtimes \meltB) \subseteq \mval(\melt)  \tagH{camera-valid-op} \\
-    \All n, \melt, \meltB_1, \meltB_2.& \omit\rlap{$n \in \mval(\melt) \land \melt \equivN{n} \meltB_1 \mtimes \meltB_2 \Ra {}$} \\
-    &\Exists \meltC_1, \meltC_2. \melt = \meltC_1 \mtimes \meltC_2 \land \meltC_1 \equivN{n} \meltB_1 \land \meltC_2 \equivN{n} \meltB_2 \tagH{camera-extend} \\
+    \All n, \melt, \meltB_1, \meltB_2.& \omit\rlap{$n \in \mval(\melt) \land \melt \dist{n} \meltB_1 \mtimes \meltB_2 \Ra {}$} \\
+    &\Exists \meltC_1, \meltC_2. \melt = \meltC_1 \mtimes \meltC_2 \land \meltC_1 \dist{n} \meltB_1 \land \meltC_2 \dist{n} \meltB_2 \tagH{camera-extend} \\
     \text{where}\qquad\qquad\\
     \melt \mincl \meltB \eqdef{}& \Exists \meltC. \meltB = \melt \mtimes \meltC \tagH{camera-incl} \\
-    \melt \mincl[n] \meltB \eqdef{}& \Exists \meltC. \meltB \equivN{n} \melt \mtimes \meltC \tagH{camera-inclN}
+    \melt \mincl[n] \meltB \eqdef{}& \Exists \meltC. \meltB \dist{n} \melt \mtimes \meltC \tagH{camera-inclN}
   \end{align*}
 \end{defn}
 
@@ -188,7 +188,7 @@ We define the plain $\mvalFull$ as the ``limit'' of the step-indexed approximati
 Notice that the existential quantification in this axiom is \emph{constructive}, \ie it is a sigma type in Coq.
 The purpose of this axiom is to compute $\melt_1$, $\melt_2$ completing the following square:
 
-% RJ FIXME: Needs some magic to fix the baseline of the $\equivN{n}$, or so
+% RJ FIXME: Needs some magic to fix the baseline of the $\dist{n}$, or so
 \begin{center}
 \begin{tikzpicture}[every edge/.style={draw=none}]
   \node (a) at (0, 0) {$\melt$};
@@ -196,12 +196,12 @@ The purpose of this axiom is to compute $\melt_1$, $\melt_2$ completing the foll
   \node (b12) at (1.7, -1) {$\meltB_1 \mtimes \meltB_2$};
   \node (a12) at (0, -1) {$\melt_1 \mtimes \melt_2$};
 
-  \path (a) edge node {$\equivN{n}$} (b);
-  \path (a12) edge node {$\equivN{n}$} (b12);
+  \path (a) edge node {$\dist{n}$} (b);
+  \path (a12) edge node {$\dist{n}$} (b12);
   \path (a) edge node [rotate=90] {$=$} (a12);
   \path (b) edge node [rotate=90] {$=$} (b12);
 \end{tikzpicture}\end{center}
-where the $n$-equivalence at the bottom is meant to apply to the pairs of elements, \ie we demand $\melt_1 \equivN{n} \meltB_1$ and $\melt_2 \equivN{n} \meltB_2$.
+where the $n$-equivalence at the bottom is meant to apply to the pairs of elements, \ie we demand $\melt_1 \dist{n} \meltB_1$ and $\melt_2 \dist{n} \meltB_2$.
 In other words, extension carries the decomposition of $\meltB$ into $\meltB_1$ and $\meltB_2$ over the $n$-equivalence of $\melt$ and $\meltB$, and yields a corresponding decomposition of $\melt$ into $\melt_1$ and $\melt_2$.
 This operation is needed to prove that $\later$ commutes with separating conjunction:
 \begin{mathpar}
