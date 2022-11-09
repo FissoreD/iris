@@ -3,7 +3,7 @@
 \subsection{Trivial Pointwise Lifting}
 
 The (C)OFE structure on many types can be easily obtained by pointwise lifting of the structure of the components.
-This is what we do for option $\maybe\cofe$, product $(M_i)_{i \in I}$ (with $I$ some finite index set), sum $\cofe + \cofe'$ and finite partial functions $K \fpfn \monoid$ (with $K$ infinite countable).
+This is what we do for option $\optionm\cofe$, product $(M_i)_{i \in I}$ (with $I$ some finite index set), sum $\cofe + \cofe'$ and finite partial functions $K \fpfn \monoid$ (with $K$ infinite countable).
 
 \subsection{Next (Type-Level Later)}
 
@@ -180,7 +180,7 @@ All cases of composition go to $\mundef$.
   \mcore{\exinj(x)} \eqdef{}& \mnocore &
   \mcore{\mundef} \eqdef{}& \mundef
 \end{align*}
-Remember that $\mnocore$ is the ``dummy'' element in $\maybe\monoid$ indicating (in this case) that $\exinj(x)$ has no core.
+Remember that $\mnocore$ is the ``dummy'' element in $\optionm\monoid$ indicating (in this case) that $\exinj(x)$ has no core.
 
 The step-indexed equivalence is inductively defined as follows:
 \begin{mathpar}
@@ -253,7 +253,7 @@ Given a camera $M$, we construct $\authm(M)$ modeling someone owning an \emph{au
 We assume that $M$ has a unit $\munit$, and hence its core is total.
 (If $M$ is an exclusive monoid, the construction is very similar to a half-ownership monoid with two asymmetric halves.)
 \begin{align*}
-\authm(M) \eqdef{}& \maybe{\exm(M)} \times M \\
+\authm(M) \eqdef{}& \optionm{\exm(M)} \times M \\
 \mval( (x, \meltB ) ) \eqdef{}& \setComp{ n }{ (x = \mnocore \land n \in \mval(\meltB)) \lor (\Exists \melt. x = \exinj(\melt) \land \meltB \mincl_n \melt \land n \in \mval(\melt)) } \\
   (x_1, \meltB_1) \mtimes (x_2, \meltB_2) \eqdef{}& (x_1 \mtimes x_2, \meltB_2 \mtimes \meltB_2) \\
   \mcore{(x, \meltB)} \eqdef{}& (\mnocore, \mcore\meltB) \\
@@ -267,9 +267,9 @@ We write $\authfull \melt$ for full ownership $(\exinj(\melt), \munit)$ and $\au
 The frame-preserving update involves the notion of a \emph{local update}:
 \begin{defn}
   It is possible to do a \emph{local update} from $\melt_1$ and $\meltB_1$ to $\melt_2$ and $\meltB_2$, written $(\melt_1, \meltB_1) \lupd (\melt_2, \meltB_2)$, if
-  \[ \All n, \maybe{\melt_\f}. n \in \mval(\melt_1) \land \melt_1 \dist{n} \meltB_1 \mtimes \maybe{\melt_\f} \Ra n \in \mval(\melt_2) \land \melt_2 \dist{n} \meltB_2 \mtimes \maybe{\melt_\f} \]
+  \[ \All n, \optionm{\melt_\f}. n \in \mval(\melt_1) \land \melt_1 \dist{n} \meltB_1 \mtimes \optionm{\melt_\f} \Ra n \in \mval(\melt_2) \land \melt_2 \dist{n} \meltB_2 \mtimes \optionm{\melt_\f} \]
 \end{defn}
-In other words, the idea is that for every possible frame $\maybe{\melt_\f}$ completing $\meltB_1$ to $\melt_1$, the same frame also completes $\meltB_2$ to $\melt_2$.
+In other words, the idea is that for every possible frame $\optionm{\melt_\f}$ completing $\meltB_1$ to $\melt_1$, the same frame also completes $\meltB_2$ to $\melt_2$.
 
 We then obtain
 \begin{mathpar}
