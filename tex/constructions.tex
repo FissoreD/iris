@@ -22,7 +22,7 @@ $\latert(-)$ is a locally \emph{contractive} functor from $\OFEs$ to $\OFEs$.
 Given a camera $\monoid$, we define the COFE $\UPred(\monoid)$ of \emph{uniform predicates} over $\monoid$ as follows:
 \begin{align*}
 \monoid \monnra \SProp \eqdef{}& \setComp{\pred: \monoid \nfn \SProp}
-{\All n, \melt, \meltB. \melt \mincl[n] \meltB \Ra \pred(\melt) \includedN{n} \pred(\meltB)} \\
+{\All n, \melt, \meltB. \melt \mincl[n] \meltB \Ra \pred(\melt) \subseteqN{n} \pred(\meltB)} \\
   \UPred(\monoid) \eqdef{}&  \faktor{\monoid \monnra \SProp}{\equiv} \\
   \pred \equiv \predB \eqdef{}& \All m, \melt. m \in \mval(\melt) \Ra (m \in \pred(\melt) \iff  m \in \predB(\melt)) \\
   \pred \dist{n} \predB \eqdef{}& \All m \le n, \melt. m \in \mval(\melt) \Ra (m \in \pred(\melt) \iff  m \in \predB(\melt))
@@ -35,7 +35,7 @@ It is worth noting that the above quotient admits canonical
 representatives. More precisely, one can show that every
 equivalence class contains exactly one element $P_0$ such that:
 \begin{align*}
-  \All n, \melt.  (\mval(\melt) \includedN{n} P_0(\melt)) \Ra n \in P_0(\melt)  \tagH{UPred-canonical}
+  \All n, \melt.  (\mval(\melt) \subseteqN{n} P_0(\melt)) \Ra n \in P_0(\melt)  \tagH{UPred-canonical}
 \end{align*}
 Intuitively, this says that $P_0$ trivially holds whenever the resource is invalid.
 Starting from any element $P$, one can find this canonical
