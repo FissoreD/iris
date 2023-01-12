@@ -3,6 +3,8 @@ From iris.base_logic Require Import invariants ghost_var.
 From iris.heap_lang Require Import proofmode notation.
 From iris.prelude Require Import options.
 
+Local Open Scope Z_scope.
+
 (** * This file showcases the basic usage of later credits. *)
 (** The examples are taken from the later credits paper at ICFP'22,
       "Later Credits: Resourceful Reasoning for the Later Modality",
@@ -36,9 +38,9 @@ From iris.prelude Require Import options.
   demonstrates how they can be used. *)
 Lemma mini_later_credits_example `{!heapGS Σ} N (f : val) l :
   (** Assume we have some specification for f... *)
-  (∀ v, ⊢ {{{ ∃ n: nat, ⌜v = LitV n⌝}}} f v {{{ (n' : nat), RET #n'; True }}}) →
+  (∀ v, ⊢ {{{ ∃ n: Z, ⌜v = LitV n⌝}}} f v {{{ (n' : Z), RET #n'; True }}}) →
   (** ... and an invariant managing [l] *)
-  inv N (∃ n : nat, l ↦ LitV n) -∗
+  inv N (∃ n : Z, l ↦ LitV n) -∗
   (** Our program stores the result of calling [f] to [l]. *)
   {{{ True }}} #l <- f (#41 + #1) {{{ v, RET v; True }}}.
 Proof.
@@ -85,7 +87,7 @@ Lemma nested_invariants_example `{!heapGS Σ} `{!ghost_varG Σ loc} γ (l : loc)
   (** Assume that the location [l] is managed through another indirection with a ghost variable [γ],
      a situation you might well encounter as part of more complicated proof setups.
      The ownership of the location [l] itself is kept inside a nested invariant. *)
-  inv (nroot .@ "1") (∃ l : loc, inv (nroot .@ "2") (∃ n : nat, l ↦ #n) ∗ ghost_var γ (1/2) l) -∗
+  inv (nroot .@ "1") (∃ l : loc, inv (nroot .@ "2") (∃ n : Z, l ↦ #n) ∗ ghost_var γ (1/2) l) -∗
   (** One half of [γ] is kept outside the invariant to keep knowledge about the location [l].
      We also assume to get one later credit, perhaps from a preceding pure step or from a
      totally different part of the program. *)

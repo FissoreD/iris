@@ -1,4 +1,3 @@
-From stdpp Require Export list.
 From iris.algebra Require Export ofe.
 From iris.algebra Require Import big_op.
 From iris.prelude Require Import options.
@@ -40,6 +39,14 @@ Global Instance reverse_ne : NonExpansive (@reverse A) := _.
 Global Instance last_ne : NonExpansive (@last A).
 Proof. intros ????; by apply dist_option_Forall2, Forall2_last. Qed.
 Global Instance resize_ne n : NonExpansive2 (@resize A n) := _.
+
+Global Instance lengthZ_ne n : Proper (dist n ==> (=)) (@lengthZ A) := _.
+Global Instance takeZ_ne n : NonExpansive (@take A n) := _.
+Global Instance dropZ_ne n : NonExpansive (@drop A n) := _.
+Global Instance list_lookupZ_ne i : NonExpansive (lookup (M:=list A) i).
+Proof. intros ????. by apply dist_option_Forall2, Forall2_lookup. Qed.
+Global Instance list_insertZ_ne i : NonExpansive2 (insert (M:=list A) i) := _.
+Global Instance replicateZ_ne n : NonExpansive (@replicate A n) := _.
 
 Lemma list_dist_cons_inv_l n x l k :
   x :: l ≡{n}≡ k → ∃ y k', x ≡{n}≡ y ∧ l ≡{n}≡ k' ∧ k = y :: k'.
@@ -138,6 +145,16 @@ Proof.
   { apply monoid_ne. }
   intros k. assert (l1 !! k ≡{n}≡ l2 !! k) as Hlk by (by f_equiv).
   destruct (l1 !! k) eqn:?, (l2 !! k) eqn:?; inversion Hlk; naive_solver.
+Qed.
+Lemma big_opLZ_ne_2 {M : ofe} {o : M → M → M} `{!Monoid o} {A : ofe} (f g : Z → A → M) l1 l2 n :
+  l1 ≡{n}≡ l2 →
+  (∀ k y1 y2,
+    l1 !! k = Some y1 → l2 !! k = Some y2 → y1 ≡{n}≡ y2 → f k y1 ≡{n}≡ g k y2) →
+  ([^o listZ] k ↦ y ∈ l1, f k y) ≡{n}≡ ([^o listZ] k ↦ y ∈ l2, g k y).
+Proof.
+  intros ? Hfg. eapply big_opL_ne_2; first done.
+  intros k y1 y2. generalize (Hfg (Z.of_nat k) y1 y2). clear Hfg.
+  rewrite !lookupZ_of_nat. done.
 Qed.
 
 (** Functor *)

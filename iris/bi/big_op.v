@@ -11,6 +11,8 @@ Notation "'[∗' 'list]' k ↦ x ∈ l , P" :=
 Notation "'[∗' 'list]' x ∈ l , P" :=
   (big_opL bi_sep (λ _ x, P%I) l) : bi_scope.
 Notation "'[∗]' Ps" := (big_opL bi_sep (λ _ x, x) Ps%I) : bi_scope.
+Notation "'[∗' 'listZ]' k ↦ x ∈ l , P" :=
+  (big_opLZ bi_sep (λ k x, P%I) l) : bi_scope.
 
 Notation "'[∧' 'list]' k ↦ x ∈ l , P" :=
   (big_opL bi_and (λ k x, P%I) l) : bi_scope.
@@ -367,6 +369,9 @@ Section sep_list.
   Lemma big_sepL_replicate l P :
     [∗] replicate (length l) P ⊣⊢ [∗ list] y ∈ l, P.
   Proof. induction l as [|x l]=> //=; by f_equiv. Qed.
+  Lemma big_sepL_replicate_seq n x Φ :
+    ([∗ list] k↦y ∈ replicate n x, Φ k y) ⊣⊢ ([∗ list] k ∈ seq 0 n, Φ k x).
+  Proof. apply big_opL_replicate_seq. Qed.
 
   Lemma big_sepL_later `{!BiAffine PROP} Φ l :
     ▷ ([∗ list] k↦x ∈ l, Φ k x) ⊣⊢ ([∗ list] k↦x ∈ l, ▷ Φ k x).
@@ -407,6 +412,131 @@ Proof.
   - by rewrite big_sepL_emp left_id.
   - by rewrite IH.
 Qed.
+
+(** ** Big ops over lists with integer indices *)
+Section sep_listZ.
+  Context {A : Type}.
+  Implicit Types l : list A.
+  Implicit Types Φ Ψ : Z → A → PROP.
+  Local Open Scope Z_scope.
+
+  Lemma big_sepLZ_nil Φ : ([∗ listZ] k↦y ∈ nil, Φ k y) ⊣⊢ emp.
+  Proof. done. Qed.
+  Lemma big_sepLZ_nil' P `{!Affine P} Φ : P ⊢ [∗ listZ] k↦y ∈ nil, Φ k y.
+  Proof. apply: affine. Qed.
+  Lemma big_sepLZ_cons Φ x l :
+    ([∗ listZ] k↦y ∈ x :: l, Φ k y) ⊣⊢ Φ 0 x ∗ [∗ listZ] k↦y ∈ l, Φ (Z.succ k) y.
+  Proof. by rewrite big_opLZ_cons. Qed.
+  Lemma big_sepLZ_singleton Φ x : ([∗ listZ] k↦y ∈ [x], Φ k y) ⊣⊢ Φ 0 x.
+  Proof. by rewrite big_opLZ_singleton. Qed.
+  Lemma big_sepLZ_app Φ l1 l2 :
+    ([∗ listZ] k↦y ∈ l1 ++ l2, Φ k y)
+    ⊣⊢ ([∗ listZ] k↦y ∈ l1, Φ k y) ∗ ([∗ listZ] k↦y ∈ l2, Φ (lengthZ l1 + k) y).
+  Proof. by rewrite big_opLZ_app. Qed.
+  Lemma big_sepLZ_snoc Φ l x :
+    ([∗ listZ] k↦y ∈ l ++ [x], Φ k y) ⊣⊢ ([∗ listZ] k↦y ∈ l, Φ k y) ∗ Φ (lengthZ l) x.
+  Proof. by rewrite big_opLZ_snoc. Qed.
+
+  (** The lemmas [big_sepLZ_mono], [big_sepLZ_ne] and [big_sepLZ_proper] are more
+  generic than the instances as they also give [l !! k = Some y] in the premise. *)
+  Lemma big_sepLZ_mono Φ Ψ l :
+    (∀ k y, l !! k = Some y → Φ k y ⊢ Ψ k y) →
+    ([∗ listZ] k ↦ y ∈ l, Φ k y) ⊢ [∗ listZ] k ↦ y ∈ l, Ψ k y.
+  Proof. apply big_opLZ_gen_proper; apply _. Qed.
+  Lemma big_sepLZ_ne Φ Ψ l n :
+    (∀ k y, l !! k = Some y → Φ k y ≡{n}≡ Ψ k y) →
+    ([∗ listZ] k ↦ y ∈ l, Φ k y)%I ≡{n}≡ ([∗ listZ] k ↦ y ∈ l, Ψ k y)%I.
+  Proof. apply big_opLZ_ne. Qed.
+  Lemma big_sepLZ_proper Φ Ψ l :
+    (∀ k y, l !! k = Some y → Φ k y ⊣⊢ Ψ k y) →
+    ([∗ listZ] k ↦ y ∈ l, Φ k y) ⊣⊢ ([∗ listZ] k ↦ y ∈ l, Ψ k y).
+  Proof. apply big_opLZ_proper. Qed.
+
+  (** No need to declare instances for non-expansiveness and properness, we
+  get both from the generic [big_opLZ] instances. *)
+  Global Instance big_sepLZ_mono' :
+    Proper (pointwise_relation _ (pointwise_relation _ (⊢)) ==> (=) ==> (⊢))
+           (big_opLZ (@bi_sep PROP) (A:=A)).
+  Proof. intros f g Hf m ? <-. apply big_sepLZ_mono; intros; apply Hf. Qed.
+
+  Global Instance big_sepLZ_nil_persistent Φ :
+    Persistent ([∗ listZ] k↦x ∈ [], Φ k x).
+  Proof. simpl; apply _. Qed.
+  Global Instance big_sepLZ_persistent Φ l :
+    (∀ k x, Persistent (Φ k x)) → Persistent ([∗ listZ] k↦x ∈ l, Φ k x).
+  Proof. revert Φ. induction l as [|x l IH]=> Φ ? /=; apply _. Qed.
+
+  Global Instance big_sepLZ_nil_affine Φ :
+    Affine ([∗ listZ] k↦x ∈ [], Φ k x).
+  Proof. simpl; apply _. Qed.
+  Global Instance big_sepLZ_affine Φ l :
+    (∀ k x, Affine (Φ k x)) → Affine ([∗ listZ] k↦x ∈ l, Φ k x).
+  Proof. revert Φ. induction l as [|x l IH]=> Φ ? /=; apply _. Qed.
+
+  Global Instance big_sepLZ_nil_timeless `{!Timeless (emp%I : PROP)} Φ :
+    Timeless ([∗ listZ] k↦x ∈ [], Φ k x).
+  Proof. simpl; apply _. Qed.
+  Global Instance big_sepLZ_timeless `{!Timeless (emp%I : PROP)} Φ l :
+    (∀ k x, Timeless (Φ k x)) → Timeless ([∗ listZ] k↦x ∈ l, Φ k x).
+  Proof. revert Φ. induction l as [|x l IH]=> Φ ? /=; apply _. Qed.
+
+  Lemma big_sepLZ_emp l : ([∗ listZ] k↦y ∈ l, emp) ⊣⊢@{PROP} emp.
+  Proof. apply big_sepL_emp. Qed.
+
+  Lemma big_sepLZ_insertZ_acc Φ l i x :
+    l !! i = Some x →
+    ([∗ listZ] k↦y ∈ l, Φ k y) ⊢ Φ i x ∗ (∀ y, Φ i y -∗ ([∗ listZ] k↦y ∈ <[i:=y]>l, Φ k y)).
+  Proof.
+    intros Hli. setoid_rewrite insertZ_eq. rewrite Z.to_onat_nonneg /=.
+    2:{ apply lookupZ_lt_Some in Hli. lia. }
+    rewrite /big_opLZ (big_sepL_insert_acc _ _ (Z.to_nat i) x).
+    2:{ rewrite lookupZ_eq in Hli. Z.case_to_onat; simpl in *; done. }
+    rewrite Z2Nat.id.
+    2:{ apply lookupZ_lt_Some in Hli. lia. }
+    done.
+  Qed.
+
+  Lemma big_sepLZ_lookupZ_acc Φ l i x :
+    l !! i = Some x →
+    ([∗ listZ] k↦y ∈ l, Φ k y) ⊢ Φ i x ∗ (Φ i x -∗ ([∗ listZ] k↦y ∈ l, Φ k y)).
+  Proof. intros. by rewrite {1}big_sepLZ_insertZ_acc // (forall_elim x) list_insertZ_id. Qed.
+
+  Lemma big_sepLZ_lookup Φ l i x
+    `{!TCOr (∀ j y, Affine (Φ j y)) (Absorbing (Φ i x))} :
+    l !! i = Some x → ([∗ listZ] k↦y ∈ l, Φ k y) ⊢ Φ i x.
+  Proof.
+    intros Hi. destruct select (TCOr _ _).
+    - rewrite -(takeZ_dropZ_middle l i x) // big_sepLZ_app /= takeZ_lengthZ.
+      apply lookupZ_lt_Some in Hi. rewrite big_sepLZ_cons (_ : _ + 0 = i); last lia.
+      rewrite sep_elim_r sep_elim_l //.
+    - rewrite big_sepLZ_lookupZ_acc // sep_elim_l //.
+  Qed.
+
+  Lemma big_sepLZ_fmap {B} (f : A → B) (Φ : Z → B → PROP) l :
+    ([∗ listZ] k↦y ∈ f <$> l, Φ k y) ⊣⊢ ([∗ listZ] k↦y ∈ l, Φ k (f y)).
+  Proof. by rewrite big_opLZ_fmap. Qed.
+
+  Lemma big_sepLZ_sep Φ Ψ l :
+    ([∗ listZ] k↦x ∈ l, Φ k x ∗ Ψ k x)
+    ⊣⊢ ([∗ listZ] k↦x ∈ l, Φ k x) ∗ ([∗ listZ] k↦x ∈ l, Ψ k x).
+  Proof. by rewrite big_opLZ_op. Qed.
+
+  Lemma big_sepLZ_sep_2 Φ Ψ l :
+    ([∗ listZ] k↦x ∈ l, Φ k x) -∗
+    ([∗ listZ] k↦x ∈ l, Ψ k x) -∗
+    ([∗ listZ] k↦x ∈ l, Φ k x ∗ Ψ k x).
+  Proof. apply wand_intro_r. rewrite big_sepLZ_sep //. Qed.
+
+  Lemma big_sepLZ_and Φ Ψ l :
+    ([∗ listZ] k↦x ∈ l, Φ k x ∧ Ψ k x)
+    ⊢ ([∗ listZ] k↦x ∈ l, Φ k x) ∧ ([∗ listZ] k↦x ∈ l, Ψ k x).
+  Proof. auto using and_intro, big_sepLZ_mono, and_elim_l, and_elim_r. Qed.
+
+  Lemma big_sepLZ_replicateZ_seqZ n x Φ :
+    ([∗ listZ] k↦y ∈ replicateZ n x, Φ k y) ⊣⊢ ([∗ list] k ∈ seqZ 0 n, Φ k x).
+  Proof. apply big_opLZ_replicateZ_seqZ. Qed.
+
+End sep_listZ.
 
 (** ** Big ops over two lists *)
 Lemma big_sepL2_alt {A B} (Φ : nat → A → B → PROP) l1 l2 :

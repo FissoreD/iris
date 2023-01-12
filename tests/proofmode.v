@@ -601,8 +601,8 @@ Proof.
 Qed.
 
 (* Check coercions *)
-Lemma test_iExist_coercion (P : Z → PROP) : (∀ x, P x) -∗ ∃ x, P x.
-Proof. iIntros "HP". iExists (0:nat). iApply ("HP" $! (0:nat)). Qed.
+Lemma test_iExist_coercion (P : Prop → PROP) : (∀ x, P x) -∗ ∃ x, P x.
+Proof. iIntros "HP". iExists false. iApply ("HP" $! false). Qed.
 
 Lemma test_iExist_tc `{Set_ A C} P : ⊢ ∃ x1 x2 : gset positive, P -∗ P.
 Proof. iExists {[ 1%positive ]}, ∅. auto. Qed.

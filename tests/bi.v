@@ -43,20 +43,20 @@ Definition big_sepM_pattern_both
 Definition big_sepM2_pattern {PROP : bi} (m1 m2 : gmap nat (nat * nat)) : PROP :=
   [∗ map] '(x,_);'(_,y) ∈ m1;m2, ⌜ x = y ⌝.
 
-(** This fails, Coq will infer [x] to have type [Z] due to the equality, and
-then sees a type mismatch with [m : gmap nat nat]. *)
-Fail Definition big_sepM_implicit_type {PROP : bi} (m : gmap nat nat) : PROP :=
-  [∗ map] x ∈ m, ⌜ 10%Z = x ⌝.
+(** This fails, Coq will infer [x] to have type [Prop] due to the equality, and
+then sees a type mismatch with [m : gmap bool bool]. *)
+Fail Definition big_sepM_implicit_type {PROP : bi} (m : gmap bool bool) : PROP :=
+  [∗ map] x ∈ m, ⌜ False = x ⌝.
 
-(** With a cast, we can force Coq to type check the body with [x : nat] and
-thereby insert the [nat] to [Z] coercion in the body. *)
-Definition big_sepM_cast {PROP : bi} (m : gmap nat nat) : PROP :=
-  [∗ map] (x:nat) ∈ m, ⌜ 10%Z = x ⌝.
+(** With a cast, we can force Coq to type check the body with [x : bool] and
+thereby insert the [bool] to [Prop] coercion in the body. *)
+Definition big_sepM_cast {PROP : bi} (m : gmap bool bool) : PROP :=
+  [∗ map] (x:bool) ∈ m, ⌜ False = x ⌝.
 
 Section big_sepM_implicit_type.
-  Implicit Types x : nat.
+  Implicit Types x : bool.
 
   (** And we can do the same with an [Implicit Type]. *)
-  Definition big_sepM_implicit_type {PROP : bi} (m : gmap nat nat) : PROP :=
-    [∗ map] x ∈ m, ⌜ 10%Z = x ⌝.
+  Definition big_sepM_implicit_type {PROP : bi} (m : gmap bool bool) : PROP :=
+    [∗ map] x ∈ m, ⌜ False = x ⌝.
 End big_sepM_implicit_type.

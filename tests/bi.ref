@@ -1,6 +1,6 @@
 The command has indeed failed with message:
 In environment
 PROP : bi
-m : gmap nat nat
-The term "m" has type "gmap nat nat" while it is expected to have type
- "gmap nat Z" (cannot unify "nat" and "Z").
+m : gmap bool bool
+The term "m" has type "gmap bool bool" while it is expected to have type
+ "gmap bool Prop" (cannot unify "bool" and "Prop").

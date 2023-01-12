@@ -512,7 +512,7 @@ Section interpreter.
           l ← interp_alloc n;
           _ ← interp_modify_state (state_init_heap l n v);
           mret (LitV (LitLoc l))
-        else (error $ if decide (n = 0)
+        else (error $ if decide (n = 0)%Z
                       then "alloc: cannot allocate 0 elements"
                       else "alloc: negative number of elements (first argument) " + n)
       | _ => error $ "alloc: number of elements (first argument) " + nv
@@ -706,7 +706,7 @@ Section interpret_ok.
     apply fin_maps.lookup_union_None; split.
     - destruct (heap_array _ _ !! l) eqn:Hlookup; auto.
       apply heap_array_lookup in Hlookup as (j & w & Hle & ? & ? & Hlookup); subst.
-      apply lookup_replicate in Hlookup as [? ?]; subst.
+      apply lookupZ_replicateZ in Hlookup as [? ?]; subst.
       simpl in *.
       lia.
     - apply state_wf_holds; auto.

@@ -35,6 +35,14 @@ Notation "'[^' o 'list]' x ∈ l , P" := (big_opL o (λ _ x, P) l)
   (at level 200, o at level 1, l at level 10, x at level 1, right associativity,
    format "[^ o  list]  x  ∈  l ,  P") : stdpp_scope.
 
+Definition big_opLZ {M : ofe} {o : M → M → M} `{!Monoid o} {A} (f : Z → A → M) (xs : list A) : M :=
+  big_opL o (λ n, f (Z.of_nat n)) xs.
+Global Instance: Params (@big_opLZ) 4 := {}.
+Global Arguments big_opLZ {M} o {_ A} : simpl never.
+Notation "'[^' o 'listZ]' k ↦ x ∈ l , P" := (big_opLZ o (λ k x, P) l)
+  (at level 200, o at level 1, l at level 10, k, x at level 1, right associativity,
+   format "[^ o  listZ]  k ↦ x  ∈  l ,  P") : stdpp_scope.
+
 Local Definition big_opM_def {M : ofe} {o : M → M → M} `{!Monoid o} `{Countable K} {A} (f : K → A → M)
   (m : gmap K A) : M := big_opL o (λ _, uncurry f) (map_to_list m).
 Local Definition big_opM_aux : seal (@big_opM_def). Proof. by eexists. Qed.
@@ -199,10 +207,10 @@ Section list.
   Proof. intros f f' Hf l ? <-. apply big_opL_proper; intros; apply Hf. Qed.
 
   Lemma big_opL_consZ_l (f : Z → A → M) x l :
-    ([^o list] k↦y ∈ x :: l, f k y) = f 0 x `o` [^o list] k↦y ∈ l, f (1 + k)%Z y.
+    ([^o list] k↦y ∈ x :: l, f (Z.of_nat k) y) = f 0%Z x `o` [^o list] k↦y ∈ l, f (1 + Z.of_nat k)%Z y.
   Proof. rewrite big_opL_cons. auto using big_opL_ext with f_equal lia. Qed.
   Lemma big_opL_consZ_r (f : Z → A → M) x l :
-    ([^o list] k↦y ∈ x :: l, f k y) = f 0 x `o` [^o list] k↦y ∈ l, f (k + 1)%Z y.
+    ([^o list] k↦y ∈ x :: l, f (Z.of_nat k) y) = f 0%Z x `o` [^o list] k↦y ∈ l, f (Z.of_nat k + 1)%Z y.
   Proof. rewrite big_opL_cons. auto using big_opL_ext with f_equal lia. Qed.
 
   Lemma big_opL_fmap {B} (h : A → B) (f : nat → B → M) l :
@@ -250,6 +258,155 @@ Lemma big_opL_sep_zip {A B} (h1 : nat → A → M) (h2 : nat → B → M) l1 l2 
   ([^o list] k↦xy ∈ zip l1 l2, h1 k xy.1 `o` h2 k xy.2) ≡
   ([^o list] k↦x ∈ l1, h1 k x) `o` ([^o list] k↦y ∈ l2, h2 k y).
 Proof. by apply big_opL_sep_zip_with. Qed.
+
+Lemma big_opL_replicate_seq {A} n x (f : nat → A → M) :
+  ([^o list] k↦y ∈ replicate n x, f k y) ≡ ([^o list] k ∈ seq 0 n, f k x).
+Proof.
+  revert f. induction n as [|n IH]; intros f; simpl.
+  { done. }
+  f_equiv. rewrite -fmap_S_seq big_opL_fmap IH //.
+Qed.
+
+(** ** Big ops over lists (Z indices) *)
+Section listZ.
+  Context {A : Type}.
+  Implicit Types l : list A.
+  Implicit Types f g : Z → A → M.
+  Local Open Scope Z_scope.
+
+  Lemma big_opLZ_nil f : ([^o listZ] k↦y ∈ [], f k y) = monoid_unit.
+  Proof. done. Qed.
+  Lemma big_opLZ_cons f x l :
+    ([^o listZ] k↦y ∈ x :: l, f k y) = f 0 x `o` [^o listZ] k↦y ∈ l, f (Z.succ k) y.
+  Proof. rewrite /big_opLZ big_opL_cons. f_equal. apply big_opL_ext. intros. f_equal. lia. Qed.
+  Lemma big_opLZ_singleton f x : ([^o listZ] k↦y ∈ [x], f k y) ≡ f 0 x.
+  Proof. by rewrite /big_opLZ /= right_id. Qed.
+  Lemma big_opLZ_app f l1 l2 :
+    ([^o listZ] k↦y ∈ l1 ++ l2, f k y)
+    ≡ ([^o listZ] k↦y ∈ l1, f k y) `o` ([^o listZ] k↦y ∈ l2, f (lengthZ l1 + k) y).
+  Proof.
+    rewrite /big_opLZ big_opL_app. repeat f_equiv. unfold lengthZ. apply reflexive_eq. lia.
+  Qed.
+  Lemma big_opLZ_snoc f l x :
+    ([^o listZ] k↦y ∈ l ++ [x], f k y) ≡ ([^o listZ] k↦y ∈ l, f k y) `o` f (lengthZ l) x.
+  Proof. rewrite big_opLZ_app big_opLZ_singleton Z.add_0_r //. Qed.
+
+  Lemma big_opLZ_big_opL l (f : A → M) : ([^o listZ] k↦y ∈ l, f y) = ([^o list] k↦y ∈ l, f y).
+  Proof. done. Qed.
+
+  Lemma big_opLZ_takeZ_dropZ Φ l n :
+    0 ≤ n →
+    ([^o listZ] k ↦ x ∈ l, Φ k x) ≡
+    ([^o listZ] k ↦ x ∈ takeZ n l, Φ k x) `o` ([^o listZ] k ↦ x ∈ dropZ n l, Φ (n + k) x).
+  Proof.
+    intros. rewrite -{1}(takeZ_dropZ n l) big_opLZ_app takeZ_lengthZ_nonneg //.
+    destruct (decide (lengthZ l ≤ n)).
+    - rewrite dropZ_ge //=.
+    - rewrite /big_opLZ. repeat f_equiv. apply reflexive_eq. lia.
+  Qed.
+
+  Lemma big_opLZ_gen_proper_2 {B} (R : relation M) f (g : Z → B → M)
+        l1 (l2 : list B) :
+    R monoid_unit monoid_unit →
+    Proper (R ==> R ==> R) o →
+    (∀ k,
+      match l1 !! k, l2 !! k with
+      | Some y1, Some y2 => R (f k y1) (g k y2)
+      | None, None => True
+      | _, _ => False
+      end) →
+    R ([^o listZ] k ↦ y ∈ l1, f k y) ([^o listZ] k ↦ y ∈ l2, g k y).
+  Proof.
+    rewrite /big_opLZ. intros ?? Hf. eapply big_opL_gen_proper_2; try done.
+    intros k. specialize (Hf (Z.of_nat k)). rewrite !lookupZ_of_nat in Hf. done.
+  Qed.
+  Lemma big_opLZ_gen_proper R f g l :
+    Reflexive R →
+    Proper (R ==> R ==> R) o →
+    (∀ k y, l !! k = Some y → R (f k y) (g k y)) →
+    R ([^o listZ] k ↦ y ∈ l, f k y) ([^o listZ] k ↦ y ∈ l, g k y).
+  Proof.
+    intros. apply big_opLZ_gen_proper_2; [done..|].
+    intros k. destruct (l !! k) eqn:?; auto.
+  Qed.
+
+  Lemma big_opLZ_ext f g l :
+    (∀ k y, l !! k = Some y → f k y = g k y) →
+    ([^o listZ] k ↦ y ∈ l, f k y) = [^o listZ] k ↦ y ∈ l, g k y.
+  Proof. apply big_opLZ_gen_proper; apply _. Qed.
+
+  (** The lemmas [big_opLZ_ne] and [big_opLZ_proper] are more generic than the
+  instances as they also give [l !! k = Some y] in the premise. *)
+  Lemma big_opLZ_ne f g l n :
+    (∀ k y, l !! k = Some y → f k y ≡{n}≡ g k y) →
+    ([^o listZ] k ↦ y ∈ l, f k y) ≡{n}≡ ([^o listZ] k ↦ y ∈ l, g k y).
+  Proof. apply big_opLZ_gen_proper; apply _. Qed.
+  Lemma big_opLZ_proper f g l :
+    (∀ k y, l !! k = Some y → f k y ≡ g k y) →
+    ([^o listZ] k ↦ y ∈ l, f k y) ≡ ([^o listZ] k ↦ y ∈ l, g k y).
+  Proof. apply big_opLZ_gen_proper; apply _. Qed.
+
+  (** The version [big_opLZ_proper_2] with [≡] for the list arguments can only be
+  used if there is a setoid on [A]. The version for [dist n] can be found in
+  [algebra.listZ]. We do not define this lemma as a [Proper] instance, since
+  [f_equiv] will then use sometimes use this one, and other times
+  [big_opLZ_proper'], depending on whether a setoid on [A] exists. *)
+  Lemma big_opLZ_proper_2 `{!Equiv A, !Equivalence (≡@{A})} f g l1 l2 :
+    l1 ≡ l2 →
+    (∀ k y1 y2,
+      l1 !! k = Some y1 → l2 !! k = Some y2 → y1 ≡ y2 → f k y1 ≡ g k y2) →
+    ([^o listZ] k ↦ y ∈ l1, f k y) ≡ ([^o listZ] k ↦ y ∈ l2, g k y).
+  Proof.
+    intros Hl Hf. apply big_opLZ_gen_proper_2; try (apply _ || done).
+    (* FIXME (Coq #14441) unnecessary type annotation *)
+    intros k. assert (l1 !! k ≡@{option A} l2 !! k) as Hlk by (by f_equiv).
+    destruct (l1 !! k) eqn:?, (l2 !! k) eqn:?; inversion Hlk; naive_solver.
+  Qed.
+
+  Global Instance big_opLZ_ne' n :
+    Proper (pointwise_relation _ (pointwise_relation _ (dist n)) ==> (=) ==> dist n)
+           (big_opLZ o (A:=A)).
+  Proof. intros f f' Hf l ? <-. apply big_opLZ_ne; intros; apply Hf. Qed.
+  Global Instance big_opLZ_proper' :
+    Proper (pointwise_relation _ (pointwise_relation _ (≡)) ==> (=) ==> (≡))
+           (big_opLZ o (A:=A)).
+  Proof. intros f f' Hf l ? <-. apply big_opLZ_proper; intros; apply Hf. Qed.
+
+  Lemma big_opLZ_fmap {B} (h : A → B) (f : Z → B → M) l :
+    ([^o listZ] k↦y ∈ h <$> l, f k y) ≡ ([^o listZ] k↦y ∈ l, f k (h y)).
+  Proof. rewrite /big_opLZ big_opL_fmap //. Qed.
+
+  Lemma big_opLZ_op f g l :
+    ([^o listZ] k↦x ∈ l, f k x `o` g k x)
+    ≡ ([^o listZ] k↦x ∈ l, f k x) `o` ([^o listZ] k↦x ∈ l, g k x).
+  Proof. rewrite /big_opLZ big_opL_op //. Qed.
+End listZ.
+
+Lemma big_opLZ_sep_zip_with {A B C} (f : A → B → C) (g1 : C → A) (g2 : C → B)
+    (h1 : Z → A → M) (h2 : Z → B → M) l1 l2 :
+  (∀ x y, g1 (f x y) = x) →
+  (∀ x y, g2 (f x y) = y) →
+  length l1 = length l2 →
+  ([^o listZ] k↦xy ∈ zip_with f l1 l2, h1 k (g1 xy) `o` h2 k (g2 xy)) ≡
+  ([^o listZ] k↦x ∈ l1, h1 k x) `o` ([^o listZ] k↦y ∈ l2, h2 k y).
+Proof.
+  intros Hlen Hg1 Hg2. rewrite big_opLZ_op.
+  rewrite -(big_opLZ_fmap g1) -(big_opLZ_fmap g2).
+  rewrite fmap_zip_with_r; [|auto with lia..].
+  by rewrite fmap_zip_with_l; [|auto with lia..].
+Qed.
+
+Lemma big_opLZ_sep_zip {A B} (h1 : Z → A → M) (h2 : Z → B → M) l1 l2 :
+  length l1 = length l2 →
+  ([^o listZ] k↦xy ∈ zip l1 l2, h1 k xy.1 `o` h2 k xy.2) ≡
+  ([^o listZ] k↦x ∈ l1, h1 k x) `o` ([^o listZ] k↦y ∈ l2, h2 k y).
+Proof. by apply big_opLZ_sep_zip_with. Qed.
+
+Lemma big_opLZ_replicateZ_seqZ {A} n x (f : Z → A → M) :
+  ([^o listZ] k↦y ∈ replicateZ n x, f k y) ≡ ([^o list] k ∈ seqZ 0 n, f k x).
+Proof.
+  rewrite /replicateZ /big_opLZ big_opL_replicate_seq seqZ_seq // big_opL_fmap //.
+Qed.
 
 (** ** Big ops over finite maps *)
 

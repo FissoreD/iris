@@ -12,7 +12,7 @@ Section tests.
   Implicit Types P Q : iProp Σ.
   Implicit Types Φ : val → iProp Σ.
 
-  Definition simpl_test :
+  Lemma simpl_test :
     ⌜(10 = 4 + 6)%nat⌝ -∗
     WP let: "x" := ref #1 in "x" <- !"x";; !"x" {{ v, ⌜v = #1⌝ }}.
   Proof.
@@ -132,15 +132,15 @@ Section tests.
 
   (** These tests specially test the handling of the [vals_compare_safe]
   side-condition of the [=] operator. *)
-  Lemma Id_wp (n : nat) : ⊢ WP Id #n {{ v, ⌜ v = #() ⌝ }}.
+  Lemma Id_wp (n : nat) : ⊢ WP Id #(Z.of_nat n) {{ v, ⌜ v = #() ⌝ }}.
   Proof.
     iInduction n as [|n] "IH"; wp_rec; wp_pures; first done.
-    by replace (S n - 1)%Z with (n:Z) by lia.
+    by replace (Z.of_nat (S n) - 1)%Z with (Z.of_nat n) by lia.
   Qed.
-  Lemma Id_twp (n : nat) : ⊢ WP Id #n [{ v, ⌜ v = #() ⌝ }].
+  Lemma Id_twp (n : nat) : ⊢ WP Id #(Z.of_nat n) [{ v, ⌜ v = #() ⌝ }].
   Proof.
     iInduction n as [|n] "IH"; wp_rec; wp_pures; first done.
-    by replace (S n - 1)%Z with (n:Z) by lia.
+    by replace (Z.of_nat (S n) - 1)%Z with (Z.of_nat n) by lia.
   Qed.
 
   (* Make sure [wp_bind] works even when it changes nothing. *)
@@ -379,7 +379,7 @@ Section mapsto_tests.
     [[{ l ↦□ v }]] ! #l [[{ RET v; True }]].
   Proof. iIntros (Φ) "Hl HΦ". wp_load. by iApply "HΦ". Qed.
 
-  Lemma persistent_mapsto_load l (n : nat) :
+  Lemma persistent_mapsto_load l (n : Z) :
     {{{ l ↦ #n }}} Store #l (! #l + #5) ;; ! #l {{{ RET #(n + 5); l ↦□ #(n + 5) }}}.
   Proof.
     iIntros (Φ) "Hl HΦ".

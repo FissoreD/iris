@@ -43,7 +43,7 @@ Section proof.
 
   Definition lock_inv (γ : gname) (lo ln : loc) (R : iProp Σ) : iProp Σ :=
     ∃ o n : nat,
-      lo ↦ #o ∗ ln ↦ #n ∗
+      lo ↦ #(Z.of_nat o) ∗ ln ↦ #(Z.of_nat n) ∗
       own γ (● (Excl' o, GSet (set_seq 0 n))) ∗
       ((own γ (◯ (Excl' o, GSet ∅)) ∗ R) ∨ own γ (◯ (ε, GSet {[ o ]}))).
 
@@ -95,7 +95,7 @@ Section proof.
   Qed.
 
   Lemma wait_loop_spec γ lk x R :
-    {{{ is_lock γ lk R ∗ issued γ x }}} wait_loop #x lk {{{ RET #(); locked γ ∗ R }}}.
+    {{{ is_lock γ lk R ∗ issued γ x }}} wait_loop #(Z.of_nat x) lk {{{ RET #(); locked γ ∗ R }}}.
   Proof.
     iIntros (Φ) "[Hl Ht] HΦ". iDestruct "Hl" as (lo ln ->) "#Hinv".
     iLöb as "IH". wp_rec. subst. wp_pures. wp_bind (! _)%E.
@@ -125,7 +125,7 @@ Section proof.
     { iNext. iExists o, n. by iFrame. }
     wp_pures. wp_bind (CmpXchg _ _ _).
     iInv N as (o' n') "(>Hlo' & >Hln' & >Hauth & Haown)".
-    destruct (decide (#n' = #n))%V as [[= ->%Nat2Z.inj] | Hneq].
+    destruct (decide (#(Z.of_nat n') = #(Z.of_nat n)))%V as [[= ->%Nat2Z.inj] | Hneq].
     - iMod (own_update with "Hauth") as "[Hauth Hofull]".
       { eapply auth_update_alloc, prod_local_update_2.
         eapply (gset_disj_alloc_empty_local_update _ {[ n ]}).
