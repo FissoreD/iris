@@ -156,6 +156,7 @@ iris_heap_lang/metatheory.v
 iris_heap_lang/tactics.v
 iris_heap_lang/primitive_laws.v
 iris_heap_lang/derived_laws.v
+iris_heap_lang/step_update.v
 iris_heap_lang/notation.v
 iris_heap_lang/proofmode.v
 iris_heap_lang/adequacy.v
