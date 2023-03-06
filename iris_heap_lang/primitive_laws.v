@@ -7,6 +7,7 @@ From iris.base_logic.lib Require Import mono_nat.
 From iris.base_logic.lib Require Export gen_heap proph_map gen_inv_heap.
 From iris.program_logic Require Export weakestpre total_weakestpre.
 From iris.program_logic Require Import ectx_lifting total_ectx_lifting.
+From iris.program_logic Require Import step_update.
 From iris.heap_lang Require Export class_instances.
 From iris.heap_lang Require Import tactics notation.
 From iris.prelude Require Import options.
@@ -107,42 +108,57 @@ Implicit Types σ : state.
 Implicit Types v : val.
 Implicit Types l : loc.
 
+Lemma step_get_lb_get E :
+  ⊢ |~{E}~| steps_lb 0.
+Proof.
+  iIntros (? m???) "(?&?&Hauth)".
+  iDestruct (primitive_laws.steps_lb_get with "Hauth") as "#Hlb".
+  iDestruct (primitive_laws.steps_lb_le with "Hlb") as "$"; [lia|].
+  iFrame. iApply fupd_mask_intro; [set_solver|]. iIntros "Hclose".
+  iMod "Hclose". by iModIntro.
+Qed.
+
+Lemma step_update_lb_update E n :
+  steps_lb n -∗ |~{E}~> (steps_lb (S n)).
+Proof.
+  iIntros "Hlb" (? m???) "(?&?&Hauth)".
+  iDestruct (primitive_laws.steps_lb_valid with "Hauth Hlb") as %Hvalid.
+  iApply fupd_mask_intro; [set_solver|]. iIntros "Hclose". iFrame=> /=.
+  iIntros "!>!>!>".
+  iApply step_fupdN_intro; [done|].
+  iIntros "!>" (??) "(?&?&Hauth)".
+  iDestruct (primitive_laws.steps_lb_get with "Hauth") as "#Hlb'".
+  iDestruct (steps_lb_le _ (S n) with "Hlb'") as "Hlb''"; [lia|].
+  iMod "Hclose". iFrame. done.
+Qed.
+
+Lemma step_update_lb_step E1 E2 P n :
+  steps_lb n -∗ (|={E1,E2}=> |={∅}▷=>^(S n) |={E2,E1}=> P) -∗ |~{E1,E2}~> P.
+Proof.
+  iIntros "Hlb HP" (? m???) "(?&?&Hauth)".
+  iDestruct (primitive_laws.steps_lb_valid with "Hauth Hlb") as %Hvalid.
+  iMod "HP". iModIntro. iFrame.
+  iApply (step_fupdN_le (S n))=> /=; [lia|done|].
+  iApply (step_fupdN_wand with "HP").
+  iIntros "!> HP" (??) "(?&?&Hauth)".
+  by iFrame.
+Qed.
+
 Lemma wp_lb_init s E e Φ :
   TCEq (to_val e) None →
   (steps_lb 0 -∗ WP e @ s; E {{ v, Φ v }}) -∗
   WP e @ s; E {{ Φ }}.
-Proof.
-  (** TODO: We should try to use a generic lifting lemma (and avoid [wp_unfold])
-  here, since this breaks the WP abstraction. *)
-  rewrite !wp_unfold /wp_pre /=. iIntros (->) "Hwp".
-  iIntros (σ1 ns κ κs m) "(Hσ & Hκ & Hsteps)".
-  iDestruct (steps_lb_get with "Hsteps") as "#Hlb".
-  iDestruct (steps_lb_le _ 0 with "Hlb") as "Hlb0"; [lia|].
-  iSpecialize ("Hwp" with "Hlb0"). iApply ("Hwp" $! σ1 ns κ κs m). iFrame.
-Qed.
+Proof. iIntros (Hval). iApply wp_step_get. iApply step_get_lb_get. Qed.
 
 Lemma wp_lb_update s n E e Φ :
   TCEq (to_val e) None →
   steps_lb n -∗
-  WP e @ s; E {{ v, steps_lb (S n) -∗ Φ v }} -∗
+  WP e @ s; E {{ v, steps_lb (S n) ={E}=∗ Φ v }} -∗
   WP e @ s; E {{ Φ }}.
 Proof.
-  (** TODO: We should try to use a generic lifting lemma (and avoid [wp_unfold])
-  here, since this breaks the WP abstraction. *)
-  rewrite !wp_unfold /wp_pre /=. iIntros (->) "Hlb Hwp".
-  iIntros (σ1 ns κ κs m) "(Hσ & Hκ & Hsteps)".
-  iDestruct (steps_lb_valid with "Hsteps Hlb") as %?.
-  iMod ("Hwp" $! σ1 ns κ κs m with "[$Hσ $Hκ $Hsteps]") as "[%Hs Hwp]".
-  iModIntro. iSplit; [done|].
-  iIntros (e2 σ2 efs Hstep) "Hcred".
-  iMod ("Hwp" with "[//] Hcred") as "Hwp".
-  iIntros "!> !>". iMod "Hwp" as "Hwp". iIntros "!>".
-  iApply (step_fupdN_wand with "Hwp").
-  iIntros "Hwp". iMod "Hwp" as "(($ & $ & Hsteps)& Hwp & $)".
-  iDestruct (steps_lb_get with "Hsteps") as "#HlbS".
-  iDestruct (steps_lb_le _ (S n) with "HlbS") as "#HlbS'"; [lia|].
-  iModIntro. iFrame "Hsteps".
-  iApply (wp_wand with "Hwp"). iIntros (v) "HΦ". by iApply "HΦ".
+  iIntros (Hval) "Hlb Hwp".
+  iApply (wp_step_update with "[Hlb] Hwp");
+    [done|by iApply step_update_lb_update].
 Qed.
 
 Lemma wp_step_fupdN_lb s n E1 E2 e P Φ :
@@ -154,12 +170,8 @@ Lemma wp_step_fupdN_lb s n E1 E2 e P Φ :
   WP e @ s; E1 {{ Φ }}.
 Proof.
   iIntros (He HE) "Hlb HP Hwp".
-  iApply wp_step_fupdN; [done|].
-  iSplit; [|by iFrame].
-  iIntros (σ ns κs nt) "(? & ? & Hsteps)".
-  iDestruct (steps_lb_valid with "Hsteps Hlb") as %Hle.
-  iApply fupd_mask_intro; [set_solver|].
-  iIntros "_". iPureIntro. rewrite /num_laters_per_step /=. lia.
+  iApply (wp_step_update with "[Hlb HP] Hwp"); [done|].
+  by iApply (step_update_lb_step with "Hlb").
 Qed.
 
 (** Recursive functions: we do not use this lemmas as it is easier to use Löb

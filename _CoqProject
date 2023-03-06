@@ -120,6 +120,7 @@ iris/program_logic/ownp.v
 iris/program_logic/total_lifting.v
 iris/program_logic/total_ectx_lifting.v
 iris/program_logic/atomic.v
+iris/program_logic/step_update.v
 iris/proofmode/base.v
 iris/proofmode/ident_name.v
 iris/proofmode/string_ident.v
@@ -156,7 +157,6 @@ iris_heap_lang/metatheory.v
 iris_heap_lang/tactics.v
 iris_heap_lang/primitive_laws.v
 iris_heap_lang/derived_laws.v
-iris_heap_lang/step_update.v
 iris_heap_lang/notation.v
 iris_heap_lang/proofmode.v
 iris_heap_lang/adequacy.v
