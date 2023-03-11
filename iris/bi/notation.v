@@ -129,6 +129,9 @@ Reserved Notation "'[∗' 'list]' k ↦ x ∈ l , P"
 Reserved Notation "'[∗' 'list]' x ∈ l , P"
   (at level 200, l at level 10, x binder, right associativity,
    format "[∗  list]  x  ∈  l ,  P").
+Reserved Notation "'[∗' 'listZ]' k ↦ x ∈ l , P"
+  (at level 200, l at level 10, k binder, x binder, right associativity,
+   format "[∗  listZ]  k ↦ x  ∈  l ,  P").
 
 Reserved Notation "'[∗' 'list]' k ↦ x1 ; x2 ∈ l1 ; l2 , P"
   (at level 200, l1, l2 at level 10, k binder, x1 binder, x2 binder,

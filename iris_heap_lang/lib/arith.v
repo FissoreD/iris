@@ -24,8 +24,8 @@ Proof.
 Qed.
 
 Lemma minimum_spec_nat `{!heapGS Σ} s E (Φ : val → iProp Σ) (m n : nat) :
-  ▷ Φ #(m `min` n)%nat -∗
-  WP minimum #m #n @ s;E {{ Φ }}.
+  ▷ Φ #(Z.of_nat $ m `min` n)%nat -∗
+  WP minimum #(Z.of_nat m) #(Z.of_nat n) @ s;E {{ Φ }}.
 Proof. iIntros "HΦ". iApply minimum_spec. by rewrite Nat2Z.inj_min. Qed.
 
 Lemma maximum_spec `{!heapGS Σ} s E (Φ : val → iProp Σ) (m n : Z) :
@@ -38,6 +38,6 @@ Proof.
 Qed.
 
 Lemma maximum_spec_nat `{!heapGS Σ} s E (Φ : val → iProp Σ) (m n : nat) :
-  ▷ Φ #(m `max` n)%nat -∗
-  WP maximum #m #n @ s;E {{ Φ }}.
+  ▷ Φ #(Z.of_nat $ m `max` n)%nat -∗
+  WP maximum #(Z.of_nat m) #(Z.of_nat n) @ s;E {{ Φ }}.
 Proof. iIntros "HΦ". iApply maximum_spec. by rewrite Nat2Z.inj_max. Qed.

@@ -63,6 +63,8 @@ attach several prophecy resolutions to a head-redex. *)
 Delimit Scope expr_scope with E.
 Delimit Scope val_scope with V.
 
+Local Open Scope Z_scope.
+
 Module heap_lang.
 
 (** Expressions and vals. *)
@@ -543,7 +545,7 @@ Definition bin_op_eval_int (op : bin_op) (n1 n2 : Z) : option base_lit :=
   | LtOp => Some $ LitBool (bool_decide (n1 < n2))
   | EqOp => Some $ LitBool (bool_decide (n1 = n2))
   | OffsetOp => None (* Pointer arithmetic *)
-  end%Z.
+  end.
 
 Definition bin_op_eval_bool (op : bin_op) (b1 b2 : bool) : option base_lit :=
   match op with
@@ -597,32 +599,33 @@ Proof. by rewrite /heap_array right_id. Qed.
 
 Lemma heap_array_lookup l vs ow k :
   heap_array l vs !! k = Some ow ↔
-  ∃ j w, (0 ≤ j)%Z ∧ k = l +ₗ j ∧ ow = Some w ∧ vs !! (Z.to_nat j) = Some w.
+  ∃ j w, (0 ≤ j) ∧ k = l +ₗ j ∧ ow = Some w ∧ vs !! j = Some w.
 Proof.
   revert k l; induction vs as [|v' vs IH]=> l' l /=.
-  { rewrite lookup_empty. naive_solver lia. }
+  { rewrite lookup_empty. setoid_rewrite lookupZ_nil. naive_solver. }
   rewrite -insert_union_singleton_l lookup_insert_Some IH. split.
   - intros [[-> ?] | (Hl & j & w & ? & -> & -> & ?)].
     { eexists 0, _. rewrite loc_add_0. naive_solver lia. }
-    eexists (1 + j)%Z, _. rewrite loc_add_assoc !Z.add_1_l Z2Nat.inj_succ; auto with lia.
+    eexists (1 + j). rewrite loc_add_assoc.
+    rewrite lookupZ_cons_ne_0. 2:lia. replace (1 + j - 1) with j by lia.
+    naive_solver lia.
   - intros (j & w & ? & -> & -> & Hil). destruct (decide (j = 0)); simplify_eq/=.
     { rewrite loc_add_0; eauto. }
     right. split.
     { rewrite -{1}(loc_add_0 l). intros ?%(inj (loc_add _)); lia. }
-    assert (Z.to_nat j = S (Z.to_nat (j - 1))) as Hj.
-    { rewrite -Z2Nat.inj_succ; last lia. f_equal; lia. }
-    rewrite Hj /= in Hil.
-    eexists (j - 1)%Z, _. rewrite loc_add_assoc Z.add_sub_assoc Z.add_simpl_l.
-    auto with lia.
+    eexists (j - 1), _. rewrite loc_add_assoc.
+    rewrite lookupZ_cons_ne_0 // in Hil.
+    replace (1 + (j - 1)) with j by lia.
+    naive_solver lia.
 Qed.
 
 Lemma heap_array_map_disjoint (h : gmap loc (option val)) (l : loc) (vs : list val) :
-  (∀ i, (0 ≤ i)%Z → (i < length vs)%Z → h !! (l +ₗ i) = None) →
+  (∀ i, (0 ≤ i) → (i < lengthZ vs) → h !! (l +ₗ i) = None) →
   (heap_array l vs) ##ₘ h.
 Proof.
   intros Hdisj. apply map_disjoint_spec=> l' v1 v2.
-  intros (j&w&?&->&?&Hj%lookup_lt_Some%inj_lt)%heap_array_lookup.
-  move: Hj. rewrite Z2Nat.id // => ?. by rewrite Hdisj.
+  intros (j&w&?&->&?&Hj%lookupZ_lt_Some)%heap_array_lookup.
+  rewrite Hdisj //; lia.
 Qed.
 
 (* [h] is added on the right here to make [state_init_heap_singleton] true. *)
@@ -667,8 +670,8 @@ Inductive head_step : expr → state → list observation → expr → state →
   | CaseRS v e1 e2 σ :
      head_step (Case (Val $ InjRV v) e1 e2) σ [] (App e2 (Val v)) σ []
   | AllocNS n v σ l :
-     (0 < n)%Z →
-     (∀ i, (0 ≤ i)%Z → (i < n)%Z → σ.(heap) !! (l +ₗ i) = None) →
+     (0 < n) →
+     (∀ i, (0 ≤ i) → (i < n) → σ.(heap) !! (l +ₗ i) = None) →
      head_step (AllocN (Val $ LitV $ LitInt n) (Val v)) σ
                []
                (Val $ LitV $ LitLoc l) (state_init_heap l n v σ)
@@ -747,7 +750,7 @@ Qed.
 
 Lemma alloc_fresh v n σ :
   let l := fresh_locs (dom σ.(heap)) in
-  (0 < n)%Z →
+  (0 < n) →
   head_step (AllocN ((Val $ LitV $ LitInt $ n)) (Val v)) σ []
             (Val $ LitV $ LitLoc l) (state_init_heap l n v σ) [].
 Proof.

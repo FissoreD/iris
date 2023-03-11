@@ -200,7 +200,7 @@ Section counter_proof.
   Implicit Types l : loc.
 
   Definition I (γ : gname) (l : loc) : iProp Σ :=
-    (∃ c : nat, l ↦ #c ∗ own γ (Auth c))%I.
+    (∃ c : nat, l ↦ #(Z.of_nat c) ∗ own γ (Auth c))%I.
 
   Definition C (l : loc) (n : nat) : iProp Σ :=
     (∃ N γ, inv N (I γ l) ∧ own γ (Frag n))%I.
@@ -247,7 +247,7 @@ Section counter_proof.
 
   Check "read_spec".
   Lemma read_spec l n :
-    ⊢ {{ C l n }} read #l {{ v, ∃ m : nat, ⌜v = #m ∧ n ≤ m⌝ ∧ C l m }}.
+    ⊢ {{ C l n }} read #l {{ v, ∃ m : nat, ⌜v = #(Z.of_nat m) ∧ n ≤ m⌝ ∧ C l m }}.
   Proof.
     iIntros "!> Hl /=". iDestruct "Hl" as (N γ) "[#Hinv Hγf]".
     rewrite /read /=. wp_lam. Show. iApply wp_inv_open; last iFrame "Hinv"; auto.
