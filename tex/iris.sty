@@ -529,7 +529,19 @@
 \newcommand*\BoxSlice[3]{\textlog{BoxSlice}(#1, #2, #3)}
 \newcommand*\ABox[3]{\textlog{Box}(#1, #2, #3)}
 
-%% Common logical fragments
-\newcommand{\pointsto}{\mapsto}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% DEPRECATED MACRO ALIASES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Deprecated macro alises may be outphased and should not be used
+
+\newcommand{\maybe}[1]{\optionm{#1}}
+
+\newcommand{\dist}[1]{\nequiv{#1}}
+\newcommand{\nincl}[1]{\subseteqN{#1}}
+\newcommand{\notnequiv}[1]{\ndist{#1}}
+\newcommand{\nequivset}[1]{\distset{#1}}
+\newcommand{\nequivB}[1]{\distB{#1}}
+
+\newcommand{\always}{\persistently}
 
 \endinput
