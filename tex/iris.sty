@@ -137,7 +137,6 @@
 \newcommand{\subseteqN}[1]{\ensuremath{\mathrel{\stackrel{#1}{\subseteq}}}}
 \newcommand{\ndist}[1]{\ensuremath{\mathrel{\stackrel{#1}{\neq}}}}
 \newcommand{\distset}[2]{\ensuremath{\mathrel{\stackrel{#1}{=}_{#2}}}}
-\newcommand{\distB}[1]{\ensuremath{\mathrel{\stackrel{#1}{\equiv}}}}
 \newcommand{\latert}{\mathord{\blacktriangleright}}
 \newcommand{\latertinj}{\textlog{next}}
 
@@ -536,11 +535,10 @@
 
 \newcommand{\maybe}[1]{\optionm{#1}}
 
-\newcommand{\dist}[1]{\nequiv{#1}}
+\newcommand{\nequiv}[1]{\dist{#1}}
 \newcommand{\nincl}[1]{\subseteqN{#1}}
 \newcommand{\notnequiv}[1]{\ndist{#1}}
 \newcommand{\nequivset}[1]{\distset{#1}}
-\newcommand{\nequivB}[1]{\distB{#1}}
 
 \newcommand{\always}{\persistently}
 
