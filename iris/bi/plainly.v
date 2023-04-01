@@ -682,7 +682,7 @@ Proof.
   apply fixpoint_ind.
   - intros ?? Heq ??. by rewrite -(Heq _).
   - exists (fun _ => bi_pure True); intros; split; [apply pure_plain | apply bi.pure_absorbing].
-  - intros ? Hpa y.
+  - intros x Hpa y.
     assert ((∀y, Plain (x y)) ∧ (∀y, Absorbing (x y))) as [??] by (split; intros; eapply Hpa; eauto).
     eauto.
   - apply limit_preserving_forall; intros.
