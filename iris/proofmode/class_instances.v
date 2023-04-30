@@ -4,17 +4,9 @@ From iris.proofmode Require Import ltac_tactics.
 From iris.prelude Require Import options.
 Import bi.
 
-(* FIXME(Coq #6294): needs new unification *)
-(** The lemma [from_assumption_exact] is not an instance, but defined using
-[notypeclasses refine] through [Hint Extern] to enable the better unification
-algorithm. We use [shelve] to avoid the creation of unshelved goals for evars
-by [refine], which otherwise causes TC search to fail. Such unshelved goals are
-created for example when solving [FromAssumption p ?P ?Q] where both [?P] and
-[?Q] are evars. See [test_iApply_evar] in [tests/proofmode] for an example. *)
-Lemma from_assumption_exact {PROP : bi} p (P : PROP) : FromAssumption p P P.
-Proof. by rewrite /FromAssumption /= intuitionistically_if_elim. Qed.
-Global Hint Extern 0 (FromAssumption _ _ _) =>
-  notypeclasses refine (from_assumption_exact _ _); shelve : typeclass_instances.
+Global Instance from_assumption_exact {PROP : bi} p (P Q : PROP) :
+  Unify P Q → FromAssumption p P Q | 0.
+Proof. intros ->. by rewrite /FromAssumption /= intuitionistically_if_elim. Qed.
 
 (* FIXME(Coq #6294): needs new unification *)
 (** Similarly, the lemma [from_exist_exist] is defined using a [Hint Extern] to
@@ -426,10 +418,11 @@ Global Instance into_wand_wandM' p q mP (Q P' Q' : PROP) :
   IntoWand' p q (mP -∗? Q) P' Q' → IntoWand p q (mP -∗? Q) P' Q' | 100.
 Proof. done. Qed.
 
-Global Instance into_wand_wand p q P Q P' :
-  FromAssumption q P P' → IntoWand p q (P' -∗ Q) P Q.
+Global Instance into_wand_wand p q P Q P' Q' :
+  Unify Q Q' → FromAssumption q P P' → IntoWand p q (P' -∗ Q) P Q'.
 Proof.
-  rewrite /FromAssumption /IntoWand=> HP. by rewrite HP intuitionistically_if_elim.
+  rewrite /FromAssumption /IntoWand=> -> HP.
+  by rewrite HP intuitionistically_if_elim.
 Qed.
 (** Implication instances
   For non-affine BIs, generally we assume [P → ...] is written in cases where
@@ -438,49 +431,55 @@ Qed.
   implication itself or the premise are taken from the persistent context,
   things become a bit easier and we can drop some of these requirements. We also
   support arbitrary implications for affine BIs via [BiAffine]. *)
-Global Instance into_wand_impl_false_false P Q P' P'' :
+Global Instance into_wand_impl_false_false P Q P' Q' P'' :
+  Unify Q Q' →
   Absorbing P →
   (* Cheap check comes first *)
   TCOr (BiAffine PROP) (Persistent P) →
   MakeAffinely P P' →
   FromAssumption false P'' P' →
-  IntoWand false false (P → Q) P'' Q.
+  IntoWand false false (P → Q) P'' Q'.
 Proof.
-  rewrite /MakeAffinely /IntoWand /FromAssumption /= => ? Hpers <- ->.
+  rewrite /MakeAffinely /IntoWand /FromAssumption /= => -> ? Hpers <- ->.
   apply wand_intro_l. destruct Hpers.
   - rewrite impl_wand_1 affinely_elim wand_elim_r //.
   - rewrite persistent_impl_wand_affinely wand_elim_r //.
 Qed.
-Global Instance into_wand_impl_false_true P Q P' :
+Global Instance into_wand_impl_false_true P Q P' Q' :
+  Unify Q Q' →
   Absorbing P' →
   FromAssumption true P P' →
-  IntoWand false true (P' → Q) P Q.
+  IntoWand false true (P' → Q) P Q'.
 Proof.
-  rewrite /IntoWand /FromAssumption /= => ? HP. apply wand_intro_l.
+  rewrite /IntoWand /FromAssumption /= => -> ? HP. apply wand_intro_l.
   rewrite -(persistently_elim P').
   rewrite persistent_impl_wand_affinely.
   rewrite -(intuitionistically_idemp P) HP.
   apply wand_elim_r.
 Qed.
-Global Instance into_wand_impl_true_false P Q P' P'' :
+Global Instance into_wand_impl_true_false P Q P' Q' P'' :
+  Unify Q Q' →
   MakeAffinely P P' →
   FromAssumption false P'' P' →
-  IntoWand true false (P → Q) P'' Q.
+  IntoWand true false (P → Q) P'' Q'.
 Proof.
-  rewrite /MakeAffinely /IntoWand /FromAssumption /= => <- ->.
+  rewrite /MakeAffinely /IntoWand /FromAssumption /= => -> <- ->.
   apply wand_intro_r.
   rewrite sep_and intuitionistically_elim affinely_elim impl_elim_l //.
 Qed.
-Global Instance into_wand_impl_true_true P Q P' :
+Global Instance into_wand_impl_true_true P Q P' Q' :
+  Unify Q Q' →
   FromAssumption true P P' →
-  IntoWand true true (P' → Q) P Q.
+  IntoWand true true (P' → Q) P Q'.
 Proof.
-  rewrite /FromAssumption /IntoWand /= => <-. apply wand_intro_l.
+  rewrite /FromAssumption /IntoWand /= => -> <-. apply wand_intro_l.
   rewrite sep_and [(□ (_ → _))%I]intuitionistically_elim impl_elim_r //.
 Qed.
 
-Global Instance into_wand_wandM p q mP' P Q :
-  FromAssumption q P (default emp%I mP') → IntoWand p q (mP' -∗? Q) P Q.
+Global Instance into_wand_wandM p q mP' P Q Q' :
+  Unify Q Q' →
+  FromAssumption q P (default emp%I mP') →
+  IntoWand p q (mP' -∗? Q) P Q'.
 Proof. rewrite /IntoWand wandM_sound. exact: into_wand_wand. Qed.
 
 Global Instance into_wand_and_l p q R1 R2 P' Q' :

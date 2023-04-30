@@ -5,6 +5,14 @@ From iris.proofmode Require Export ident_name modalities.
 From iris.prelude Require Import options.
 Import bi.
 
+Class Unify {A} (x y : A) := unify : x = y.
+
+Lemma unify_refl {A} (x : A) : Unify x x.
+Proof. split. Qed.
+
+Global Hint Extern 0 (Unify _ _) =>
+  notypeclasses refine (unify_refl _); shelve : typeclass_instances.
+
 (** Use this as precondition on "failing" instances of typeclasses that have
 pure preconditions (such as [ElimModal]), if you want a nice error to be shown
 when this instances is picked as part of some proof mode tactic. *)
