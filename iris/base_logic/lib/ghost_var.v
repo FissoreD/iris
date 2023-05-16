@@ -56,15 +56,14 @@ Section lemmas.
     ghost_var γ q1 a1 -∗ ghost_var γ q2 a2 -∗ ⌜(q1 + q2 ≤ 1)%Qp ∧ a1 = a2⌝.
   Proof.
     unseal. iIntros "Hvar1 Hvar2".
-    iCombine "Hvar1 Hvar2" gives %[Hq Ha]%frac_agree_op_valid.
-    done.
+    by iCombine "Hvar1 Hvar2" gives %H.
   Qed.
   (** Almost all the time, this is all you really need. *)
   Lemma ghost_var_agree γ a1 q1 a2 q2 :
     ghost_var γ q1 a1 -∗ ghost_var γ q2 a2 -∗ ⌜a1 = a2⌝.
   Proof.
     iIntros "Hvar1 Hvar2".
-    iDestruct (ghost_var_valid_2 with "Hvar1 Hvar2") as %[_ ?]. done.
+    iDestruct (ghost_var_valid_2 with "Hvar1 Hvar2") as %[_ ->]. done.
   Qed.
 
   Global Instance ghost_var_combine_gives γ a1 q1 a2 q2 :
