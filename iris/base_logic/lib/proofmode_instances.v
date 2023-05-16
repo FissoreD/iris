@@ -1,5 +1,5 @@
 From iris.algebra Require Import cmra proofmode_classes.
-From iris.proofmode Require Import proofmode.
+From iris.proofmode Require Import proofmode classes_make.
 From iris.base_logic.lib Require Import own proofmode_classes.
 From iris.prelude Require Import options.
 
@@ -236,7 +236,7 @@ Section numbers.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%pos_included.
-    - iIntros "%". iExists (a2 - a1)%positive. iPureIntro. fold_leibniz. rewrite pos_op_plus. lia.
+    - iIntros "%". iExists (a2 - a1)%positive. iPureIntro. fold_leibniz. rewrite pos_op_add. lia.
   Qed.
   Global Instance positive_included_merge_unital (a1 a2 : positive) : 
     IsIncludedOrEq M a1 a2 ⌜(a1 < a2)%positive⌝ ⌜(a1 ≤ a2)%positive⌝ | 20.
@@ -258,15 +258,15 @@ Section numbers.
   Proof. 
     rewrite /IsIncluded. iIntros "_" ; iSplit.
     - by iDestruct 1 as %?%frac_included.
-    - iIntros "%H". apply Qp_lt_sum in H as [q' ->]. eauto.
+    - iIntros "%H". apply Qp.lt_sum in H as [q' ->]. eauto.
   Qed.
   Global Instance frac_included_merge_unital (q1 q2 : Qp) : IsIncludedOrEq M q1 q2 ⌜(q1 < q2)%Qp⌝ ⌜(q1 ≤ q2)%Qp⌝ | 20.
   Proof.
     apply: Build_IsIncludedOrEq.
     iIntros "_"; iSplit.
-    - iIntros "[%|->]"; eauto. iPureIntro. by apply Qp_lt_le_incl.
+    - iIntros "[%|->]"; eauto. iPureIntro. by apply Qp.lt_le_incl.
     - iIntros "%H".
-      destruct (Qp_le_lteq q1 q2) as [[?|?] _]; eauto.
+      destruct (Qp.le_lteq q1 q2) as [[?|?] _]; eauto.
   Qed.
 
   Global Instance dfrac_valid_op_carry (q q1 q2 : Qp) Pq :
@@ -297,7 +297,7 @@ Section numbers.
     rewrite /IsIncluded dfrac_validI -frac_validI => ->.
     iApply bi.wand_iff_trans. iSplit.
     - iDestruct 1 as %?%dfrac_own_included. iPureIntro. by apply frac_included.
-    - iDestruct 1 as %[q' ->]%frac_included%Qp_lt_sum.
+    - iDestruct 1 as %[q' ->]%frac_included%Qp.lt_sum.
       by iExists (DfracOwn q').
   Qed.
   Global Instance dfrac_own_included_merge_unital (q1 q2 : Qp) Pq Pq' : 
@@ -360,7 +360,7 @@ Section sets.
   Qed.
   Global Instance set_disj_valid_op_emp_l X Y :
     IsValidOp M (GSet X) (GSet X) (GSet ∅) True | 10.
-  Proof. eapply is_valid_op_weaken; [iSolveTC | eauto ]. Qed.
+  Proof. eapply is_valid_op_weaken; [tc_solve | eauto ]. Qed.
   Global Instance set_disj_valid_op_emp_r X Y :
     IsValidOp M (GSet X) (GSet ∅) (GSet X) True | 10.
   Proof. apply is_valid_op_comm, _. Qed.
@@ -418,7 +418,7 @@ Section coPsets.
   Qed.
   Global Instance coPset_disj_valid_op_unit_l X Y :
     IsValidOp M (CoPset X) (CoPset X) (CoPset ∅) True | 10.
-  Proof. eapply is_valid_op_weaken; [iSolveTC | eauto]. Qed.
+  Proof. eapply is_valid_op_weaken; [tc_solve | eauto]. Qed.
   Global Instance coPset_disj_valid_op_unit_r X Y :
     IsValidOp M (CoPset X) (CoPset ∅) (CoPset X) True | 10.
   Proof. apply is_valid_op_comm, _. Qed.
@@ -836,7 +836,7 @@ Section gmap.
   Global Instance gmap_included_merge_singleton m k a : 
     IsIncluded M {[ k := a ]} m (∃ a', m !! k ≡ Some a' ∧ Some a ≼ Some a' )%I | 50. (* if m !! k would reduce, we could do better *)
   Proof.
-    eapply is_included_weaken; [iSolveTC | ].
+    eapply is_included_weaken; [tc_solve | ].
     iIntros "#H✓"; iSplit.
     - iIntros "[%m' #Hm] !>".
       iSpecialize ("Hm" $! k). rewrite lookup_singleton //.
@@ -928,7 +928,7 @@ Section reservation_map.
     - iIntros "#HP".
       iAssert (CoPset E1 ≼ CoPset E2)%I as "[%E HE]"; first by iApply HP.
       iExists (ReservationMap ∅ E).
-      rewrite reservation_equivI /=. iSplit => //. by rewrite right_id.
+      rewrite reservation_equivI /=. by iSplit.
   Qed.
 
   Global Instance reservation_data_included_merge k b1 b2 P :
@@ -1000,7 +1000,7 @@ Section view.
     destruct v as [[[dq a]|] b] => /=.
     - uPred.unseal.
       split=> n y Hy.
-      rewrite /uPred_cmra_valid_def /= /validN /cmra_validN /= /view_validN_instance /=.
+      rewrite /upred.uPred_cmra_valid_def /= /validN /cmra_validN /= /view_validN_instance /=.
       split.
       * case => Hdq [a' [Ha1 Ha2]].
         repeat (rewrite /uPred_holds /=).
@@ -1095,7 +1095,7 @@ Section auth.
     IsValidOp M (●{dq} a1) (●{dq1} a1) (●{dq2} a2) (Pq ∧ a1 ≡ a2).
   Proof.
     move => Hq. eapply is_valid_op_weaken. 
-    - rewrite /auth_auth. iSolveTC. 
+    - rewrite /auth_auth. tc_solve. 
     - iIntros "[_ #($ & $ & _)]".
   Qed.
 
@@ -1253,7 +1253,7 @@ Section gmap_view.
     IsValidOp _ (gmap_view_auth dq m1) (gmap_view_auth dq1 m1) (gmap_view_auth dq2 m2) (P ∧ m1 ≡ m2).
   Proof.
     intros. eapply is_valid_op_weaken.
-    - rewrite /gmap_view_auth. iSolveTC.
+    - rewrite /gmap_view_auth. tc_solve.
     - iIntros "(_ & #$ & #$ & _ )".
   Qed.
 

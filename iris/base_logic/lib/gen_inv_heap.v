@@ -155,8 +155,11 @@ Section inv_heap.
     iIntros "Hl_inv H●".
     iCombine "H● Hl_inv" gives %[Hincl Hvalid]%auth_both_valid_discrete.
     iPureIntro.
+    move: Hincl; rewrite singleton_included_l; intros ([v' I'] & Hsome & Hincl).
+    apply lookup_to_inv_heap_Some_2 in Hsome as (v'' & I'' & -> & HI & Hh).
     move: Hincl; rewrite HI Some_included_total pair_included
       Excl_included to_agree_included; intros [-> ?]; eauto.
+
   Qed.
 
   (** * Typeclass instances *)

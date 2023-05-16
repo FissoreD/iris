@@ -24,8 +24,8 @@ Lemma own_valid_gives {A : cmra} (a1 a2 : A) γ `{!inG Σ A} (P : iProp Σ) :
   own γ a1 -∗ own γ a2 -∗ □ P.
 Proof.
   rewrite /IsValidGives => HaP.
-  rewrite own_valid_2. apply bi.wand_intro_r.
-  by erewrite bi.wand_elim_l.
+  iIntros "Hγ1 Hγ2". iApply HaP.
+  by (iApply (own_valid_2 with "Hγ1")).
 Qed.
 
 
@@ -38,7 +38,7 @@ Lemma tac_own_valid_op i1 i2 {A : cmra} (a a1 a2 : A) p1 p2 γ `{!inG Σ A} (P G
   envs_entails (envs_delete true i2 p2 (envs_delete true i1 p1 Δ)) (own γ a -∗ P -∗ G)%I →
   envs_entails Δ G.
 Proof.
-  rewrite envs_entails_eq => Hi1 Hi2 HaP HΔ.
+  rewrite envs_entails_unseal => Hi1 Hi2 HaP HΔ.
   erewrite envs_lookup_sound => //.
   erewrite envs_lookup_sound => //.
   rewrite !bi.intuitionistically_if_elim HΔ.
@@ -59,7 +59,7 @@ Lemma tac_own_valid_gives i1 i2 {A : cmra} (a1 a2 : A) p1 p2 γ `{!inG Σ A} (P 
   envs_entails Δ (□ P -∗ G)%I →
   envs_entails Δ G.
 Proof.
-  rewrite envs_entails_eq => Hi1 Hi2 HaP HΔ.
+  rewrite envs_entails_unseal => Hi1 Hi2 HaP HΔ.
   iIntros "HΔ".
   iAssert (□ P)%I as "#HP".
   { erewrite envs_lookup_sound => //.
@@ -91,9 +91,9 @@ Ltac iCombineOwn_gen_pre Hs_raw lem :=
       | first [reflexivity | fail 2 "Failed to turn"H1"into an own"]
       | lazymatch goal with
         | |- proofmode_classes.IsValidOp _ _ ?a1 ?a2 _ =>
-          first [iSolveTC | fail 2 "Did not find a simplification of"a1"⋅"a2 ]
+          first [tc_solve | fail 2 "Did not find a simplification of"a1"⋅"a2 ]
         | |- proofmode_classes.IsValidGives _ ?a1 ?a2 _ =>
-          first [iSolveTC | fail 2 "Did not find a consequence of the validity of"a1"⋅"a2 ]
+          first [tc_solve | fail 2 "Did not find a consequence of the validity of"a1"⋅"a2 ]
         end
       | reduction.pm_reduce ] (* simplify the envs_delete *)
     | _ => (fail 1 "Expected exactly two hypothesis, got" Hs_raw)
