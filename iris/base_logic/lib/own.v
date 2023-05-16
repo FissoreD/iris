@@ -383,7 +383,7 @@ Section proofmode_instances.
   (* TODO: Improve this instance with generic own validity simplification
   machinery once https://gitlab.mpi-sws.org/iris/iris/-/issues/460 is fixed *)
   Global Instance combine_sep_gives_own γ b1 b2 :
-    CombineSepGives (own γ b1) (own γ b2) (✓ (b1 ⋅ b2)).
+    CombineSepGives (own γ b1) (own γ b2) (✓ (b1 ⋅ b2)) | 100.
   Proof.
     intros. rewrite /CombineSepGives -own_op own_valid.
     by apply: bi.persistently_intro.

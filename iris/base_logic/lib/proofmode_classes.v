@@ -64,3 +64,31 @@ Class HasRightId {A : cmra} (a : A) :=
   has_right_id : a ≼ a.
 
 Global Hint Mode HasRightId ! ! : typeclass_instances.
+
+Global Instance combine_sep_from_valid_gives {A : cmra} `{!inG Σ A} (a a1 a2 : A) P γ :
+  IsValidOp (iResUR Σ) a a1 a2 P →
+  CombineSepAs (own γ a1) (own γ a2) (own γ a) | 50.
+Proof.
+  case => _ Ha.
+  rewrite /CombineSepAs.
+  iIntros "[Hγ1 Hγ2]".
+  iDestruct (own_valid_2 with "Hγ1 Hγ2") as "#H✓".
+  rewrite Ha.
+  iRewrite "H✓".
+  by iSplitL "Hγ1".
+Qed.
+
+Global Instance combine_sep_gives_from_valid_op {A : cmra} `{!inG Σ A} (a1 a2 : A) P γ :
+  IsValidGives (iResUR Σ) a1 a2 P →
+  CombineSepGives (own γ a1) (own γ a2) P | 50.
+Proof.
+  rewrite /CombineSepGives /IsValidGives => HP.
+  iIntros "[Hγ1 Hγ2]".
+  iDestruct (own_valid_2 with "Hγ1 Hγ2") as "#H✓".
+  by rewrite HP.
+Qed.
+
+
+
+
+
