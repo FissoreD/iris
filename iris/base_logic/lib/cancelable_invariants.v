@@ -48,7 +48,7 @@ Section proofs.
   Proof. split; [done|]. apply _. Qed.
 
   Lemma cinv_own_valid γ q1 q2 : cinv_own γ q1 -∗ cinv_own γ q2 -∗ ⌜q1 + q2 ≤ 1⌝%Qp.
-  Proof. iIntros "H1 H2". by iCombineOwn "H1 H2" gives %H. Qed.
+  Proof. iIntros "H1 H2". by iCombine "H1 H2" gives %H. Qed.
 
   Lemma cinv_own_1_l γ q : cinv_own γ 1 -∗ cinv_own γ q -∗ False.
   Proof.
