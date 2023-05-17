@@ -4,18 +4,20 @@ From iris.proofmode Require Import proofmode.
 From iris.prelude Require Import options.
 
 
-(* Given two valid ghost elements a1 and a2, IsValidGives _ a1 a2 P computes 
-  a simplified proposition P that follows from the validity of a1 and a2 *)
+(* Given two valid ghost elements [a1] and [a2], [IsValidGives _ a1 a2 P]
+  computes a simplified proposition [P] that follows from the validity of 
+  [a1] and [a2] *)
 Class IsValidGives {A : cmra} M (a1 a2 : A) (P : uPred M) :=
   is_valid_gives : ✓ (a1 ⋅ a2) ⊢ □ P.
 
 Global Hint Mode IsValidGives ! ! ! ! - : typeclass_instances.
 
 
-(* Often we can simplify a1 ⋅ a2 to some new element a. This may make use
-  of validity, for example in the case of GSet. IsValidOp _ a a1 a2 P
-  says that a is a simplified element equivalent to a1 ⋅ a2, and P 
-  a simplified proposition following from the validity of a1 and a2 *)
+(* Often we can simplify [a1 ⋅ a2] to some new element [a]. This may itself
+  make use of validity, for example in the case of [GSet]. The class
+  [IsValidOp _ a a1 a2 P] says that [a] is a simplified element equivalent to
+  [a1 ⋅ a2], and [P] a simplified proposition following from the validity of 
+  [a1] and [a2] *)
 Class IsValidOp {A : cmra} M (a a1 a2 : A) (P : uPred M) := {
   is_valid_op_gives :> IsValidGives _ a1 a2 P ;
   is_valid_op : ✓ (a1 ⋅ a2) ⊢@{uPredI M} a ≡ a1 ⋅ a2 ;

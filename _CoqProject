@@ -95,8 +95,8 @@ iris/base_logic/proofmode.v
 iris/base_logic/base_logic.v
 iris/base_logic/algebra.v
 iris/base_logic/bupd_alt.v
-iris/base_logic/lib/proofmode_classes.v
-iris/base_logic/lib/proofmode_instances.v
+iris/base_logic/lib/combine_own_classes.v
+iris/base_logic/lib/combine_own_instances.v
 iris/base_logic/lib/validity_tactics.v
 iris/base_logic/lib/iprop.v
 iris/base_logic/lib/own.v
