@@ -6,6 +6,9 @@ From iris.prelude Require Import options.
 Set Default Proof Using "Type".
 
 
+(** We start with some general lemmas and [Proper] instances for constructing
+  instances of the [IsValidGives], [IsValidOp], [IsIncluded] and 
+  [IsIncludedOrEq] classes. *)
 Section proper.
   Context {M : ucmra} {A : cmra}.
   Implicit Types a : A.
@@ -13,6 +16,7 @@ Section proper.
   Global Instance includedI_proper_1 : 
     NonExpansive2 (includedI (M := M) (A := A)).
   Proof. solve_proper. Qed.
+
   Global Instance includedI_proper_2 : 
     Proper ((≡) ==> (≡) ==> (≡)) (includedI (M := M) (A := A)).
   Proof. solve_proper. Qed.
@@ -20,51 +24,19 @@ Section proper.
   Global Instance is_valid_gives_proper :
     Proper ((≡) ==> (≡) ==> (=) ==> (iff)) (IsValidGives (A := A) M).
   Proof. solve_proper. Qed.
-  Lemma is_valid_gives_weaken a1 a2 P1 P2 :
-    IsValidGives M a1 a2 P1 →
-    (✓ (a1 ⋅ a2) ∗ □ P1 ⊢ P2) →
-    IsValidGives M a1 a2 P2.
-  Proof.
-    rewrite /IsValidGives => HP HP1P2.
-    iIntros "#H✓".
-    rewrite -HP1P2.
-    iFrame "#". by rewrite -HP.
-  Qed.
-  Lemma is_valid_gives_true a1 a2 : IsValidGives M a1 a2 True.
-  Proof. rewrite /IsValidGives; eauto. Qed.
 
   Global Instance is_valid_op_proper :
-    Proper ((≡) ==> (≡) ==> (≡) ==> (=) ==> (iff)) (IsValidOp (A := A) M).
+    Proper ((≡) ==> (≡) ==> (≡) ==> (iff)) (IsValidOp (A := A) M).
   Proof.
-    move => a1 a1' Ha1 a2 a2' Ha2 a a' Ha P2' P2 ->.
-    split; case => H1 H2; split.
-    - by eapply is_valid_gives_proper.
+    move => a1 a1' Ha1 a2 a2' Ha2 a a' Ha.
+    split; rewrite /IsValidOp.
     - rewrite -Ha -Ha2 -Ha1 //.
-    - by eapply is_valid_gives_proper.
     - rewrite Ha2 Ha Ha1 //.
-  Qed.
-  Lemma is_valid_op_weaken a a1 a2 P1 P2 :
-    IsValidOp M a a1 a2 P1 →
-    (✓ (a1 ⋅ a2) ∗ □ P1 ⊢ P2) →
-    IsValidOp M a a1 a2 P2.
-  Proof.
-    case => HP Ha HP1P2; split; last done.
-    by eapply is_valid_gives_weaken.
   Qed.
 
   Global Instance is_included_proper : 
     Proper ((≡) ==> (≡) ==> (≡) ==> (iff)) (IsIncluded (A := A) M).
   Proof. solve_proper. Qed.
-  Lemma is_included_weaken a1 a2 P1 P2 :
-    IsIncluded M a1 a2 P1 →
-    (✓ a2 ⊢ □ P1 ∗-∗ □ P2) →
-    IsIncluded M a1 a2 P2.
-  Proof.
-    rewrite /IsIncluded => HP1a HP1P2.
-    iIntros "#H✓". iApply bi.wand_iff_trans.
-    - by iApply HP1a.
-    - by iApply HP1P2.
-  Qed.
 
   Global Instance is_included_or_eq_proper : 
     Proper ((≡) ==> (≡) ==> (≡) ==> (≡) ==> (iff)) (IsIncludedOrEq (A := A) M).
@@ -75,6 +47,31 @@ Section proper.
     - rewrite -Ha2 -Ha1 -HP1 -HP2 //.
     - revert H1; apply is_included_proper => //.
     - rewrite Ha2 Ha1 HP1 HP2 //.
+  Qed.
+
+
+  (** The following lemma's are similar to [Proper] instances, but tailored to
+    frequent usage in actual instances further on in the file. *)
+  Lemma is_valid_gives_weaken a1 a2 P1 P2 :
+    IsValidGives M a1 a2 P1 →
+    (✓ (a1 ⋅ a2) ∗ □ P1 ⊢ P2) →
+    IsValidGives M a1 a2 P2.
+  Proof.
+    rewrite /IsValidGives => HP HP1P2.
+    iIntros "#H✓".
+    rewrite -HP1P2.
+    iFrame "#". by rewrite -HP.
+  Qed.
+
+  Lemma is_included_weaken a1 a2 P1 P2 :
+    IsIncluded M a1 a2 P1 →
+    (✓ a2 ⊢ □ P1 ∗-∗ □ P2) →
+    IsIncluded M a1 a2 P2.
+  Proof.
+    rewrite /IsIncluded => HP1a HP1P2.
+    iIntros "#H✓". iApply bi.wand_iff_trans.
+    - by iApply HP1a.
+    - by iApply HP1P2.
   Qed.
   Lemma is_included_or_eq_weaken a1 a2 P1 P2 P3 P4 :
     IsIncludedOrEq M a1 a2 P1 P2 →
@@ -89,42 +86,43 @@ Section proper.
     iSplit; iIntros "[#HP|$]"; iLeft; by iApply HP1P3.
   Qed.
 
+
+  (** Below instances improve proofmode support for [includedI] *)
+  Global Instance includedI_into_pure `{CmraDiscrete A} (a b : A) : 
+    IntoPure (PROP := uPredI M) (a ≼ b)%I (a ≼ b).
+  Proof.
+    rewrite /IntoPure. iDestruct 1 as (c) "%"; iPureIntro.
+    by eexists.
+  Qed.
+
   Global Instance valid_gives_emp_valid a1 a2 P:
     AsEmpValid (IsValidGives M a1 a2 P) (✓ (a1 ⋅ a2) -∗ □ P).
   Proof.
     rewrite /AsEmpValid /IsValidGives. split;
     iIntros (HP) "H✓"; by iApply HP.
   Qed.
-End proper.
-
-Global Hint Immediate is_valid_gives_true : core.
 
 
-Global Instance includedI_into_pure `{CmraDiscrete A} (a b : A) {M} : 
-  IntoPure (PROP := uPredI M) (a ≼ b)%I (a ≼ b).
-Proof.
-  rewrite /IntoPure. iDestruct 1 as (c) "%"; iPureIntro.
-  by eexists.
-Qed.
+  (** Lemma's for [IsValidGives] *)
+  Lemma is_valid_gives_true a1 a2 : IsValidGives M a1 a2 True.
+  Proof. rewrite /IsValidGives; eauto. Qed.
 
 
-Section cmra_instances.
-  Context {A : cmra} {M : ucmra}.
-  Implicit Types a : A.
-  Implicit Types P : uPred M.
-
+  (** Lemma's for [IsValidOp] *)
   Lemma from_isop a a1 a2 :
-    IsOp a a1 a2 → IsValidOp M a a1 a2 True.
-  Proof. rewrite /IsOp => H; split; [ | rewrite H]; eauto. Qed.
+    IsOp a a1 a2 → IsValidOp M a1 a2 a.
+  Proof. rewrite /IsOp /IsValidOp => ->; eauto. Qed.
 
   Lemma is_valid_gives_comm a1 a2 P :
     IsValidGives M a1 a2 P → IsValidGives M a2 a1 P.
   Proof. rewrite /IsValidGives comm //. Qed.
 
-  Lemma is_valid_op_comm a a1 a2 P :
-    IsValidOp M a a1 a2 P → IsValidOp M a a2 a1 P.
-  Proof. case; split; rewrite /IsValidGives comm //. Qed.
+  Lemma is_valid_op_comm a a1 a2 :
+    IsValidOp M a1 a2 a → IsValidOp M a2 a1 a.
+  Proof. rewrite /IsValidOp comm => -> //. Qed.
 
+
+  (** Lemma's for [IsIncluded] *)
   Lemma is_included_merge' a1 a2 P :
     IsIncluded M a1 a2 P →
     a1 ≼ a2 ⊢ ✓ a2 -∗ □ P.
@@ -134,7 +132,21 @@ Section cmra_instances.
     by iApply "HP".
   Qed.
 
-  Global Instance unital_from_right_id a1 a2 P :
+End proper.
+
+Global Hint Immediate is_valid_gives_true : core.
+
+
+(** Next, we start giving actual instances of the classes. We start by
+  providing some utility instances that should be used/can be inferred for 
+  general [cmra]'s. *)
+Section cmra_instances.
+  Context {A : cmra} {M : ucmra}.
+  Implicit Types a : A.
+  Implicit Types P : uPred M.
+
+  (* If [a2] has a right identity, [IsIncludedOrEq] coincides with [IsIncluded] *)
+  Global Instance is_included_or_eq_from_right_id a1 a2 P :
     HasRightId a2 →
     IsIncluded M a1 a2 P →
     IsIncludedOrEq M a1 a2 P P | 100.
@@ -149,20 +161,23 @@ Section cmra_instances.
     by iExists _.
   Qed.
 
-  Global Instance merge_unital_id_free (a : A) :
+  (* If, instead, having such a right identity is contradictory, then 
+    [IsIncludedOrEq] simplifies to [False] in the [≼] case.
+    This instance should have higher priority than custom [IsIncludedOrEq] instances. *)
+  Global Instance is_included_or_eq_id_free (a : A) :
     IdFree a →
-    IsIncludedOrEq M a a False True | 5. 
-    (* this instance should have higher priority than custom IncludedMergeUnital instances *)
+    IsIncludedOrEq M a a False True | 5.
   Proof.
     split; last eauto 10.
     rewrite /IsIncluded; iIntros "#H✓". iSplit; last eauto.
     iDestruct 1 as "[%e #He]". iIntros "!>". (* now drop down to the model *)
     iStopProof. rewrite bi.intuitionistically_elim.
     split => n x Hx. uPred.unseal. repeat (rewrite /uPred_holds /=).
-    move => [Hn Ha].  eapply id_freeN_r => //.
+    move => [Hn Ha]. by eapply id_freeN_r.
   Qed.
 
-  Global Instance merge_unital_last_resort a1 a2 P1 P2:
+  (* If no better [IsIncludedOrEq] instance is found, build it the stupid way *)
+  Global Instance is_included_or_eq_last_resort a1 a2 P1 P2:
     IsIncluded M a1 a2 P1 →
     MakeOr P1 (a1 ≡ a2)%I P2 →
     IsIncludedOrEq M a1 a2 P1 P2 | 999.
@@ -174,123 +189,181 @@ Section cmra_instances.
 End cmra_instances.
 
 
+(** Similarly, we provide some simple, useful instances for general [ucmra]'s *)
 Section ucmra_instances.
   Context {A M : ucmra} (a : A).
 
-  Global Instance valid_op_unit_left :
-    IsValidOp M a ε a True | 5.
-  Proof. apply from_isop. rewrite /IsOp left_id //. Qed.
+  Global Instance valid_gives_unit_right :
+    IsValidGives M a ε True | 5.
+  Proof. eauto. Qed.
+  Global Instance valid_gives_unit_left :
+    IsValidGives M ε a True | 5.
+  Proof. eauto. Qed.
 
   Global Instance valid_op_unit_right :
-    IsValidOp M a a ε True%I | 5.
+    IsValidOp M a ε a | 5.
+  Proof. apply from_isop. rewrite /IsOp right_id //. Qed.
+  Global Instance valid_op_unit_left :
+    IsValidOp M ε a a | 5.
   Proof. apply is_valid_op_comm, _. Qed.
 
+  Global Instance is_included_unit :
+    IsIncluded M ε a True.
+  Proof.
+    rewrite /IsIncluded.
+    iIntros "#H✓". iSplit; first eauto.
+    iIntros "_". iExists a. by rewrite left_id.
+  Qed.
+
+  (* We do not provide an instance for [IsIncludedOrEq], instead we show
+    [HasRightId] holds. The [unital_from_right_id] instance will then kick in. *)
   Global Instance has_right_id :
     HasRightId a.
   Proof. exists ε. rewrite right_id //. Qed.
 End ucmra_instances.
 
 
+(** Now, we provide instances for concrete [cmra]'s, starting with numbers. *)
 From iris.algebra Require Import numbers frac dfrac.
 
 Section numbers.
   Context {M : ucmra}.
 
+  (** Instances for [natR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
+  Global Instance nat_valid_gives (a1 a2 : nat) : IsValidGives M a1 a2 True | 10.
+  Proof. eauto. Qed.
+
   Global Instance nat_valid_op (a a1 a2 : nat) : 
-    IsOp a a1 a2 → IsValidOp M a a1 a2 True | 10.
+    IsOp a a1 a2 → IsValidOp M a1 a2 a | 10.
   Proof. apply from_isop. Qed.
-  Global Instance nat_included_merge (a1 a2 : nat) : IsIncluded M a1 a2 ⌜a1 ≤ a2⌝.
+
+  Global Instance nat_is_included (a1 a2 : nat) : IsIncluded M a1 a2 ⌜a1 ≤ a2⌝.
   Proof.
     rewrite /IsIncluded.
-    iIntros "_"; iSplit. 
+    iIntros "_"; iSplit.
     - by iDestruct 1 as %?%nat_included.
     - iIntros "%". iExists (a2 - a1). iPureIntro. fold_leibniz. rewrite nat_op. lia.
   Qed.
 
-  Global Instance nat_max_valid_op (a a1 a2 : max_nat) :
-    IsOp a a1 a2 → IsValidOp M a a1 a2 True | 10.
+
+  (** Instances for [max_natR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
+  Global Instance max_nat_valid_gives (a1 a2 : max_nat) : 
+    IsValidGives M a1 a2 True | 10.
+  Proof. eauto. Qed.
+
+  Global Instance max_nat_valid_op (a a1 a2 : max_nat) :
+    IsOp a a1 a2 → IsValidOp M a1 a2 a | 10.
   Proof. apply from_isop. Qed.
-  Global Instance nat_max_included_merge (a1 a2 : nat) : IsIncluded M (MaxNat a1) (MaxNat a2) ⌜a1 ≤ a2⌝.
+
+  (* We require concrete naturals here, to give the user a pretty goal. *)
+  Global Instance max_nat_is_included (a1 a2 : nat) : 
+    IsIncluded M (MaxNat a1) (MaxNat a2) ⌜a1 ≤ a2⌝.
   Proof.
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%max_nat_included.
-    - iIntros "%". iExists (MaxNat a2). rewrite max_nat_op. iPureIntro. fold_leibniz. f_equal. lia.
+    - iIntros "%". iExists (MaxNat a2). rewrite max_nat_op.
+      iPureIntro. fold_leibniz. f_equal. lia.
   Qed.
 
-  Global Instance nat_min_valid_op (a a1 a2 : min_nat) :
-    IsOp a a1 a2 → IsValidOp M a a1 a2 True.
+
+  (** Instances for [min_natR]. *)
+  Global Instance min_nat_valid_gives (a1 a2 : min_nat) : 
+    IsValidGives M a1 a2 True | 10.
+  Proof. eauto. Qed.
+
+  Global Instance min_nat_valid_op (a a1 a2 : min_nat) :
+    IsOp a a1 a2 → IsValidOp M a1 a2 a.
   Proof. apply from_isop. Qed.
-  Global Instance nat_min_included_merge (a1 a2 : nat) : IsIncluded M (MinNat a1) (MinNat a2) ⌜a2 ≤ a1⌝.
+
+  (* We require concrete naturals here, to give the user a pretty goal. *)
+  Global Instance min_nat_is_included (a1 a2 : nat) : 
+    IsIncluded M (MinNat a1) (MinNat a2) ⌜a2 ≤ a1⌝.
   Proof.
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%min_nat_included.
-    - iIntros "%". iExists (MinNat a2). rewrite min_nat_op_min. iPureIntro. fold_leibniz. f_equal. lia.
+    - iIntros "%". iExists (MinNat a2). rewrite min_nat_op_min. 
+      iPureIntro. fold_leibniz. f_equal. lia.
   Qed.
-  Global Instance nat_min_has_right_id (a : nat) : HasRightId (MinNat a).
-  Proof. exists (MinNat a). rewrite min_nat_op_min. fold_leibniz. f_equal. lia. Qed.
+  (* Although not a [ucmra], every [min_nat] has a right_id, which gives us
+    access to the [unital_from_right_id] instance for [IsIncludedOrEq] *)
+  Global Instance nat_min_has_right_id (a : min_nat) : HasRightId a.
+  Proof.
+    exists a. destruct a as [a'].
+    rewrite min_nat_op_min. fold_leibniz. f_equal. lia.
+  Qed.
+
+
+  (** Instances for [positiveR]. *)
+  Global Instance positive_valid_gives (a1 a2 : positive) :
+    IsValidGives M a1 a2 True | 10.
+  Proof. eauto. Qed.
 
   Global Instance positive_valid_op (a a1 a2 : positive) :
-    IsOp a a1 a2 → IsValidOp M a a1 a2 True.
+    IsOp a a1 a2 → IsValidOp M a1 a2 a.
   Proof. apply from_isop. Qed.
-  Global Instance positive_included_merge (a1 a2 : positive) : IsIncluded M a1 a2 ⌜(a1 < a2)%positive⌝.
+
+  Global Instance positive_is_included (a1 a2 : positive) : 
+    IsIncluded M a1 a2 ⌜(a1 < a2)%positive⌝.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%pos_included.
-    - iIntros "%". iExists (a2 - a1)%positive. iPureIntro. fold_leibniz. rewrite pos_op_add. lia.
-  Qed.
-  Global Instance positive_included_merge_unital (a1 a2 : positive) : 
-    IsIncludedOrEq M a1 a2 ⌜(a1 < a2)%positive⌝ ⌜(a1 ≤ a2)%positive⌝ | 20.
-  Proof.
-    apply: Build_IsIncludedOrEq.
-    iIntros "_"; iSplit.
-    - iIntros "[%|->]"; eauto with lia.
-    - iIntros "%H".
-      apply Positive_as_DT.le_lteq in H as [Hl| ->]; eauto. 
+    - iIntros "%". iExists (a2 - a1)%positive. iPureIntro. 
+      fold_leibniz. rewrite pos_op_add. lia.
   Qed.
 
-  Global Instance frac_valid_op (q q1 q2 : Qp) :
-    IsOp q q1 q2 → IsValidOp M q q1 q2 ⌜q1 + q2 ≤ 1⌝%Qp%I.
+  Global Instance positive_is_included_or_eq (a1 a2 : positive) : 
+    IsIncludedOrEq M a1 a2 ⌜(a1 < a2)%positive⌝ ⌜(a1 ≤ a2)%positive⌝ | 20.
   Proof.
-    rewrite /IsOp => H; split; last by rewrite H; eauto.
-    by iDestruct 1 as %?%frac_valid.
+    constructor; first apply _.
+    iIntros "_"; iSplit.
+    - iIntros "[%|->]"; eauto with lia.
+    - iIntros "%H". iPureIntro. fold_leibniz. lia.
   Qed.
-  Global Instance frac_included_merge (q1 q2 : Qp) : IsIncluded M q1 q2 ⌜(q1 < q2)%Qp⌝.
+
+
+  (** Instances for [fracR]. *)
+  Global Instance frac_valid_gives (q1 q2 : Qp) :
+    IsValidGives M q1 q2 ⌜q1 + q2 ≤ 1⌝%Qp%I.
+  Proof. by iDestruct 1 as %?%frac_valid. Qed.
+
+  Global Instance frac_valid_op (q q1 q2 : Qp) :
+    IsOp q q1 q2 → IsValidOp M q1 q2 q.
+  Proof. apply from_isop. Qed.
+
+  Global Instance frac_is_included (q1 q2 : Qp) : 
+    IsIncluded M q1 q2 ⌜(q1 < q2)%Qp⌝.
   Proof. 
     rewrite /IsIncluded. iIntros "_" ; iSplit.
     - by iDestruct 1 as %?%frac_included.
     - iIntros "%H". apply Qp.lt_sum in H as [q' ->]. eauto.
   Qed.
-  Global Instance frac_included_merge_unital (q1 q2 : Qp) : IsIncludedOrEq M q1 q2 ⌜(q1 < q2)%Qp⌝ ⌜(q1 ≤ q2)%Qp⌝ | 20.
+
+  Global Instance frac_is_included_or_eq (q1 q2 : Qp) : 
+    IsIncludedOrEq M q1 q2 ⌜(q1 < q2)%Qp⌝ ⌜(q1 ≤ q2)%Qp⌝ | 20.
   Proof.
-    apply: Build_IsIncludedOrEq.
+    constructor; first apply _.
     iIntros "_"; iSplit.
     - iIntros "[%|->]"; eauto. iPureIntro. by apply Qp.lt_le_incl.
     - iIntros "%H".
       destruct (Qp.le_lteq q1 q2) as [[?|?] _]; eauto.
   Qed.
 
-  Global Instance dfrac_valid_op_carry (q q1 q2 : Qp) Pq :
-    IsValidOp M q q1 q2 Pq → IsValidOp M (DfracOwn q) (DfracOwn q1) (DfracOwn q2) Pq.
+
+  (** Instance for [dfracR], for all combination of constructors.
+      (Except [DfracBoth], which clients should not use? )
+      - DfracOwn, DfracOwn *)
+  Global Instance dfrac_own_valid_gives (q1 q2 : Qp) Pq :
+    IsValidGives M q1 q2 Pq → IsValidGives M (DfracOwn q1) (DfracOwn q2) Pq.
+  Proof. by rewrite /IsValidGives dfrac_validI /= frac_validI. Qed.
+
+  Global Instance dfrac_own_valid_op (q q1 q2 : Qp) :
+    IsValidOp M q1 q2 q → IsValidOp M (DfracOwn q1) (DfracOwn q2) (DfracOwn q).
   Proof.
-    move => [H1 H2]; split.
-    - rewrite /op /cmra_op /= /IsValidGives dfrac_validI /= -frac_validI //.
-    - rewrite /op /cmra_op /= dfrac_validI -frac_validI H2.
-      iIntros "->" => //.
+    rewrite /IsValidOp /op /cmra_op /= dfrac_validI -frac_validI => ->.
+    iIntros "->" => //.
   Qed.
 
-  Global Instance dfrac_valid_op_with_discarded_r (q : Qp) :
-    IsValidOp M (DfracOwn q ⋅ DfracDiscarded) (DfracOwn q) DfracDiscarded ⌜(q < 1)%Qp⌝.
-  Proof. split; [rewrite /IsValidGives dfrac_validI | ]; eauto. Qed.
-
-  Global Instance dfrac_valid_op_with_discarded_l (q : Qp) :
-    IsValidOp M (DfracOwn q ⋅ DfracDiscarded) DfracDiscarded (DfracOwn q) ⌜(q < 1)%Qp⌝.
-  Proof. apply is_valid_op_comm, _. Qed.
-
-  Global Instance dfrac_valid_op_both_discarded (q : Qp) :
-    IsValidOp M DfracDiscarded DfracDiscarded DfracDiscarded True.
-  Proof. split; eauto. Qed.
-
-  Global Instance dfrac_own_included_merge (q1 q2 : Qp) Pq : 
+  Global Instance dfrac_own_is_included (q1 q2 : Qp) Pq : 
     IsIncluded M q1 q2 Pq → 
     IsIncluded M (DfracOwn q1) (DfracOwn q2) Pq.
   Proof. 
@@ -300,7 +373,8 @@ Section numbers.
     - iDestruct 1 as %[q' ->]%frac_included%Qp.lt_sum.
       by iExists (DfracOwn q').
   Qed.
-  Global Instance dfrac_own_included_merge_unital (q1 q2 : Qp) Pq Pq' : 
+
+  Global Instance dfrac_own_is_included_or_eq (q1 q2 : Qp) Pq Pq' : 
     IsIncludedOrEq M q1 q2 Pq Pq' → 
     IsIncludedOrEq M (DfracOwn q1) (DfracOwn q2) Pq Pq' | 20.
   Proof.
@@ -310,27 +384,57 @@ Section numbers.
     - iIntros "[Hpq|%H]"; eauto. iRight. case: H => -> //.
     - iIntros "[Hpq|->]"; eauto.
   Qed.
-  Global Instance dfrac_own_disc_included_merge (q : Qp) :
+
+  (** - DfracOwn, DfracDiscarded *)
+  Global Instance dfrac_own_discarded_valid_gives (q : Qp) :
+    IsValidGives M (DfracOwn q) DfracDiscarded ⌜q < 1⌝%Qp%I.
+  Proof. rewrite /IsValidGives dfrac_validI /=. eauto. Qed.
+
+  Global Instance dfrac_discarded_own_valid_gives (q : Qp) :
+    IsValidGives M DfracDiscarded (DfracOwn q) ⌜q < 1⌝%Qp%I.
+  Proof. apply is_valid_gives_comm, _. Qed.
+
+  Global Instance dfrac_own_discarded_valid_own (q : Qp) :
+    IsValidOp M (DfracOwn q) DfracDiscarded (DfracOwn q ⋅ DfracDiscarded).
+  Proof. rewrite /IsValidOp. eauto. Qed.
+
+  Global Instance dfrac_discarded_own_valid_own (q : Qp) :
+    IsValidOp M DfracDiscarded (DfracOwn q) (DfracOwn q ⋅ DfracDiscarded).
+  Proof. apply is_valid_op_comm, _. Qed.
+
+  Global Instance dfrac_own_discarded_is_included (q : Qp) :
     IsIncluded M (DfracOwn q) DfracDiscarded False.
   Proof.
     rewrite /IsIncluded.
     iIntros "_". iSplit => //.
     iIntros "[%dq %Hdq]". destruct dq => //=.
   Qed.
-  Global Instance dfrac_disc_own_included_merge (q : Qp) :
+
+  Global Instance dfrac_discarded_own_is_included (q : Qp) :
     IsIncluded M DfracDiscarded (DfracOwn q) False.
   Proof.
     rewrite /IsIncluded.
     iIntros "_". iSplit => //.
     iIntros "[%dq %Hdq]". destruct dq => //=.
   Qed.
-  Global Instance dfrac_disc_disc_included_merge :
+
+  (** - DfracDiscarded, DfracDiscarded *)
+  Global Instance dfrac_discarded_valid_gives :
+    IsValidGives M DfracDiscarded DfracDiscarded True.
+  Proof. eauto. Qed.
+
+  Global Instance dfrac_discarded_valid_op :
+    IsValidOp M DfracDiscarded DfracDiscarded DfracDiscarded.
+  Proof. rewrite /IsValidOp. eauto. Qed.
+
+  Global Instance dfrac_discarded_is_included :
     IsIncluded M DfracDiscarded DfracDiscarded True.
   Proof.
     rewrite /IsIncluded.
-    iIntros "_". iSplit => //.
+    iIntros "_". iSplit; first eauto.
     iIntros "_". by iExists DfracDiscarded.
   Qed.
+
   Global Instance dfrac_discarded_right_id : HasRightId DfracDiscarded.
   Proof. exists DfracDiscarded => //. Qed.
 End numbers.
