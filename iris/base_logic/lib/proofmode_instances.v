@@ -653,7 +653,7 @@ Section prod.
     MakeAnd P1_lt P2_lt P_lt →
     TCIf (HasRightId x2) (TCEq P_lt_case' True%I) (TCEq P_lt_case' P1_lt) →
     TCIf (HasRightId y2) (TCEq P_lt_case P_lt_case') (MakeAnd P_lt_case' P2_lt P_lt_case) →
-    MakeOr P_lt_case (x1 ≡ x2 ∧ y1 ≡ y2)%I P_case → (* MakeOr will simplify True ∨ P ⊣⊢ True *)
+    MakeOr P_lt_case (x1 ≡ x2 ∧ y1 ≡ y2)%I P_case → (* MakeOr will simplify True ∨ P ⊣⊢ True and False ∨ P ⊣⊢ P *)
     MakeAnd P_le' P_case P_le →
     IsIncludedOrEq _ (x1, y1) (x2, y2) P_lt P_le.
   Proof.
