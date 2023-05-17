@@ -220,7 +220,7 @@ Section with_Σ.
   Qed.
 
   Lemma step_update_mono E1 E2 E3 P Q :
-    E2 ⊆ E1 → (|~{E2,E3}~> P) -∗ (P ={E2,E1}=∗ Q) -∗ |~{E1,E3}~> Q.
+    E1 ⊆ E2 → (|~{E1,E3}~> P) -∗ (P ={E1,E2}=∗ Q) -∗ |~{E2,E3}~> Q.
   Proof.
     iIntros (Hle) "HP HPQ". iIntros (σ n κ κs nt) "Hσ".
     iApply fupd_mask_weaken; [done|]. iIntros "Hclose".
@@ -258,3 +258,54 @@ Notation "|~~| P" := (|~{∅}~| P) (at level 99, P at level 200, format "'[  ' |
 Notation "|~{ E1 , E2 }~> P" := (step_update E1 E2 P) (at level 99, P at level 200, format "'[  ' |~{  E1  ,  E2  }~>  '/' P ']'").
 Notation "|~{ E }~> P" := (step_update E ∅ P) (at level 99, P at level 200, format "'[  ' |~{  E  }~>  '/' P ']'").
 Notation "|~~> P" := (|~{∅}~> P) (at level 99, P at level 200, format "'[  ' |~~>  '/' P ']'").
+
+Section with_Σ.
+  Context `{iG : irisGS_gen hlc Λ Σ}.
+
+  Class IntoStep (P Q : iProp Σ) :=
+    into_step : P ⊢ |~~> Q.
+  Instance into_step_id P: IntoStep (|~~> P) P | 0.
+  Proof. rewrite /IntoStep. by iIntros "HP". Qed.
+  Instance into_step_intro P: IntoStep P P | 1.
+  Proof. rewrite /IntoStep. by iApply step_update_intro. Qed.
+
+  Lemma modality_step_mixin :
+    modality_mixin (@step_update hlc Λ Σ iG ∅ ∅)
+                   (MIEnvId) (MIEnvTransform IntoStep).
+  Proof.
+    split; simpl.
+    - iIntros (P). by iApply step_update_intro.
+    - rewrite /IntoStep. iIntros (P Q HPQ) "HP". by iApply HPQ.
+    - iIntros "H". by iApply step_update_intro.
+    - iIntros (P Q HPQ) "HP". iApply (step_update_mono with "HP"); [done|].
+      iIntros "HP!>". by iApply HPQ.
+    - iIntros (P Q) "[HP HQ]".
+      iDestruct (step_update_comm with "HP HQ") as "HPQ"; [set_solver|].
+      by rewrite right_id_L.
+  Qed.
+  Definition modality_step :=
+    Modality _ (modality_step_mixin ).
+  Global Instance from_modality_step P :
+    FromModal True (modality_step) (|~~> P) (|~~> P) P.
+  Proof. by rewrite /FromModal /=. Qed.
+
+  Instance elim_modal_step p P Q :
+    ElimModal True p false (|==> P) P (|~~> Q) (|~~> Q).
+  Proof.
+    destruct p.
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]". iDestruct "HP" as "#HP".
+      iApply step_update_open. iMod "HP".
+      iDestruct ("HPQ" with "HP") as "HQ". iModIntro. iIntros "!>". by iModIntro.
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]". iApply step_update_open.
+      iMod "HP". iDestruct ("HPQ" with "HP") as "HQ". by iIntros "!>!>!>".
+  Qed.
+
+  Lemma my_lemma P Q :
+    (|~~> P) -∗ (P -∗ Q) -∗ |~~> Q.
+  Proof. iIntros "HP HPQ". iIntros "!>". by iApply "HPQ". Qed.
+
+  Lemma my_lemma2 P Q :
+    (|~~> P) -∗ (|==> P -∗ Q) -∗ |~~> Q.
+  Proof. iIntros "HP HPQ". iMod "HPQ". iIntros "!>". by iApply "HPQ". Qed.
+
+End with_Σ.
