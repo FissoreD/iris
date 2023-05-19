@@ -53,33 +53,45 @@ Section proper.
   (** The following lemma's are similar to [Proper] instances, but tailored to
     frequent usage in actual instances further on in the file. *)
   Lemma is_valid_gives_weaken a1 a2 P1 P2 :
-    IsValidGives M a1 a2 P1 →
     (✓ (a1 ⋅ a2) ∗ □ P1 ⊢ P2) →
+    IsValidGives M a1 a2 P1 →
     IsValidGives M a1 a2 P2.
   Proof.
-    rewrite /IsValidGives => HP HP1P2.
+    rewrite /IsValidGives => HP1P2 HP.
     iIntros "#H✓".
     rewrite -HP1P2.
     iFrame "#". by rewrite -HP.
   Qed.
 
+  Lemma is_valid_op_change a1 a2 a a' :
+    (✓ (a1 ⋅ a2) ⊢@{uPred M} a ≡ a') →
+    IsValidOp M a1 a2 a →
+    IsValidOp M a1 a2 a'.
+  Proof.
+    rewrite /IsValidOp => Ha' Ha.
+    iIntros "#H✓".
+    iAssert (a ≡ a1 ⋅ a2)%I as "Ha"; first by iApply Ha.
+    iAssert (a ≡ a')%I as "Ha'"; first by iApply Ha'.
+    iRewrite -"Ha". by iRewrite "Ha'".
+  Qed.
+
   Lemma is_included_weaken a1 a2 P1 P2 :
-    IsIncluded M a1 a2 P1 →
     (✓ a2 ⊢ □ P1 ∗-∗ □ P2) →
+    IsIncluded M a1 a2 P1 →
     IsIncluded M a1 a2 P2.
   Proof.
-    rewrite /IsIncluded => HP1a HP1P2.
+    rewrite /IsIncluded => HP1P2 HP1a.
     iIntros "#H✓". iApply bi.wand_iff_trans.
     - by iApply HP1a.
     - by iApply HP1P2.
   Qed.
   Lemma is_included_or_eq_weaken a1 a2 P1 P2 P3 P4 :
-    IsIncludedOrEq M a1 a2 P1 P2 →
     (✓ a2 ⊢ □ P1 ∗-∗ □ P3) →
     (✓ a2 ⊢ □ P2 ∗-∗ □ P4) →
+    IsIncludedOrEq M a1 a2 P1 P2 →
     IsIncludedOrEq M a1 a2 P3 P4.
   Proof.
-    case => HP1 HP1P2 HP1P3 HP2P4; split; first by eapply is_included_weaken.
+    move => HP1P3 HP2P4 [HP1 HP1P2]; split; first by eapply is_included_weaken.
     iIntros "#H✓". 
     iApply bi.wand_iff_trans; last by iApply HP2P4.
     iApply bi.wand_iff_trans; last by iApply HP1P2.
@@ -189,10 +201,13 @@ Section cmra_instances.
 End cmra_instances.
 
 
-(** Similarly, we provide some simple, useful instances for general [ucmra]'s *)
+(** Similarly, we provide some simple, useful instances for general [ucmra]'s. *)
 Section ucmra_instances.
   Context {A M : ucmra} (a : A).
 
+  (** [IsValidGives] and [IsValidOp] instances for [ucmra]'s should have a
+    higher cost than 5, to simplify combining with the unit element. This
+    is of course not necessary if the validity simplifies to [True]. *)
   Global Instance valid_gives_unit_right :
     IsValidGives M a ε True | 5.
   Proof. eauto. Qed.
@@ -230,7 +245,7 @@ Section numbers.
   Context {M : ucmra}.
 
   (** Instances for [natR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
-  Global Instance nat_valid_gives (a1 a2 : nat) : IsValidGives M a1 a2 True | 10.
+  Global Instance nat_valid_gives (a1 a2 : nat) : IsValidGives M a1 a2 True.
   Proof. eauto. Qed.
 
   Global Instance nat_valid_op (a a1 a2 : nat) : 
@@ -242,13 +257,14 @@ Section numbers.
     rewrite /IsIncluded.
     iIntros "_"; iSplit.
     - by iDestruct 1 as %?%nat_included.
-    - iIntros "%". iExists (a2 - a1). iPureIntro. fold_leibniz. rewrite nat_op. lia.
+    - iIntros "%". iExists (a2 - a1). iPureIntro.
+      fold_leibniz. rewrite nat_op. lia.
   Qed.
 
 
   (** Instances for [max_natR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
   Global Instance max_nat_valid_gives (a1 a2 : max_nat) : 
-    IsValidGives M a1 a2 True | 10.
+    IsValidGives M a1 a2 True.
   Proof. eauto. Qed.
 
   Global Instance max_nat_valid_op (a a1 a2 : max_nat) :
@@ -268,7 +284,7 @@ Section numbers.
 
   (** Instances for [min_natR]. *)
   Global Instance min_nat_valid_gives (a1 a2 : min_nat) : 
-    IsValidGives M a1 a2 True | 10.
+    IsValidGives M a1 a2 True.
   Proof. eauto. Qed.
 
   Global Instance min_nat_valid_op (a a1 a2 : min_nat) :
@@ -295,7 +311,7 @@ Section numbers.
 
   (** Instances for [positiveR]. *)
   Global Instance positive_valid_gives (a1 a2 : positive) :
-    IsValidGives M a1 a2 True | 10.
+    IsValidGives M a1 a2 True.
   Proof. eauto. Qed.
 
   Global Instance positive_valid_op (a a1 a2 : positive) :
@@ -440,57 +456,73 @@ Section numbers.
 End numbers.
 
 
+(** Instances for [gsetR] and [gset_disjR]. *)
 From iris.algebra Require Import gset.
 
 Section sets.
   Context `{Countable K} {M : ucmra}.
   Implicit Types X Y Z : gset K.
 
-  Global Instance set_is_valid_op X Y Z :
-    IsOp X Y Z → IsValidOp M X Y Z True | 10.
+  (** Instance for [gsetR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
+  Global Instance gset_valid_gives X Y Z : IsValidGives M X Y True.
+  Proof. eauto. Qed.
+
+  Global Instance gset_valid_op X Y Z : IsOp X Y Z → IsValidOp M Y Z X | 10.
   Proof. apply from_isop. Qed.
-  Global Instance set_included_merge (a1 a2 : gset K) : IsIncluded M a1 a2 ⌜a1 ⊆ a2⌝.
+
+  Global Instance gset_is_included X Y : IsIncluded M X Y ⌜X ⊆ Y⌝.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gset_included. 
-    - iIntros "%". iExists a2. iPureIntro. set_solver.
+    - iIntros "%". iExists Y. iPureIntro. set_solver.
   Qed.
 
-  Global Instance set_disj_is_valid_op X Y :
-    IsValidOp M (GSet (X ∪ Y)) (GSet X) (GSet Y) ⌜X ## Y⌝ | 20.
+
+  (** Instance for [gset_disjR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
+  Global Instance gset_disj_valid_gives X Y : 
+    IsValidGives M (GSet X) (GSet Y) ⌜X ## Y⌝ | 10.
+  Proof. by iDestruct 1 as %?%gset_disj_valid_op. Qed.
+
+  Global Instance gset_disj_valid_op X Y :
+    IsValidOp M (GSet X) (GSet Y) (GSet (X ∪ Y)) | 10.
   Proof.
-    split; iDestruct 1 as %?%gset_disj_valid_op; first done.
+    rewrite /IsValidOp is_valid_gives.
+    iDestruct 1 as %?.
     by rewrite gset_disj_union.
   Qed.
-  Global Instance set_disj_valid_op_emp_l X Y :
-    IsValidOp M (GSet X) (GSet X) (GSet ∅) True | 10.
-  Proof. eapply is_valid_op_weaken; [tc_solve | eauto ]. Qed.
-  Global Instance set_disj_valid_op_emp_r X Y :
-    IsValidOp M (GSet X) (GSet ∅) (GSet X) True | 10.
-  Proof. apply is_valid_op_comm, _. Qed.
-  Global Instance disj_set_included_merge (a1 a2 : gset K) : IsIncluded M (GSet a1) (GSet a2) ⌜a1 ⊆ a2⌝.
+
+  Global Instance gset_disj_is_included X Y : 
+    IsIncluded M (GSet X) (GSet Y) ⌜X ⊆ Y⌝.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gset_disj_included. 
     - iIntros "%".
-      iExists (GSet (a2 ∖ a1)).
+      iExists (GSet (Y ∖ X)).
       iPureIntro. rewrite gset_disj_union; [|set_solver]. 
       f_equiv. by apply union_difference_L.
   Qed.
+
+  (** TODO: I used to give explicit instances for combining with
+     the empty set, but that does not seem necessary? *)
 End sets.
 
 
+(** Instances for [gmultisetR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
 From iris.algebra Require Import gmultiset.
 
 Section multisets.
   Context `{Countable K} {M : ucmra}.
   Implicit Types X Y Z : gmultiset K.
 
-  Global Instance multiset_is_valid_op X Y Z :
-    IsOp X Y Z → IsValidOp M X Y Z True | 10.
+  Global Instance gmultiset_valid_gives X Y : IsValidGives M X Y True.
+  Proof. eauto. Qed.
+
+  Global Instance gmultiset_valid_op X Y Z :
+    IsOp X Y Z → IsValidOp M Y Z X | 10.
   Proof. apply from_isop. Qed.
-  Global Instance multiset_included_merge X Y : IsIncluded M X Y ⌜X ⊆ Y⌝.
-  Proof. 
+
+  Global Instance gmultiset_is_included X Y : IsIncluded M X Y ⌜X ⊆ Y⌝.
+  Proof.
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gmultiset_included. 
     - iIntros "%". iExists (Y ∖ X). iPureIntro. fold_leibniz. rewrite gmultiset_op. multiset_solver.
@@ -498,35 +530,44 @@ Section multisets.
 End multisets.
 
 
+(** Instances for [coPsetR] and [coPset_disjR]. *)
 From iris.algebra Require Import coPset.
 
 Section coPsets.
   Context {M : ucmra}.
   Implicit Types X Y Z : coPset.
 
-  Global Instance coPset_is_valid_op X Y Z :
-    IsOp X Y Z → IsValidOp M X Y Z True | 10.
+  (** Instances for [coPsetR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
+  Global Instance coPset_valid_gives X Y : IsValidGives M X Y True.
+  Proof. eauto. Qed.
+
+  Global Instance coPset_valid_op X Y Z :
+    IsOp X Y Z → IsValidOp M Y Z X | 10.
   Proof. apply from_isop. Qed.
-  Global Instance coPset_included_merge X Y : IsIncluded M X Y ⌜X ⊆ Y⌝.
+
+  Global Instance coPset_is_included X Y : IsIncluded M X Y ⌜X ⊆ Y⌝.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%coPset_included. 
     - iIntros "%". iExists Y. iPureIntro. set_solver.
   Qed.
 
-  Global Instance coPset_disj_is_valid_op X Y :
-    IsValidOp M (CoPset (X ∪ Y)) (CoPset X) (CoPset Y) ⌜X ## Y⌝ | 20.
+
+  (** Instances for [coPset_disjR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
+
+  Global Instance coPset_disj_valid_gives X Y :
+    IsValidGives M (CoPset X) (CoPset Y) ⌜X ## Y⌝ | 10.
+  Proof. by iDestruct 1 as %?%coPset_disj_valid_op. Qed.
+
+  Global Instance coPset_disj_valid_op X Y :
+    IsValidOp M (CoPset X) (CoPset Y) (CoPset (X ∪ Y)) | 10.
   Proof.
-    split; iDestruct 1 as %?%coPset_disj_valid_op; first done.
-    by rewrite coPset_disj_union.
+    rewrite /IsValidOp is_valid_gives.
+    iDestruct 1 as %?. by rewrite coPset_disj_union.
   Qed.
-  Global Instance coPset_disj_valid_op_unit_l X Y :
-    IsValidOp M (CoPset X) (CoPset X) (CoPset ∅) True | 10.
-  Proof. eapply is_valid_op_weaken; [tc_solve | eauto]. Qed.
-  Global Instance coPset_disj_valid_op_unit_r X Y :
-    IsValidOp M (CoPset X) (CoPset ∅) (CoPset X) True | 10.
-  Proof. apply is_valid_op_comm, _. Qed.
-  Global Instance disj_coPset_included_merge X Y : IsIncluded M (CoPset X) (CoPset Y) ⌜X ⊆ Y⌝.
+
+  Global Instance coPset_disj_is_included X Y : 
+    IsIncluded M (CoPset X) (CoPset Y) ⌜X ⊆ Y⌝.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%coPset_disj_included. 
@@ -535,7 +576,13 @@ Section coPsets.
       iPureIntro. rewrite coPset_disj_union; [|set_solver]. 
       f_equiv. by apply union_difference_L.
   Qed.
+
+  (** TODO:  I used to give explicit instances for combining with
+     the empty set, but that does not seem necessary? *)
 End coPsets.
+
+
+(** Next, we start giving instances for the [cmra] combinators. *)
 
 
 Section optional.
