@@ -111,33 +111,32 @@ Implicit Types l : loc.
 Lemma step_get_lb_get E :
   ⊢ |~{E}~| steps_lb 0.
 Proof.
+  rewrite step_update.step_get_unseal.
   iIntros (? m???) "(?&?&Hauth)".
   iDestruct (primitive_laws.steps_lb_get with "Hauth") as "#Hlb".
   iDestruct (primitive_laws.steps_lb_le with "Hlb") as "$"; [lia|].
-  iFrame. iApply fupd_mask_intro; [set_solver|]. iIntros "Hclose".
-  iMod "Hclose". by iModIntro.
+  by iFrame.
 Qed.
 
 Lemma step_update_lb_update E n :
   steps_lb n -∗ |~{E}~> (steps_lb (S n)).
 Proof.
+  rewrite step_update.step_update_unseal.
   iIntros "Hlb" (? m???) "(?&?&Hauth)".
   iDestruct (primitive_laws.steps_lb_valid with "Hauth Hlb") as %Hvalid.
-  iApply fupd_mask_intro; [set_solver|]. iIntros "Hclose". iFrame=> /=.
-  iIntros "!>!>!>".
-  iApply step_fupdN_intro; [done|].
+  iFrame=> /=. iIntros "!>!>!>!>". iApply step_fupdN_intro; [done|].
   iIntros "!>" (??) "(?&?&Hauth)".
   iDestruct (primitive_laws.steps_lb_get with "Hauth") as "#Hlb'".
-  iDestruct (steps_lb_le _ (S n) with "Hlb'") as "Hlb''"; [lia|].
-  iMod "Hclose". iFrame. done.
+  iDestruct (steps_lb_le _ (S n) with "Hlb'") as "Hlb''"; [lia|]. by iFrame.
 Qed.
 
-Lemma step_update_lb_step E1 E2 P n :
-  steps_lb n -∗ (|={E1,E2}=> |={∅}▷=>^(S n) |={E2,E1}=> P) -∗ |~{E1,E2}~> P.
+Lemma step_update_lb_step E P n :
+  steps_lb n -∗ (|={∅}▷=>^(S n) P) -∗ |~{E}~> P.
 Proof.
+  rewrite step_update.step_update_unseal.
   iIntros "Hlb HP" (? m???) "(?&?&Hauth)".
   iDestruct (primitive_laws.steps_lb_valid with "Hauth Hlb") as %Hvalid.
-  iMod "HP". iModIntro. iFrame.
+  iModIntro. iFrame.
   iApply (step_fupdN_le (S n))=> /=; [lia|done|].
   iApply (step_fupdN_wand with "HP").
   iIntros "!> HP" (??) "(?&?&Hauth)".
@@ -157,20 +156,19 @@ Lemma wp_lb_update s n E e Φ :
   WP e @ s; E {{ Φ }}.
 Proof.
   iIntros (Hval) "Hlb Hwp".
-  iApply (wp_step_update with "[Hlb] Hwp");
-    [done|by iApply step_update_lb_update].
+  iApply (wp_step_update with "[Hlb] Hwp").
+  by iApply step_update_lb_update.
 Qed.
 
-Lemma wp_step_fupdN_lb s n E1 E2 e P Φ :
+Lemma wp_step_fupdN_lb s n E e P Φ :
   TCEq (to_val e) None →
-  E2 ⊆ E1 →
   steps_lb n -∗
-  (|={E1∖E2,∅}=> |={∅}▷=>^(S n) |={∅,E1∖E2}=> P) -∗
-  WP e @ s; E2 {{ v, P ={E1}=∗ Φ v }} -∗
-  WP e @ s; E1 {{ Φ }}.
+  (|={∅}▷=>^(S n) P) -∗
+  WP e @ s; E {{ v, P ={E}=∗ Φ v }} -∗
+  WP e @ s; E {{ Φ }}.
 Proof.
-  iIntros (He HE) "Hlb HP Hwp".
-  iApply (wp_step_update with "[Hlb HP] Hwp"); [done|].
+  iIntros (He) "Hlb HP Hwp".
+  iApply (wp_step_update with "[Hlb HP] Hwp").
   by iApply (step_update_lb_step with "Hlb").
 Qed.
 

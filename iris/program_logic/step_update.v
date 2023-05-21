@@ -2,6 +2,43 @@ From iris.prelude Require Import options.
 From iris.program_logic Require Import weakestpre.
 From iris.proofmode Require Import tactics.
 
+Definition step_gen `{!irisGS_gen hlc Λ Σ} E P : iProp Σ :=
+  ∀ σ n κ κs nt,
+    state_interp σ n (κ ++ κs) nt ={E}=∗ state_interp σ n (κ ++ κs) nt ∗
+    (P σ n κ κs nt).
+
+Local Definition step_get_def `{!irisGS_gen hlc Λ Σ} E (P : iProp Σ) : iProp Σ :=
+  step_gen E (λ _ _ _ _ _, |={E}=> P)%I.
+Local Definition step_get_aux : seal (@step_get_def).
+Proof. by eexists. Qed.
+Definition step_get := step_get_aux.(unseal).
+Global Arguments step_get {hlc Λ Σ _}.
+Local Lemma step_get_unseal `{!irisGS_gen hlc Λ Σ} : step_get = step_get_def.
+Proof. rewrite -step_get_aux.(seal_eq) //. Qed.
+
+Notation "|~{ E }~| P" := (step_get E P)%I
+  (at level 99, P at level 200, format "'[  ' |~{  E  }~|  '/' P ']'").
+Notation "|~~| P" := (|~{∅}~| P)%I
+  (at level 99, P at level 200, format "'[  ' |~~|  '/' P ']'").
+
+Local Definition step_update_def `{!irisGS_gen hlc Λ Σ} E (P : iProp Σ) : iProp Σ :=
+  step_gen E (λ σ1 n κ κs nt,
+                (|={∅}▷=>^(S (num_laters_per_step n))
+                   ∀ σ2 nt', (state_interp σ2 (S n) κs (nt' + nt) ={E}=∗
+                              state_interp σ2 (S n) κs (nt' + nt) ∗ P)))%I.
+Local Definition step_update_aux : seal (@step_update_def).
+Proof. by eexists. Qed.
+Definition step_update := step_update_aux.(unseal).
+Global Arguments step_update {hlc Λ Σ _}.
+Local Lemma step_update_unseal `{!irisGS_gen hlc Λ Σ} :
+  step_update = step_update_def.
+Proof. rewrite -step_update_aux.(seal_eq) //. Qed.
+
+Notation "|~{ E }~> P" := (step_update E P)%I
+  (at level 99, P at level 200, format "'[  ' |~{  E  }~>  '/' P ']'").
+Notation "|~~> P" := (|~{∅}~> P)%I
+  (at level 99, P at level 200, format "'[  ' |~~>  '/' P ']'").
+
 Section with_Σ.
   Context `{!irisGS_gen hlc Λ Σ}.
 
@@ -13,94 +50,75 @@ Section with_Σ.
     iMod "HR". iMod "HQ". iIntros "!>!>". iMod "HR". iMod "HQ". by iFrame.
   Qed.
 
-  Definition step_get E1 E2 P : iProp Σ :=
-    ∀ σ n κ κs nt, state_interp σ n (κ ++ κs) nt ={E1,E2}=∗ state_interp σ n (κ ++ κs) nt ∗
-                 (P σ n κ κs nt).
-
-  Notation "|~{ E1 , E2 }~| P" := (step_get E1 E2 (λ _ _ _ _ _, |={E2,E1}=> P))%I
-    (at level 99, P at level 200, format "'[  ' |~{  E1  ,  E2  }~|  '/' P ']'").
-  Notation "|~{ E }~| P" := (|~{E,∅}~| P)
-    (at level 99, P at level 200, format "'[  ' |~{  E  }~|  '/' P ']'").
-  Notation "|~~| P" := (|~{∅}~| P)
-    (at level 99, P at level 200, format "'[  ' |~~|  '/' P ']'").
-
   Lemma wp_step_get s E e P Φ :
     TCEq (to_val e) None →
     (|~{E}~| P) -∗
     (P -∗ WP e @ s; E {{ Φ }}) -∗
     WP e @ s; E {{ Φ }}.
   Proof.
+    rewrite step_get_unseal.
     iIntros (Hval) "HP Hwp". rewrite !wp_unfold /wp_pre /=.
     destruct (to_val e); [by inversion Hval|].
     iIntros (σ1 ns κ κs nt) "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]". iMod "HP".
+    iMod ("HP" with "Hσ") as "[Hσ HP]".
+    iMod "HP".
     by iDestruct ("Hwp" with "HP Hσ") as "Hwp".
   Qed.
 
   Lemma step_get_intro E P :
     P -∗ |~{E}~| P.
-  Proof.
-    iIntros "HP" (σ n κ κs nt) "Hσ". iApply fupd_mask_intro; [set_solver|].
-    iIntros "Hclose". by iFrame.
-  Qed.
-
-  Lemma step_get_open E1 E2 E3 P :
-    (|={E1,E2}=> |~{E2,E3}~| (|={E2, E1}=> P)) -∗ |~{E1,E3}~| P.
-  Proof.
-    iIntros "Hstep" (σ n κ κs nt) "Hσ".
-    iMod "Hstep". iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
-    iIntros "!>". iFrame=> /=. by iMod "Hstep".
-  Qed.
+  Proof. rewrite step_get_unseal. iIntros "HP" (σ n κ κs nt) "Hσ". by iFrame. Qed.
 
   Lemma step_get_comm E P Q :
     (|~{E}~| P) -∗ (|~{E}~| Q) -∗ |~{E}~| P ∗ Q.
   Proof.
+    rewrite step_get_unseal.
     iIntros "HP HQ" (σ n κ κs nt) "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]". iMod "HP".
-    iMod ("HQ" with "Hσ") as "[Hσ HQ]". iMod "HQ".
-    iFrame. iApply fupd_mask_intro; [set_solver|]. by iMod 1.
-  Qed.
-
-  (* TODO: Not sure what to call this. *)
-  Lemma step_get_impl E P Q :
-    (|~{E}~| P) -∗ (P -∗ |~{E}~| Q) -∗ |~{E}~| Q.
-  Proof.
-    iIntros "HP HPQ" (σ n κ κs nt) "Hσ". iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iMod "HP". by iMod ("HPQ" with "HP Hσ") as "HPQ".
+    iMod ("HP" with "Hσ") as "[Hσ HP]".
+    iMod ("HQ" with "Hσ") as "[Hσ HQ]".
+    iMod "HP". iMod "HQ". by iFrame.
   Qed.
 
   Lemma step_get_mono E P Q :
     (P -∗ Q) -∗ (|~{E}~| P) -∗ |~{E}~| Q.
   Proof.
-    iIntros "HPQ HP". iApply (step_get_impl with "HP").
-    iIntros "HP". iApply step_get_intro. by iApply "HPQ".
+    rewrite step_get_unseal.
+    iIntros "HPQ HP" (σ n κ κs nt) "Hσ".
+    iMod ("HP" with "Hσ") as "[Hσ HP]". iIntros "!>". iFrame. by iApply "HPQ".
   Qed.
 
-  Definition step_update E1 E2 P : iProp Σ :=
-    step_get E1 E2 (λ σ1 n κ κs nt,
-                      (|={∅}▷=>^(S (num_laters_per_step n))
-                         ∀ σ2 nt', (state_interp σ2 (S n) κs (nt' + nt) ={E2,E1}=∗
-                                    state_interp σ2 (S n) κs (nt' + nt) ∗ P)))%I.
-
-  (* Local Definition step_update_aux : seal (@step_update_def). Proof. by eexists. Qed. *)
-  (* Definition step_update := step_update_aux.(unseal). *)
-  (* Local Lemma step_update_unseal : step_update = step_update_def. *)
-  (* Proof. rewrite -step_update_aux.(seal_eq) //. Qed. *)
-
-  Notation "|~{ E1 , E2 }~> P" := (step_update E1 E2 P)
-    (at level 99, P at level 200, format "'[  ' |~{  E1  ,  E2  }~>  '/' P ']'").
-  Notation "|~{ E }~> P" := (step_update E ∅ P)
-    (at level 99, P at level 200, format "'[  ' |~{  E  }~>  '/' P ']'").
-  Notation "|~~> P" := (|~{∅}~> P)
-    (at level 99, P at level 200, format "'[  ' |~~>  '/' P ']'").
-
-  Lemma wp_step_update_strong s E1 E2 e P Φ :
-    TCEq (to_val e) None → E2 ⊆ E1 →
-    (|~{E1,E2}~> P) -∗
-    WP e @ s; E2 {{ v, P ={E1}=∗ Φ v }} -∗
-    WP e @ s; E1 {{ Φ }}.
+  Lemma fupd_step_get_fupd E P : (|={E}=> |~{E}~| |={E}=> P) -∗ |~{E}~| P.
   Proof.
-    iIntros (Hval HE) "Hstep Hwp". rewrite !wp_unfold /wp_pre /=.
+    rewrite step_get_unseal.
+    iIntros "Hstep" (σ n κ κs nt) "Hσ".
+    iMod "Hstep". iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
+    iIntros "!>". iFrame=> /=.
+    by iMod "Hstep".
+  Qed.
+
+  Lemma step_get_fupd E P : (|~{E}~| |={E}=> P) -∗ |~{E}~| P.
+  Proof. iIntros "HP". iApply fupd_step_get_fupd. by iModIntro. Qed.
+
+  Lemma fupd_step_get E P : (|={E}=> |~{E}~| P) -∗ |~{E}~| P.
+  Proof.
+    iIntros "HP". iApply fupd_step_get_fupd. iMod "HP".
+    iModIntro. iApply (step_get_mono with "[] HP"). by iIntros "HP!>".
+  Qed.
+
+  Global Instance step_get_except0 E P : IsExcept0 (|~{E}~| P).
+  Proof.
+    rewrite /IsExcept0. iIntros "Hstep". iApply fupd_step_get.
+    iApply is_except_0. by iMod "Hstep".
+  Qed.
+
+  Lemma wp_step_update s E e P Φ :
+    TCEq (to_val e) None →
+    (|~{E}~> P) -∗
+    WP e @ s; E {{ v, P ={E}=∗ Φ v }} -∗
+    WP e @ s; E {{ Φ }}.
+  Proof.
+    rewrite step_update_unseal.
+    iIntros (Hval) "Hstep Hwp". rewrite !wp_unfold /wp_pre /=.
     destruct (to_val e); [by inversion Hval|].
     iIntros (σ1 n κ κs nt) "Hσ".
     iMod ("Hstep" with "Hσ") as "[Hσ Hstep]"=> /=.
@@ -120,80 +138,25 @@ Section with_Σ.
     iIntros (v) "H". by iApply ("H").
   Qed.
 
-  Lemma step_get_step_update E1 E2 P Q :
-    (|~{E1}~| P) -∗
-    (P -∗ |~{E1,E2}~> Q) -∗
-    |~{E1,E2}~> Q.
+  Lemma step_update_later E P :
+    ▷ P -∗ |~{E}~> P.
   Proof.
-    iIntros "HP HPQ" (σ n κ κs nt) "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]". iMod "HP".
-    iMod ("HPQ" with "HP Hσ") as "[Hσ HPQ]". by iFrame.
+    rewrite step_update_unseal.
+    iIntros "HP". iIntros (σ n κ κs nt) "Hσ".
+    iFrame. iApply step_fupdN_intro; [set_solver|].
+    iIntros "!>!>!>" (σ2 nt') "Hσ". by iFrame.
   Qed.
 
-  Lemma step_update_frame E1 E2 Ef P :
-    E2 ⊆ E1 → E1 ## Ef →
-    (|~{E1,E2}~> P) -∗
-    (|~{E1 ∪ Ef,E2 ∪ Ef}~> P).
-  Proof.
-    iIntros (Hle Hidjs) "Hstep".
-    iIntros (σ n κ κs nt) "Hσ".
-    iDestruct ("Hstep" with "Hσ") as "Hstep".
-    iDestruct (fupd_mask_frame_r E1 E2 Ef with "Hstep") as "Hstep"; [done|].
-    iMod "Hstep" as "[Hσ Hstep]".
-    iApply fupd_mask_intro; [done|].
-    iIntros "Hclose".
-    iFrame=> /=.
-    iMod "Hstep". iIntros "!>!>". iMod "Hstep". iIntros "!>".
-    iApply (step_fupdN_wand with "Hstep").
-    iIntros "Hstep" (σ2 nt') "Hσ".
-    iDestruct ("Hstep" with "Hσ") as "Hstep".
-    iMod "Hclose".
-    iApply fupd_mask_frame_r; [set_solver|].
-    iMod "Hstep".
-    iModIntro. done.
-  Qed.
+  Lemma step_update_intro E P : P -∗ |~{E}~> P.
+  Proof. iIntros "HP". by iApply step_update_later. Qed.
 
-  Lemma wp_step_update s E1 E2 e P Φ :
-    TCEq (to_val e) None → E2 ⊆ E1 →
-    (|~{E1∖E2}~> P) -∗
-    WP e @ s; E2 {{ v, P ={E1}=∗ Φ v }} -∗
-    WP e @ s; E1 {{ Φ }}.
+  Lemma step_update_comm E P Q :
+    (|~{E}~> P) -∗ (|~{E}~> Q) -∗ |~{E}~> P ∗ Q.
   Proof.
-    iIntros (Hval HE) "Hstep Hwp".
-    iDestruct (step_update_frame (E1∖E2) ∅ (E2) with "Hstep") as "Hstep";
-      [set_solver|set_solver|].
-    replace (E1 ∖ E2 ∪ E2) with E1; last first.
-    { rewrite difference_union_L. set_solver. }
-    replace (∅ ∪ E2) with E2 by set_solver.
-    by iApply (wp_step_update_strong with "Hstep").
-  Qed.
-
-  Lemma step_update_intro E1 E2 P :
-    E2 ⊆ E1 → P -∗ |~{E1,E2}~> P.
-  Proof.
-    iIntros (HE) "HP". iIntros (σ n κ κs nt) "Hσ". iApply fupd_mask_intro; [set_solver|].
-    iIntros "Hclose". iFrame. iApply step_fupdN_intro; [set_solver|].
-    iIntros "!>!>" (σ2 nt') "Hσ". iMod "Hclose". iFrame. done.
-  Qed.
-
-  Lemma step_update_frame_l E1 E2 P Q :
-    (|~{E1,E2}~> P) -∗ (|={E1}=> Q) -∗ |~{E1,E2}~> (P ∗ Q).
-  Proof.
-    iIntros "HP HQ" (σ n κ κs nt) "Hσ".
-    iMod "HQ". iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iIntros "!>". iFrame=> /=.
-    iMod "HP". iIntros "!>!>". iMod "HP". iIntros "!>".
-    iApply (step_fupdN_wand with "HP").
-    iIntros "HP" (σ2 nt') "Hσ". iMod ("HP" with "Hσ") as "[Hσ HP]". by iFrame.
-  Qed.
-
-  Lemma step_update_comm E1 E2 P Q :
-    E1 ## E2 → (|~{E1}~> P) -∗ (|~{E2}~> Q) -∗ |~{E1 ∪ E2}~> P ∗ Q.
-  Proof.
-    iIntros (HE) "HP HQ". iIntros (σ n κ κs nt) "Hσ".
+    rewrite step_update_unseal.
+    iIntros "HP HQ". iIntros (σ n κ κs nt) "Hσ".
     iDestruct ("HP" with "Hσ") as "HP".
-    iDestruct (fupd_mask_frame_r E1 ∅ E2 with "HP") as "HP"; [done|].
-    iMod "HP" as "[Hσ HP]". rewrite union_empty_l_L.
+    iMod "HP" as "[Hσ HP]".
     iMod ("HQ" with "Hσ") as "[Hσ HQ]".
     iIntros "!>". iFrame=> /=.
     iMod "HP". iMod "HQ". iIntros "!>!>". iMod "HP". iMod "HQ". iIntros "!>".
@@ -202,34 +165,13 @@ Section with_Σ.
     iIntros "[HP HQ]" (σ2 nt') "Hσ".
     iMod ("HQ" with "Hσ") as "[Hσ HQ]".
     iDestruct ("HP" with "Hσ") as "HP".
-    iDestruct (fupd_mask_frame_r ∅ E1 E2 with "HP") as "HP"; [set_solver|].
-    rewrite union_empty_l_L.
-    iMod "HP". iFrame. done.
+    iMod "HP". by iFrame.
   Qed.
 
-  (* TODO: Not sure if this is important to keep *)
-  Lemma step_update_impl E1 E2 P Q :
-    (|~{E2,E2}~> P) -∗ (|~{E1,E2}~> P -∗ Q) -∗ |~{E1,E2}~> Q.
+  Lemma step_update_mono E P Q : (P -∗ Q) -∗ (|~{E}~> P) -∗ |~{E}~> Q.
   Proof.
-    iIntros "HP HPQ" (σ n κ κs nt) "Hσ".
-    iMod ("HPQ" with "Hσ") as "[Hσ HPQ]".
-    iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iIntros "!>". iFrame=> /=.
-    iMod "HP". iMod "HPQ". iIntros "!>!>". iMod "HP". iMod "HPQ". iIntros "!>".
-    iAssert (|={∅}▷=>^(num_laters_per_step n) _ ∗ _)%I with "[HPQ HP]" as "H".
-    { iApply step_fupdN_empty_sep. iFrame. }
-    iApply (step_fupdN_wand with "H").
-    iIntros "[HP HPQ]" (σ2 nt') "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iMod ("HPQ" with "Hσ") as "[Hσ HPQ]".
-    iFrame. by iApply "HPQ".
-  Qed.
-
-  Lemma step_update_mono E1 E2 E3 P Q :
-    E1 ⊆ E2 → (|~{E1,E3}~> P) -∗ (P ={E1,E2}=∗ Q) -∗ |~{E2,E3}~> Q.
-  Proof.
-    iIntros (Hle) "HP HPQ". iIntros (σ n κ κs nt) "Hσ".
-    iApply fupd_mask_weaken; [done|]. iIntros "Hclose".
+    rewrite step_update_unseal.
+    iIntros "HPQ HP". iIntros (σ n κ κs nt) "Hσ".
     iMod ("HP" with "Hσ") as "[Hσ HP]".
     iIntros "!>". iFrame=> /=.
     iMod "HP". iIntros "!>!>". iMod "HP". iIntros "!>".
@@ -238,13 +180,13 @@ Section with_Σ.
     iApply (step_fupdN_wand with "H").
     iIntros "[HPQ HP]" (??) "Hσ".
     iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iMod ("HPQ" with "HP") as "HQ".
+    iDestruct ("HPQ" with "HP") as "HQ".
     by iFrame.
   Qed.
 
-  Lemma step_update_open E1 E2 E3 P :
-    (|={E1,E2}=> |~{E2,E3}~> (|={E2, E1}=> P)) -∗ |~{E1,E3}~> P.
+  Lemma fupd_step_update_fupd E P : (|={E}=> |~{E}~> |={E}=> P) -∗ |~{E}~> P.
   Proof.
+    rewrite step_update_unseal.
     iIntros "Hstep" (σ n κ κs nt) "Hσ".
     iMod "Hstep". iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
     iIntros "!>". iFrame=> /=.
@@ -255,80 +197,134 @@ Section with_Σ.
     iMod "Hstep". iModIntro. by iFrame.
   Qed.
 
-  Lemma step_update_weaken E1 E2 P :
-    E2 ⊆ E1 → (|~{E2}~> P) -∗ |~{E1}~> P.
+  Lemma step_update_fupd E P : (|~{E}~> |={E}=> P) -∗ |~{E}~> P.
+  Proof. iIntros "HP". iApply fupd_step_update_fupd. by iModIntro. Qed.
+
+  Lemma fupd_step_update E P : (|={E}=> |~{E}~> P) -∗ |~{E}~> P.
   Proof.
-    intros HE.
-    iIntros "Hstep" (σ n κ κs nt) "Hσ".
-    iApply (fupd_mask_weaken E2); [done|].
-    iIntros "Hclose".
-    iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
-    iIntros "!>". iFrame=> /=.
-    iMod "Hstep". iIntros "!>!>". iMod "Hstep". iIntros "!>".
-    iApply (step_fupdN_wand with "Hstep").
-    iIntros "Hstep" (??) "Hσ".
-    iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
-    iMod "Hclose". iIntros "!>". by iFrame.
+    iIntros "HP". iApply fupd_step_update_fupd. iMod "HP".
+    iModIntro. iApply (step_update_mono with "[] HP"). by iIntros "HP!>".
+  Qed.
+
+  Global Instance step_update_except0 E P : IsExcept0 (|~{E}~> P).
+  Proof.
+    rewrite /IsExcept0. iIntros "Hstep". iApply fupd_step_update.
+    iApply is_except_0. by iMod "Hstep".
   Qed.
 
 End with_Σ.
 
-Notation "|~{ E1 , E2 }~| P" := (step_get E1 E2 (λ _ _ _ _ _, |={E2,E1}=> P))%I (at level 99, P at level 200, format "'[  ' |~{  E1  ,  E2  }~|  '/' P ']'").
-Notation "|~{ E }~| P" := (|~{E,∅}~| P) (at level 99, P at level 200, format "'[  ' |~{  E  }~|  '/' P ']'").
-Notation "|~~| P" := (|~{∅}~| P) (at level 99, P at level 200, format "'[  ' |~~|  '/' P ']'").
-
-Notation "|~{ E1 , E2 }~> P" := (step_update E1 E2 P) (at level 99, P at level 200, format "'[  ' |~{  E1  ,  E2  }~>  '/' P ']'").
-Notation "|~{ E }~> P" := (step_update E ∅ P) (at level 99, P at level 200, format "'[  ' |~{  E  }~>  '/' P ']'").
-Notation "|~~> P" := (|~{∅}~> P) (at level 99, P at level 200, format "'[  ' |~~>  '/' P ']'").
-
 Section with_Σ.
   Context `{iG : irisGS_gen hlc Λ Σ}.
 
-  Class IntoStep (P Q : iProp Σ) :=
-    into_step : P ⊢ |~~> Q.
-  Global Instance into_step_id P: IntoStep (|~~> P) P | 0.
+  Class IntoPreStep E (P Q : iProp Σ) := into_pre_step : P ⊢ |~{E}~| Q.
+  Global Instance into_pre_step_id E P : IntoPreStep E (|~{E}~| P) P | 0.
+  Proof. rewrite /IntoPreStep. by iIntros "HP". Qed.
+  Global Instance into_pre_step_intro E P : IntoPreStep E P P | 1.
+  Proof. rewrite /IntoPreStep. by iApply step_get_intro. Qed.
+
+  Lemma modality_pre_step_mixin E :
+    modality_mixin (@step_get hlc Λ Σ iG E)
+                   (MIEnvId) (MIEnvTransform (IntoPreStep E)).
+  Proof.
+    split; simpl.
+    - iIntros (P). by iApply step_get_intro.
+    - rewrite /IntoPreStep. iIntros (P Q HPQ) "HP". by iApply HPQ.
+    - iIntros "H". by iApply step_get_intro.
+    - iIntros (P Q HPQ) "HP". iApply (step_get_mono with "[] HP"). iApply HPQ.
+    - iIntros (P Q) "[HP HQ]".
+      by iDestruct (step_get_comm with "HP HQ") as "HPQ".
+  Qed.
+  Definition modality_pre_step E :=
+    Modality _ (modality_pre_step_mixin E).
+  Global Instance from_modality_pre_step E P :
+    FromModal True (modality_pre_step E) (|~{E}~| P) (|~{E}~| P) P.
+  Proof. by rewrite /FromModal /=. Qed.
+
+  Global Instance elim_modal_pre_step_fupd p E P Q :
+    ElimModal True p false (|={E}=> P) P (|~{E}~| Q) (|~{E}~| Q).
+  Proof.
+    destruct p.
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]". iDestruct "HP" as "#HP".
+      iApply fupd_step_get. iMod "HP". iDestruct ("HPQ" with "HP") as "HQ".
+      by iIntros "!>!>".
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]".
+      iApply fupd_step_get. iMod "HP". iDestruct ("HPQ" with "HP") as "HQ".
+      by iIntros "!>!>".
+  Qed.
+
+  Global Instance elim_modal_pre_step_bupd p E P Q :
+    ElimModal True p false (|==> P) P (|~{E}~| Q) (|~{E}~| Q).
+  Proof.
+    destruct p.
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]". iDestruct "HP" as "#HP".
+      iApply fupd_step_get. iMod "HP". iDestruct ("HPQ" with "HP") as "HQ".
+      by iIntros "!>!>".
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]".
+      iApply fupd_step_get. iMod "HP". iDestruct ("HPQ" with "HP") as "HQ".
+      by iIntros "!>!>".
+  Qed.
+
+  Class IntoStep E (P Q : iProp Σ) := into_step : P ⊢ |~{E}~> Q.
+  Global Instance into_step_id E P : IntoStep E (|~{E}~> P) P | 0.
   Proof. rewrite /IntoStep. by iIntros "HP". Qed.
-  Global Instance into_step_intro P: IntoStep P P | 1.
+  Global Instance into_step_intro E P : IntoStep E P P | 1.
   Proof. rewrite /IntoStep. by iApply step_update_intro. Qed.
 
-  Lemma modality_step_mixin :
-    modality_mixin (@step_update hlc Λ Σ iG ∅ ∅)
-                   (MIEnvId) (MIEnvTransform IntoStep).
+  Lemma modality_step_mixin E :
+    modality_mixin (@step_update hlc Λ Σ iG E)
+                   (MIEnvId) (MIEnvTransform (IntoStep E)).
   Proof.
     split; simpl.
     - iIntros (P). by iApply step_update_intro.
     - rewrite /IntoStep. iIntros (P Q HPQ) "HP". by iApply HPQ.
     - iIntros "H". by iApply step_update_intro.
-    - iIntros (P Q HPQ) "HP". iApply (step_update_mono with "HP"); [done|].
-      iIntros "HP!>". by iApply HPQ.
+    - iIntros (P Q HPQ) "HP". iApply (step_update_mono with "[] HP"). iApply HPQ.
     - iIntros (P Q) "[HP HQ]".
-      iDestruct (step_update_comm with "HP HQ") as "HPQ"; [set_solver|].
-      by rewrite right_id_L.
+      by iDestruct (step_update_comm with "HP HQ") as "HPQ".
   Qed.
-  Definition modality_step :=
-    Modality _ (modality_step_mixin ).
-  Global Instance from_modality_step P :
-    FromModal True (modality_step) (|~~> P) (|~~> P) P.
+  Definition modality_step E :=
+    Modality _ (modality_step_mixin E).
+  Global Instance from_modality_step E P :
+    FromModal True (modality_step E) (|~{E}~> P) (|~{E}~> P) P.
   Proof. by rewrite /FromModal /=. Qed.
 
-  Global Instance elim_modal_step p P Q :
-    ElimModal True p false (|==> P) P (|~~> Q) (|~~> Q).
+  Global Instance elim_modal_step_bupd p E P Q :
+    ElimModal True p false (|==> P) P (|~{E}~> Q) (|~{E}~> Q).
   Proof.
     destruct p.
     - rewrite /ElimModal. iIntros (_) "[HP HPQ]". iDestruct "HP" as "#HP".
-      iApply step_update_open. iMod "HP".
-      iDestruct ("HPQ" with "HP") as "HQ". iModIntro. iIntros "!>". by iModIntro.
-    - rewrite /ElimModal. iIntros (_) "[HP HPQ]". iApply step_update_open.
-      iMod "HP". iDestruct ("HPQ" with "HP") as "HQ". by iIntros "!>!>!>".
+      iApply fupd_step_update. iMod "HP". iDestruct ("HPQ" with "HP") as "HQ".
+      by iIntros "!>!>".
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]".
+      iApply fupd_step_update. iMod "HP". iDestruct ("HPQ" with "HP") as "HQ".
+      by iIntros "!>!>".
   Qed.
 
-  Lemma my_lemma P Q :
-    (|~~> P) -∗ (P -∗ Q) -∗ |~~> Q.
-  Proof. iIntros "HP HPQ". iIntros "!>". by iApply "HPQ". Qed.
-
-  Lemma my_lemma2 P Q :
-    (|~~> P) -∗ (|==> P -∗ Q) -∗ |~~> Q.
-  Proof. iIntros "HP HPQ". iMod "HPQ". iIntros "!>". by iApply "HPQ". Qed.
+  Global Instance elim_modal_step_fupd p E P Q :
+    ElimModal True p false (|={E}=> P) P (|~{E}~> Q) (|~{E}~> Q).
+  Proof.
+    destruct p.
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]". iDestruct "HP" as "#HP".
+      iApply fupd_step_update. iMod "HP". iDestruct ("HPQ" with "HP") as "HQ".
+      by iIntros "!>!>".
+    - rewrite /ElimModal. iIntros (_) "[HP HPQ]".
+      iApply fupd_step_update. iMod "HP". iDestruct ("HPQ" with "HP") as "HQ".
+      by iIntros "!>!>".
+  Qed.
 
 End with_Σ.
 
+Example step_get_example `{irisGS_gen hlc Λ Σ} E (P Q : iProp Σ) :
+  (|~{E}~| P) -∗ (|==> P ==∗ Q) -∗ |~{E}~| Q.
+Proof.
+  iIntros "HP HPQ". iMod "HPQ". iApply step_get_fupd.
+  iIntros "!>". by iMod ("HPQ" with "HP").
+Qed.
+
+Example step_update_example `{irisGS_gen hlc Λ Σ} E (P Q : iProp Σ) :
+  (|~{E}~> P) -∗ (|==> P ==∗ Q) -∗ |~{E}~> Q.
+Proof.
+  iIntros "HP HPQ". iMod "HPQ". iApply step_update_fupd.
+  iIntros "!>". by iMod ("HPQ" with "HP").
+Qed.
