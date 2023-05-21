@@ -81,6 +81,12 @@ Section with_Σ.
                       (|={∅}▷=>^(S (num_laters_per_step n))
                          ∀ σ2 nt', (state_interp σ2 (S n) κs (nt' + nt) ={E2,E1}=∗
                                     state_interp σ2 (S n) κs (nt' + nt) ∗ P)))%I.
+
+  (* Local Definition step_update_aux : seal (@step_update_def). Proof. by eexists. Qed. *)
+  (* Definition step_update := step_update_aux.(unseal). *)
+  (* Local Lemma step_update_unseal : step_update = step_update_def. *)
+  (* Proof. rewrite -step_update_aux.(seal_eq) //. Qed. *)
+
   Notation "|~{ E1 , E2 }~> P" := (step_update E1 E2 P)
     (at level 99, P at level 200, format "'[  ' |~{  E1  ,  E2  }~>  '/' P ']'").
   Notation "|~{ E }~> P" := (step_update E ∅ P)
@@ -249,6 +255,22 @@ Section with_Σ.
     iMod "Hstep". iModIntro. by iFrame.
   Qed.
 
+  Lemma step_update_weaken E1 E2 P :
+    E2 ⊆ E1 → (|~{E2}~> P) -∗ |~{E1}~> P.
+  Proof.
+    intros HE.
+    iIntros "Hstep" (σ n κ κs nt) "Hσ".
+    iApply (fupd_mask_weaken E2); [done|].
+    iIntros "Hclose".
+    iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
+    iIntros "!>". iFrame=> /=.
+    iMod "Hstep". iIntros "!>!>". iMod "Hstep". iIntros "!>".
+    iApply (step_fupdN_wand with "Hstep").
+    iIntros "Hstep" (??) "Hσ".
+    iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
+    iMod "Hclose". iIntros "!>". by iFrame.
+  Qed.
+
 End with_Σ.
 
 Notation "|~{ E1 , E2 }~| P" := (step_get E1 E2 (λ _ _ _ _ _, |={E2,E1}=> P))%I (at level 99, P at level 200, format "'[  ' |~{  E1  ,  E2  }~|  '/' P ']'").
@@ -264,9 +286,9 @@ Section with_Σ.
 
   Class IntoStep (P Q : iProp Σ) :=
     into_step : P ⊢ |~~> Q.
-  Instance into_step_id P: IntoStep (|~~> P) P | 0.
+  Global Instance into_step_id P: IntoStep (|~~> P) P | 0.
   Proof. rewrite /IntoStep. by iIntros "HP". Qed.
-  Instance into_step_intro P: IntoStep P P | 1.
+  Global Instance into_step_intro P: IntoStep P P | 1.
   Proof. rewrite /IntoStep. by iApply step_update_intro. Qed.
 
   Lemma modality_step_mixin :
@@ -289,7 +311,7 @@ Section with_Σ.
     FromModal True (modality_step) (|~~> P) (|~~> P) P.
   Proof. by rewrite /FromModal /=. Qed.
 
-  Instance elim_modal_step p P Q :
+  Global Instance elim_modal_step p P Q :
     ElimModal True p false (|==> P) P (|~~> Q) (|~~> Q).
   Proof.
     destruct p.
@@ -309,3 +331,4 @@ Section with_Σ.
   Proof. iIntros "HP HPQ". iMod "HPQ". iIntros "!>". by iApply "HPQ". Qed.
 
 End with_Σ.
+
