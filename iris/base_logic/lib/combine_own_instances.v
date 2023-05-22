@@ -175,7 +175,7 @@ Section cmra_instances.
 
   (* If, instead, having such a right identity is contradictory, then 
     [IsIncludedOrEq] simplifies to [False] in the [≼] case.
-    This instance should have higher priority than custom [IsIncludedOrEq] instances. *)
+    This instance should have lower cost than custom [IsIncludedOrEq] instances. *)
   Global Instance is_included_or_eq_id_free (a : A) :
     IdFree a →
     IsIncludedOrEq M a a False True | 5.
@@ -585,14 +585,24 @@ End coPsets.
 (** Next, we start giving instances for the [cmra] combinators. *)
 
 
+(** Instances for [optionR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
+
 Section optional.
   Context {A : cmra} {M : ucmra}.
   Implicit Types a : A.
 
-  Global Instance option_some_valid_op a a1 a2 P :
-    IsValidOp M a a1 a2 P → IsValidOp M (Some a) (Some a1) (Some a2) P.
-  Proof. case => HP Ha. split; rewrite /IsValidGives -Some_op option_validI // Ha option_equivI //. Qed.
-  Global Instance option_included_merge a1 a2 P1 P2 :
+  (** We can omit combinations with [None], since [None = ε] *)
+  Global Instance option_some_valid_gives a1 a2 P :
+    IsValidGives M a1 a2 P → IsValidGives M (Some a1) (Some a2) P.
+  Proof. by rewrite /IsValidGives option_validI => <-. Qed.
+
+  Global Instance option_some_valid_op a a1 a2 :
+    IsValidOp M a1 a2 a → IsValidOp M (Some a1) (Some a2) (Some a).
+  Proof. by rewrite /IsValidOp -Some_op option_validI option_equivI => ->. Qed.
+
+  (** This instance is the main reason for the [IsIncludedOrEq] typeclass:
+     so that we precompute a simplified version of [P1 ∨ (a1 ≡ a2)]. *)
+  Global Instance option_some_is_included a1 a2 P1 P2 :
     IsIncludedOrEq M a1 a2 P1 P2 →
     IsIncluded M (Some a1) (Some a2) P2 | 100.
   Proof.
@@ -612,22 +622,20 @@ Section optional.
         rewrite -Some_op. by iRewrite "Hc".
       + iRewrite "Hr". by iExists None.
   Qed.
-  Global Instance option_none_excl_included_merge (ma : optionUR A) :
-    IsIncluded M None ma True.
-  Proof.
-    rewrite /IsIncluded. iIntros "_". iSplit; first by eauto.
-    iIntros "_". iExists ma. by rewrite left_id.
-  Qed.
+
+  (** TODO: there used to be an explicit [IsIncluded M None ma True] instance here *)
   Global Instance option_some_none_excl_included_merge a :
     IsIncluded M (Some a) None False.
   Proof.
     rewrite /IsIncluded. iIntros "_"; iSplit; last done.
     iDestruct 1 as ([c|]) "Hc"; by rewrite option_equivI.
   Qed.
-
 End optional.
 
 
+(** Instances for [csumR]. It takes some effort to account for (almost) all
+   combinations of constructors. We skip combinations with [CsumBot],
+   since the user should have extracted a [False] from that combination. *)
 From iris.algebra Require Import csum.
 
 Section csum.
@@ -636,33 +644,52 @@ Section csum.
   Implicit Types a : A.
   Implicit Types b : B.
 
-  Global Instance sum_inl_valid_op a a1 a2 P :
-    IsValidOp _ a a1 a2 P → 
-    IsValidOp _ (Cinl a) (Cinl (B := B) a1) (Cinl (B := B) a2) P.
-  Proof.
-    case => HP Ha. 
-    split; rewrite /IsValidGives -Cinl_op csum_validI // Ha.
-    iIntros "Ha".
-    by iRewrite "Ha".
-  Qed.
-  Global Instance sum_inr_valid_op b b1 b2 P :
-    IsValidOp _ b b1 b2 P → 
-    IsValidOp _ (Cinr b) (Cinr (A := A) b1) (Cinr (A := A) b2) P.
-  Proof.
-    case => HP Ha. 
-    split; rewrite /IsValidGives -Cinr_op csum_validI // Ha.
-    iIntros "Ha".
-    by iRewrite "Ha".
-  Qed.
-  Global Instance sum_inl_inr_invalid_op a b :
-    IsValidOp M (CsumBot) (Cinl (B := B) a) (Cinr (A := A) b) False.
-  Proof. split; rewrite /IsValidGives /op /= /cmra_op /= csum_validI; eauto. Qed.
-  Global Instance sum_inr_inl_invalid_op a b :
-    IsValidOp M (CsumBot) (Cinr (A := B) a) (Cinl (B := A) b) False.
-  Proof. split; rewrite /IsValidGives /op /= /cmra_op /= csum_validI; eauto. Qed.
-  Global Instance sum_inl_included_merge a1 a2 P :
-    IsIncluded _ a1 a2 P →
-    IsIncluded _ (Cinl (B := B) a1) (Cinl (B := B) a2) P | 100.
+  (** [IsValidGives] instances. *)
+  Global Instance csum_inl_valid_gives a1 a2 P :
+    IsValidGives M a1 a2 P → 
+    IsValidGives M (Cinl (B := B) a1) (Cinl a2) P.
+  Proof. rewrite /IsValidGives -Cinl_op csum_validI // Ha. Qed.
+
+  Global Instance csum_inr_valid_gives a1 a2 P :
+    IsValidGives M a1 a2 P → 
+    IsValidGives M (Cinr (A := B) a1) (Cinr a2) P.
+  Proof. rewrite /IsValidGives -Cinr_op csum_validI // Ha. Qed.
+
+  Global Instance csum_inl_inr_valid_gives a b :
+    IsValidGives M (Cinl a) (Cinr b) False.
+  Proof. rewrite /IsValidGives csum_validI. eauto. Qed.
+
+  Global Instance csum_inr_inl_valid_gives a b :
+    IsValidGives M (Cinr a) (Cinl b) False.
+  Proof. rewrite /IsValidGives csum_validI. eauto. Qed.
+
+
+  (** [IsValidOp] instances. *)
+  Global Instance sum_inl_valid_op a a1 a2 :
+    IsValidOp M a1 a2 a → 
+    IsValidOp M (Cinl (B := B) a1) (Cinl a2) (Cinl a).
+  Proof. by rewrite /IsValidOp -Cinl_op csum_validI csum_equivI => ->. Qed.
+
+  Global Instance sum_inr_valid_op a a1 a2 :
+    IsValidOp M a1 a2 a → 
+    IsValidOp M (Cinr (A := B) a1) (Cinr a2) (Cinr a).
+  Proof. by rewrite /IsValidOp -Cinr_op csum_validI csum_equivI => ->. Qed.
+
+  Global Instance sum_inl_inr_valid_op a b :
+    IsValidOp M (Cinl a) (Cinr b) CsumBot.
+  Proof. rewrite /IsValidOp. eauto. Qed.
+
+  Global Instance sum_inr_inl_valid_op a b :
+    IsValidOp M (Cinr a) (Cinl b) CsumBot.
+  Proof. rewrite /IsValidOp. eauto. Qed.
+
+
+  (** [IsIncluded] instances.
+     For these, it would be very helpful to make use of the fact that Cinl and
+     Cinr are isomorphic. For now, we just repeat the proofs. *)
+  Global Instance sum_inl_is_included a1 a2 P :
+    IsIncluded M a1 a2 P →
+    IsIncluded M (Cinl (B := B) a1) (Cinl (B := B) a2) P | 100.
   Proof.
     rewrite /IsIncluded => HaP.
     iIntros "#H✓"; iSplit.
@@ -677,18 +704,10 @@ Section csum.
       iRewrite "Hc".
       by iExists (Cinl _).
   Qed.
-  Global Instance sum_inl_included_merge_unital a1 a2 P1 P2 :
-    IsIncludedOrEq _ a1 a2 P1 P2 →
-    IsIncludedOrEq _ (Cinl (B := B) a1) (Cinl (B := B) a2) P1 P2 | 100.
-  Proof.
-    case => HP_lt HP_le; split; first apply _.
-    rewrite csum_validI HP_le.
-    iApply bi.wand_iff_trans.
-    iSplit; iIntros "[$|H]"; iRight; rewrite csum_equivI //.
-  Qed.
-  Global Instance sum_inr_included_merge b1 b2 P :
-    IsIncluded _ b1 b2 P →
-    IsIncluded _ (Cinr (A := A) b1) (Cinr (A := A) b2) P | 100.
+
+  Global Instance sum_inr_is_included b1 b2 P :
+    IsIncluded M b1 b2 P →
+    IsIncluded M (Cinr (A := A) b1) (Cinr (A := A) b2) P | 100.
   Proof.
     rewrite /IsIncluded => HaP.
     iIntros "#H✓"; iSplit.
@@ -704,27 +723,61 @@ Section csum.
       iRewrite "Hc".
       by iExists (Cinr c).
   Qed.
-  Global Instance sum_inr_included_merge_unital b1 b2 P1 P2 :
-    IsIncludedOrEq _ b1 b2 P1 P2 →
-    IsIncludedOrEq _ (Cinr (A := A) b1) (Cinr (A := A) b2) P1 P2 | 100.
+
+  Global Instance sum_inl_inr_is_included a b :
+    IsIncluded M (Cinl a) (Cinr b) False | 100.
+  Proof.
+    rewrite /IsIncluded; iIntros "_"; iSplit; last done.
+    iDestruct 1 as ([c|c|]) "#Hc"; rewrite csum_equivI //.
+  Qed.
+
+  Global Instance sum_inr_inl_is_included a b :
+    IsIncluded M (Cinr b) (Cinl a) False | 100.
+  Proof.
+    rewrite /IsIncluded; iIntros "_"; iSplit; last done.
+    iDestruct 1 as ([c|c|]) "#Hc"; rewrite csum_equivI //.
+  Qed.
+
+  (** [IsIncludedOrEq] instances.*)
+  Global Instance sum_inl_is_included_or_eq a1 a2 P1 P2 :
+    IsIncludedOrEq M a1 a2 P1 P2 →
+    IsIncludedOrEq M (Cinl (B := B) a1) (Cinl (B := B) a2) P1 P2 | 105.
   Proof.
     case => HP_lt HP_le; split; first apply _.
     rewrite csum_validI HP_le.
     iApply bi.wand_iff_trans.
     iSplit; iIntros "[$|H]"; iRight; rewrite csum_equivI //.
   Qed.
-  Global Instance sum_inl_inr_included_merge a b :
-    IsIncluded M (Cinl a) (Cinr b) False | 100.
+
+  Global Instance sum_inr_is_included_or_eq b1 b2 P1 P2 :
+    IsIncludedOrEq M b1 b2 P1 P2 →
+    IsIncludedOrEq M (Cinr (A := A) b1) (Cinr (A := A) b2) P1 P2 | 105.
   Proof.
-    rewrite /IsIncluded; iIntros "_"; iSplit; last done.
-    iDestruct 1 as ([c|c|]) "#Hc"; rewrite csum_equivI //.
+    case => HP_lt HP_le; split; first apply _.
+    rewrite csum_validI HP_le.
+    iApply bi.wand_iff_trans.
+    iSplit; iIntros "[$|H]"; iRight; rewrite csum_equivI //.
   Qed.
-  Global Instance sum_inr_inl_included_merge a b :
-    IsIncluded M (Cinr b) (Cinl a) False | 100.
+
+  (** We also give instances for the invalid [Cinl _ ⋅ Cinr _] combinations,
+    since the [Cinl _ ≡ Cinr _] simplification provided by the fallback
+    instance [is_included_or_eq_last_resort] is not immediately helpful. *)
+  Global Instance sum_inl_inr_is_included_or_eq a b :
+    IsIncludedOrEq M (Cinl a) (Cinr b) False False.
   Proof.
-    rewrite /IsIncluded; iIntros "_"; iSplit; last done.
-    iDestruct 1 as ([c|c|]) "#Hc"; rewrite csum_equivI //.
+    split; first apply _.
+    rewrite csum_equivI right_id. eauto.
   Qed.
+
+  Global Instance sum_inr_inl_is_included_or_eq a b :
+    IsIncludedOrEq M (Cinr b) (Cinl a) False False.
+  Proof.
+    split; first apply _.
+    rewrite csum_equivI right_id. eauto.
+  Qed.
+
+  (** We need to provide recursive [HasRightId] instances, so that the
+     [is_included_or_eq_from_right_id] can kick in. *)
   Global Instance csum_right_id_l a :
     HasRightId a → HasRightId (Cinl (B := B) a).
   Proof. 
@@ -732,6 +785,7 @@ Section csum.
     exists (Cinl r).
     rewrite -Cinl_op -rH //.
   Qed.
+
   Global Instance csum_right_id_r b :
     HasRightId b → HasRightId (Cinr (A := A) b).
   Proof. 
@@ -739,27 +793,33 @@ Section csum.
     exists (Cinr r).
     rewrite -Cinr_op -rH //.
   Qed.
-
 End csum.
 
 
+(** Instances for [prodR]. *)
 Section prod.
   Context {X Y : cmra} {M : ucmra}.
   Implicit Types x : X.
   Implicit Types y : Y.
   Implicit Types P : uPred M.
 
-  Global Instance prod_valid_op x x1 x2 y y1 y2 P1 P2 P :
-    IsValidOp _ x x1 x2 P1 → 
-    IsValidOp _ y y1 y2 P2 → 
+  Global Instance prod_valid_gives x1 x2 y1 y2 P1 P2 P :
+    IsValidGives M x1 x2 P1 → 
+    IsValidGives M y1 y2 P2 → 
     MakeAnd P1 P2 P →
-    IsValidOp _ (x, y) (x1, y1) (x2, y2) P.
+    IsValidGives M (x1, y1) (x2, y2) P.
   Proof.
-    rewrite /MakeAnd => Hxs Hys HP. split; rewrite /IsValidGives -pair_op prod_validI /=.
-    - rewrite !is_valid_op_gives -HP bi.intuitionistically_and //.
-    - rewrite prod_equivI /= !is_valid_op //.
+    rewrite /IsValidGives /MakeAnd prod_validI /= => -> -> <-.
+    by rewrite bi.intuitionistically_and.
   Qed.
 
+  Global Instance prod_valid_op x x1 x2 y y1 y2:
+    IsValidOp M x1 x2 x → 
+    IsValidOp M y1 y2 y → 
+    IsValidOp M (x1, y1) (x2, y2) (x, y).
+  Proof. by rewrite /IsValidOp prod_validI prod_equivI /= => -> ->. Qed.
+
+  (** This will be a useful lemma for the [IsIncluded] instance *)
   Lemma prod_includedI x1 x2 y1 y2 :
     (x1, y1) ≼ (x2, y2) ⊣⊢@{uPredI M} (x1 ≼ x2) ∧ (y1 ≼ y2).
   Proof.
@@ -772,11 +832,11 @@ Section prod.
       by iExists (_, _).
   Qed.
 
-  Global Instance prod_included_merge x1 x2 y1 y2 P1 P2 P :
-    IsIncluded _ x1 x2 P1 →
-    IsIncluded _ y1 y2 P2 →
+  Global Instance prod_is_included x1 x2 y1 y2 P1 P2 P :
+    IsIncluded M x1 x2 P1 →
+    IsIncluded M y1 y2 P2 →
     MakeAnd P1 P2 P →
-    IsIncluded _ (x1, y1) (x2, y2) P.
+    IsIncluded M (x1, y1) (x2, y2) P.
   Proof.
     rewrite /IsIncluded /MakeAnd => HP1 HP2 <-.
     rewrite bi.intuitionistically_and prod_validI /=.
@@ -793,20 +853,27 @@ Section prod.
       * by iApply "Hy✓".
   Qed.
 
-  (* This is the most tricky instance of the bunch. 
-     The goal of this instance is to obtain good assertions for, i.e. (Some (q, p) ≼ Some (q', p')) (in the cmra: optionUR (prodR fracR positiveR))
-     The naive way of doing things would give (q < q' ∧ p < p') ∨ (q = q' ∧ p = p'). We would like to get q ≤ q' and p ≤ p' directly,
-      while still allowing the user to look into the disjunction if required. *)
-  Global Instance prod_included_merge_unital x1 x2 y1 y2 P1_lt P1_le P2_lt P2_le P_lt P_le P_le' P_lt_case P_lt_case' P_case :
+  (** This is the most tricky instance of the bunch.
+    The goal of this instance is to obtain good assertions for, e.g.
+    [Some (q, p) ≼ Some (q', p')] in the cmra [optionUR (prodR fracR positiveR]
+    This simplifies to [(q < q' ∧ p < p') ∨ (q = q' ∧ p = p')]. Crucially,
+    it does _not_ simplify to [q ≤ q' ∧ p ≤ p']: the (in)equalities must coincide!
+
+    Note that this does not have [q ≤ q'] and [p ≤ p'] directly, which might be
+    what the user is after! To fix this, we additionally include that fact.
+    We also check whether the elements of the pair [HasRightId], to further
+    simplify the resulting disjunction.
+  *)
+  Global Instance prod_is_included_or_eq x1 x2 y1 y2 P1_lt P1_le P2_lt P2_le P_lt P_le P_le' P_lt_case P_lt_case' P_case :
     IsIncludedOrEq M x1 x2 P1_lt P1_le → 
-    IsIncludedOrEq _ y1 y2 P2_lt P2_le →
+    IsIncludedOrEq M y1 y2 P2_lt P2_le →
     MakeAnd P1_le P2_le P_le' →
     MakeAnd P1_lt P2_lt P_lt →
     TCIf (HasRightId x2) (TCEq P_lt_case' True%I) (TCEq P_lt_case' P1_lt) →
     TCIf (HasRightId y2) (TCEq P_lt_case P_lt_case') (MakeAnd P_lt_case' P2_lt P_lt_case) →
     MakeOr P_lt_case (x1 ≡ x2 ∧ y1 ≡ y2)%I P_case → (* MakeOr will simplify True ∨ P ⊣⊢ True and False ∨ P ⊣⊢ P *)
     MakeAnd P_le' P_case P_le →
-    IsIncludedOrEq _ (x1, y1) (x2, y2) P_lt P_le.
+    IsIncludedOrEq M (x1, y1) (x2, y2) P_lt P_le.
   Proof.
     rewrite /MakeAnd /MakeOr /HasRightId => HP1 HP2 HP1P2 HP1P2' HTC1 HTC2 HPcase HPle.
     split.
