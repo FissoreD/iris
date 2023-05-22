@@ -864,7 +864,8 @@ Section prod.
     We also check whether the elements of the pair [HasRightId], to further
     simplify the resulting disjunction.
   *)
-  Global Instance prod_is_included_or_eq x1 x2 y1 y2 P1_lt P1_le P2_lt P2_le P_lt P_le P_le' P_lt_case P_lt_case' P_case :
+  Global Instance prod_is_included_or_eq x1 x2 y1 y2 P1_lt P1_le P2_lt P2_le 
+      P_lt P_le P_le' P_lt_case P_lt_case' P_case :
     IsIncludedOrEq M x1 x2 P1_lt P1_le → 
     IsIncludedOrEq M y1 y2 P2_lt P2_le →
     MakeAnd P1_le P2_le P_le' →
@@ -877,18 +878,19 @@ Section prod.
   Proof.
     rewrite /MakeAnd /MakeOr /HasRightId => HP1 HP2 HP1P2 HP1P2' HTC1 HTC2 HPcase HPle.
     split.
-    { apply: prod_included_merge.
+    { apply: prod_is_included.
       * apply HP1.
       * apply HP2.
       * done. }
-    rewrite prod_validI /= -HPle {HPle} -HPcase {HPcase} -HP1P2 {HP1P2} -HP1P2' {HP1P2'} prod_equivI /=.
+    rewrite prod_validI /= -HPle -HPcase -HP1P2 -HP1P2' prod_equivI /=.
+    clear HPle HPcase HP1P2 HP1P2'.
     iIntros "[#H✓x #H✓y]".
     iAssert (✓ y2 ∗ ✓ x2)%I as "[H✓y2 H✓x2]"; first by eauto.
     case: HP1 => + HP1. rewrite {1}HP1.
     case: HP2 => + HP2. rewrite {1}HP2.
     rewrite /IsIncluded => HP1' HP2'.
     iSplit.
-    - iIntros "[#[Hc1 Hc2]|#[Hc1 Hc2]] !>"; iSplit; [iSplit | | iSplit | by eauto].
+    - iIntros "[#[Hc1 Hc2]|#[Hc1 Hc2]] !>"; iSplit; [iSplit | | iSplit | eauto].
       + iApply bi.intuitionistically_elim. iApply "H✓x". eauto.
       + iApply bi.intuitionistically_elim. iApply "H✓y". eauto.
       + iLeft. case: HTC1; case: HTC2.
@@ -919,6 +921,7 @@ Section prod.
         iApply (HP1' with "H✓y2"). by iRewrite "H".
       * move => <- ->. by iLeft.
   Qed.
+
   Global Instance prod_right_id_both x y :
     HasRightId x → HasRightId y → HasRightId (x, y).
   Proof.
@@ -928,17 +931,20 @@ Section prod.
     exists (c, c').
     by rewrite -pair_op -Hx1 -Hx2.
   Qed.
-
-End prod. 
-(* extra instance because TC resolution gets confused for ucmras :( *)
+End prod.
+ 
+(** Extra instance because TC resolution gets confused for [ucmra]'s...
+   TODO: Test if this is still necessary *)
 Global Instance prod_included_merge_ucmra {X Y : ucmra} (x1 x2 : X) (y1 y2 : Y) {M} P1 P2 P :
   IsIncluded M x1 x2 P1 →
   IsIncluded M y1 y2 P2 →
   MakeAnd P1 P2 P →
-  IsIncluded _ (x1, y1) (x2, y2) P.
-Proof. simple eapply prod_included_merge. Qed.
+  IsIncluded M (x1, y1) (x2, y2) P.
+Proof. simple eapply prod_is_included. Qed.
 
 
+
+(** Instances for [exclR]. *)
 From iris.algebra Require Import excl.
 
 Section excl.
@@ -946,45 +952,59 @@ Section excl.
   Implicit Types o : O.
   Implicit Types e : excl O.
 
+  Global Instance excl_valid_gives e1 e2 :
+    IsValidGives M e1 e2 False.
+  Proof. rewrite /IsValidGives excl_validI. eauto. Qed.
+
   Global Instance excl_valid_op e1 e2 :
-    IsValidOp M ExclBot e1 e2 False.
-  Proof. split; rewrite /IsValidGives excl_validI /=; eauto. Qed.
-  Global Instance excl_included_merge e1 e2 :
+    IsValidOp M e1 e2 ExclBot.
+  Proof. rewrite /IsValidOp excl_validI. eauto. Qed.
+
+  Global Instance excl_is_included e1 e2 :
     IsIncluded M e1 e2 False.
   Proof.
     rewrite /IsIncluded. rewrite excl_validI. destruct e2 as [o2|]; last eauto.
     iIntros "_". iSplit; last eauto. iDestruct 1 as (c) "Hc".
-    rewrite /op /cmra_op /= /excl_op_instance excl_equivI //.
+    rewrite excl_equivI /=. done.
   Qed.
-  Global Instance excl_included_merge_unital o1 o2 :
+
+  (** This instance does not follow from the [IdFree] instance, since that one
+     only applies if [o1 = o2] syntactically. Here, we receive that equality *)
+  Global Instance excl_is_included_or_eq o1 o2 :
     IsIncludedOrEq M (Excl o1) (Excl o2) False (o1 ≡ o2).
   Proof.
-    apply: Build_IsIncludedOrEq.
+    split; first apply _.
     iIntros "_"; iSplit.
     - iIntros "[[]|#H] !>". rewrite excl_equivI //.
     - iIntros "#H". iRewrite "H". eauto.
   Qed.
-
 End excl.
 
 
+(** Instances for [exclR]. *)
 From iris.algebra Require Import agree.
 
 Section agree.
   Context {O : ofe} {M : ucmra}.
   Implicit Types o : O.
 
+  Global Instance agree_valid_gives o1 o2 :
+    IsValidGives M (to_agree o1) (to_agree o2) (o1 ≡ o2).
+  Proof. rewrite /IsValidGives agree_validI agree_equivI. eauto. Qed.
+
   Global Instance agree_valid_op o1 o2 :
-    IsValidOp M (to_agree o1) (to_agree o1) (to_agree o2) (o1 ≡ o2)%I.
+    IsValidOp M (to_agree o1) (to_agree o2) (to_agree o1).
   Proof.
-    split; rewrite /IsValidGives agree_validI agree_equivI; first eauto.
+    rewrite /IsValidOp agree_validI agree_equivI.
     iIntros "H".
     iRewrite "H".
     by rewrite agree_idemp.
   Qed.
-  Global Instance agree_has_right_id o : HasRightId (to_agree o).
-  Proof. exists (to_agree o). by rewrite agree_idemp. Qed.
-  Lemma to_agree_op_simple (a1 a2 : agree O) o : a1 ⋅ a2 ≡ to_agree o ⊢@{uPredI M} a1 ≡ a2 ∧ a2 ≡ to_agree o.
+
+  (** If two [a : agree O] compose to a [to_agree o], they are internally equal
+     and also equal to [to_agree o]. This turns out to be a useful lemma. *)
+  Lemma agree_op_equiv_to_agreeI (a1 a2 : agree O) o : 
+    a1 ⋅ a2 ≡ to_agree o ⊢@{uPredI M} a1 ≡ a2 ∧ a2 ≡ to_agree o.
   Proof.
     iIntros "#Heq".
     iAssert (a1 ≡ a2)%I as "#H".
@@ -992,19 +1012,9 @@ Section agree.
       by iRewrite "Heq".
     - iFrame "H". iRewrite -"Heq". iRewrite "H". rewrite agree_idemp //.
   Qed.
-  Global Instance agree_included_merge_direct o1 o2 :
-    IsIncluded M (to_agree o1) (to_agree o2) (o1 ≡ o2) | 10.
-  Proof.
-    rewrite /IsIncluded.
-    iIntros "_". iSplit. 
-    - iDestruct 1 as (c) "H2". iDestruct (internal_eq_sym with "H2") as "H".
-      rewrite to_agree_op_simple. iDestruct "H" as "[Heq1 Heq2]".
-      iRevert "Heq1". iRewrite "Heq2".
-      rewrite agree_equivI. eauto.
-    - iIntros "#H". iRewrite "H". 
-      iExists (to_agree o2). by rewrite agree_idemp.
-  Qed.
-  Global Instance agree_included_merge_abstract o1 (a : agree O) :
+
+  (** We provide a higher cost [IsIncluded] instance for abstract [a : agree O]. *)
+  Global Instance agree_is_included_abstract o1 (a : agree O) :
     IsIncluded M (to_agree o1) a (a ≡ to_agree o1) | 20.
   Proof.
     rewrite /IsIncluded.
@@ -1018,6 +1028,17 @@ Section agree.
       iExists (to_agree o1). by rewrite agree_idemp.
   Qed.
 
+  (** .. and a lower cost instance for concrete objects beneath a [to_agree]. *)
+  Global Instance agree_is_included o1 o2 :
+    IsIncluded M (to_agree o1) (to_agree o2) (o1 ≡ o2) | 10.
+  Proof.
+    eapply is_included_weaken, _. rewrite agree_equivI.
+    iIntros "_"; iSplit; iIntros "#H"; by iRewrite "H".
+  Qed.
+
+  (** We don't provide an [IsIncludedOrEq] instance, since agree [HasRightId] *)
+  Global Instance agree_has_right_id (a : agree O) : HasRightId a.
+  Proof. exists a. by rewrite agree_idemp. Qed.
 End agree.
 
 
@@ -1257,7 +1278,7 @@ Section view.
       iSplit; last eauto.
       rewrite {2}/op /= /cmra_op /= /view_op_instance /= !right_id //.
     - rewrite view_validI /=.
-      iDestruct 1 as (a) "Ha". rewrite to_agree_op_simple !agree_equivI /= right_id.
+      iDestruct 1 as (a) "Ha". rewrite agree_op_equiv_to_agreeI !agree_equivI /= right_id.
       iDestruct "Ha" as "([$ #Heq] & _ & H & $)".
       iRewrite "Heq". eauto.
   Qed.
@@ -1456,13 +1477,13 @@ Section gmap_view.
       iDestruct 1 as "[_ [%m Hm]]".
       rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
       iDestruct "Hm" as "[%v3 (#Hv3 & Hv3' & _)]".
-      rewrite to_agree_op_simple is_valid_gives bi.and_elim_l agree_equivI bi.intuitionistically_and.
+      rewrite agree_op_equiv_to_agreeI is_valid_gives bi.and_elim_l agree_equivI bi.intuitionistically_and.
       eauto.
     - rewrite view_validI /=.
       iDestruct 1 as "[_ [%m Hm]]".
       rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
       iDestruct "Hm" as "[%v3 (Hv3 & Hv3' & _)]".
-      rewrite to_agree_op_simple is_valid_op bi.and_elim_l agree_equivI.
+      rewrite agree_op_equiv_to_agreeI is_valid_op bi.and_elim_l agree_equivI.
       iRewrite "Hv3". iRewrite "Hv3'". rewrite -gmap_view_frag_op //.
   Qed.
 
