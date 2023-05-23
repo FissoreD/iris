@@ -1042,6 +1042,7 @@ Section agree.
 End agree.
 
 
+(** Instances for [gmapR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
 From iris.algebra Require Import gmap.
 
 Section gmap.
@@ -1050,7 +1051,7 @@ Section gmap.
   Implicit Types k : K.
   Implicit Types a : A.
 
-  (* move these to algebra/gmap? *)
+  (** TODO: move these to algebra/gmap? *)
   Global Instance gmap_is_op m m1 m2 :
     IsOp (merge op m1 m2) m1 m2 | 20.
   Proof. rewrite /IsOp //. Qed.
@@ -1061,42 +1062,52 @@ Section gmap.
     IsOp m ∅ m | 10.
   Proof. rewrite /IsOp left_id //. Qed.
 
-  Global Instance gmap_is_valid_op m m1 m2 :
-    IsOp m m1 m2 → IsValidOp M m m1 m2 True | 10.
+  Global Instance gmap_valid_gives m1 m2 :
+    IsValidGives M m1 m2 True | 10.
+  Proof. eauto. Qed.
+
+  Global Instance gmap_valid_op m1 m2 m :
+    IsOp m m1 m2 → IsValidOp M m1 m2 m | 10.
   Proof. apply from_isop. Qed.
-  Global Instance gmap_included_merge m1 m2 : 
+
+  (** Two [IsIncluded] instance: the general one, and one for the singleton map. *)
+  Global Instance gmap_is_included m1 m2 : 
     IsIncluded M m1 m2 (∃ m, ∀ i, m2 !! i ≡ m1 !! i ⋅ m !! i) | 100.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - iIntros "[%m #Hm] !>". iExists (m).
       iIntros (i). rewrite gmap_equivI -lookup_op. iApply "Hm".
-    - iIntros "[%m #Hm]". iExists (m). rewrite gmap_equivI. iIntros (i). rewrite lookup_op. iApply "Hm".
+    - iIntros "[%m #Hm]". iExists (m). rewrite gmap_equivI.
+      iIntros (i). rewrite lookup_op. iApply "Hm".
   Qed.
+
   Global Instance gmap_included_merge_singleton m k a : 
-    IsIncluded M {[ k := a ]} m (∃ a', m !! k ≡ Some a' ∧ Some a ≼ Some a' )%I | 50. (* if m !! k would reduce, we could do better *)
+    IsIncluded M {[ k := a ]} m (∃ a', m !! k ≡ Some a' ∧ Some a ≼ Some a' )%I | 50.
+     (* if m !! k would reduce, we could do better *)
   Proof.
-    eapply is_included_weaken; [tc_solve | ].
+    eapply is_included_weaken, _.
     iIntros "#H✓"; iSplit.
     - iIntros "[%m' #Hm] !>".
       iSpecialize ("Hm" $! k). rewrite lookup_singleton //.
       rewrite Some_op_opM.
       iExists (a ⋅? _). iFrame "Hm".
       iExists (m' !! k). rewrite Some_op_opM //.
-    - iIntros "#[%a' [Hk [%ma Hma]]] !>". rewrite Some_op_opM (option_equivI (Some a')).
+    - iIntros "#[%a' [Hk [%ma Hma]]] !>".
+      rewrite Some_op_opM (option_equivI (Some a')).
       destruct ma as [a''| ] => /=.
       * iExists (<[k := a'']> m). iIntros (i).
         destruct (decide (k = i)) as [-> | Hneq].
-        + rewrite lookup_singleton lookup_insert. iRewrite "Hk". by iApply option_equivI.
+        + rewrite lookup_singleton lookup_insert.
+          iRewrite "Hk". by iApply option_equivI.
         + rewrite lookup_singleton_ne // left_id lookup_insert_ne //.
       * iExists (delete k m). iIntros (i).
         destruct (decide (k = i)) as [-> | Hneq].
         + rewrite lookup_singleton lookup_delete // right_id. by iRewrite -"Hma".
         + rewrite lookup_singleton_ne // left_id lookup_delete_ne //.
   Qed.
-
 End gmap.
 
-
+(** Instances for [reservation_mapR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
 From iris.algebra Require Import reservation_map.
 
 Section reservation_map.
@@ -1106,8 +1117,12 @@ Section reservation_map.
   Implicit Types k : positive.
   Implicit Types P : uPred M.
 
-  Lemma reservation_validI x : (* other direction does not hold since the disjointness criteria is not mentioned here *)
+  (** We first state some lemmas about reservation maps. *)
+
+  Lemma reservation_validI x : 
     ✓ x ⊢@{uPredI M} ✓ (reservation_map_data_proj x) ∧ ✓ (reservation_map_token_proj x).
+  (** The other direction does not hold, since we do not mention the disjointness
+      criterium here *)
   Proof.
     split => n y Hy. uPred.unseal => /=.
     repeat (rewrite /uPred_holds /=). rewrite reservation_map_validN_eq /=.
@@ -1115,21 +1130,17 @@ Section reservation_map.
     case; split; first done. exact I.
   Qed.
 
-  Lemma reservation_op x y : x ⋅ y = ReservationMap (reservation_map_data_proj x ⋅ reservation_map_data_proj y) (reservation_map_token_proj x ⋅ reservation_map_token_proj y).
+  Lemma reservation_op x y : 
+    x ⋅ y = ReservationMap 
+        (reservation_map_data_proj x ⋅ reservation_map_data_proj y) 
+        (reservation_map_token_proj x ⋅ reservation_map_token_proj y).
   Proof. done. Qed.
 
   Lemma reservation_equivI x y :
-    x ≡ y ⊣⊢@{uPredI M} (reservation_map_data_proj x ≡ reservation_map_data_proj y) ∧ (reservation_map_token_proj x ≡ reservation_map_token_proj y).
+    x ≡ y ⊣⊢@{uPredI M} 
+      (reservation_map_data_proj x ≡ reservation_map_data_proj y) ∧ 
+      (reservation_map_token_proj x ≡ reservation_map_token_proj y).
   Proof. by uPred.unseal. Qed.
-
-  Global Instance combine_reservation_token E1 E2 :
-    IsValidOp M (reservation_map_token (A := A) (E1 ∪ E2)) (reservation_map_token E1) (reservation_map_token E2) ⌜E1 ## E2⌝.
-  Proof.
-    split; rewrite /IsValidGives reservation_op reservation_validI /= !is_valid_op_gives.
-    - iIntros "[_ #$]".
-    - iIntros "[_ %]".
-      rewrite reservation_map_token_union //.
-  Qed.
 
   Lemma reservation_map_data_validI k b :
     ✓ reservation_map_data k b ⊣⊢@{uPredI M} ✓ b.
@@ -1141,20 +1152,46 @@ Section reservation_map.
     split; naive_solver.
   Qed.
 
-  Global Instance combine_reservation_data k b b1 b2 P :
-    IsValidOp _ b b1 b2 P →
-    IsValidOp _ (reservation_map_data k b) (reservation_map_data k b1) (reservation_map_data k b2) P.
+  (** We give two instances of all the typeclasses: one for 
+    [reservation_map_token], and one for [reservation_map_data]. *)
+
+  Global Instance reservation_map_token_valid_gives E1 E2 :
+    IsValidGives M (reservation_map_token (A := A) E1) 
+                   (reservation_map_token E2) ⌜E1 ## E2⌝%I | 10.
   Proof.
-    split; rewrite /IsValidGives -reservation_map_data_op reservation_map_data_validI.
-    - rewrite is_valid_gives //.
-    - rewrite is_valid_op.
-      iIntros "Heq".
-      by iRewrite "Heq".
+    rewrite /IsValidGives reservation_op reservation_validI /= !is_valid_gives.
+    iIntros "[_ #$]".
   Qed.
 
-  Global Instance reservation_token_included_merge E1 E2 P :
-    IsIncluded _ (CoPset E1) (CoPset E2) P →
-    IsIncluded _ (reservation_map_token (A := A) E1) (reservation_map_token E2) P.
+  Global Instance reservation_map_token_valid_op E1 E2 :
+    IsValidOp M (reservation_map_token (A := A) E1) 
+                (reservation_map_token E2)
+                (reservation_map_token (E1 ∪ E2)) | 10.
+  Proof.
+    rewrite /IsValidOp reservation_op reservation_validI /= !is_valid_gives.
+    iIntros "[_ %]". rewrite reservation_map_token_union //.
+  Qed.
+
+  Global Instance reservation_map_data_valid_gives k b1 b2 P :
+    IsValidGives M b1 b2 P →
+    IsValidGives M (reservation_map_data k b1) (reservation_map_data k b2) P.
+  Proof.
+    rewrite /IsValidGives -reservation_map_data_op /= => <-.
+    by rewrite reservation_map_data_validI.
+  Qed.
+
+  Global Instance reservation_map_data_valid_op k b b1 b2 :
+    IsValidOp M b1 b2 b →
+    IsValidOp M (reservation_map_data k b1) (reservation_map_data k b2) 
+                (reservation_map_data k b).
+  Proof.
+    rewrite /IsValidOp -reservation_map_data_op /= reservation_map_data_validI.
+    move => ->. iIntros "Heq". by iRewrite "Heq".
+  Qed.
+
+  Global Instance reservation_map_token_is_included E1 E2 P :
+    IsIncluded M (CoPset E1) (CoPset E2) P →
+    IsIncluded M (reservation_map_token (A := A) E1) (reservation_map_token E2) P.
   Proof.
     rewrite /IsIncluded.
     iIntros (HP) "H✓"; iSplit.
@@ -1170,9 +1207,9 @@ Section reservation_map.
       rewrite reservation_equivI /=. by iSplit.
   Qed.
 
-  Global Instance reservation_data_included_merge k b1 b2 P :
-    IsIncluded _ (Some b1) (Some b2) P →
-    IsIncluded _ (reservation_map_data k b1) (reservation_map_data k b2) P.
+  Global Instance reservation_map_data_is_included k b1 b2 P :
+    IsIncluded M (Some b1) (Some b2) P →
+    IsIncluded M (reservation_map_data k b1) (reservation_map_data k b2) P.
   Proof.
     rewrite /IsIncluded option_validI.
     iIntros (HP) "H✓". rewrite reservation_map_data_validI HP.
@@ -1192,7 +1229,6 @@ Section reservation_map.
       * rewrite right_id option_equivI. iRewrite "Hmb".
         iExists ε. by rewrite right_id.
   Qed.
-
 End reservation_map.
 
 
