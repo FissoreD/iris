@@ -932,7 +932,7 @@ Section prod.
     by rewrite -pair_op -Hx1 -Hx2.
   Qed.
 End prod.
- 
+
 (** Extra instance because TC resolution gets confused for [ucmra]'s...
    TODO: Test if this is still necessary *)
 Global Instance prod_included_merge_ucmra {X Y : ucmra} (x1 x2 : X) (y1 y2 : Y) {M} P1 P2 P :
@@ -941,6 +941,16 @@ Global Instance prod_included_merge_ucmra {X Y : ucmra} (x1 x2 : X) (y1 y2 : Y) 
   MakeAnd P1 P2 P →
   IsIncluded M (x1, y1) (x2, y2) P.
 Proof. simple eapply prod_is_included. Qed.
+
+Global Instance prod_valid_gives_ucmra M {X Y : ucmra} (x1 x2 : X) (y1 y2 : Y) P1 P2 P :
+  IsValidGives M x1 x2 P1 → 
+  IsValidGives M y1 y2 P2 → 
+  MakeAnd P1 P2 P →
+  IsValidGives M (x1, y1) (x2, y2) P.
+Proof.
+  rewrite /IsValidGives /MakeAnd prod_validI /= => -> -> <-.
+  by rewrite bi.intuitionistically_and.
+Qed.
 
 
 
