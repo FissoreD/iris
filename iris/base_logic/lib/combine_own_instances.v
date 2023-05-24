@@ -1269,6 +1269,7 @@ Section view.
     split. rewrite /uPred_holds /= => n' x Hx. rewrite Ha Hb //.
   Qed.
 
+  (** TODO: Move below lemmas to some better place? *)
   Lemma view_validI v :
     ✓ v ⊣⊢@{uPredI M} match view_auth_proj v with
           | Some (dq, a) =>
@@ -1350,6 +1351,20 @@ Section view.
     iRewrite "Heq".
     rewrite -view_auth_dfrac_op //.
   Qed.
+
+  Global Instance view_auth_frag_valid_gives dq a b :
+    IsValidGives M (view_auth (rel := rel) dq a) (◯V b) (rel_holds_for a b).
+  Proof.
+    rewrite /IsValidGives.
+    rewrite view_validI /=.
+    iIntros "[%a' [#Ha [_ [#Hc _]]]]".
+    rewrite agree_equivI left_id.
+    by iRewrite "Ha". 
+  Qed.
+
+  Global Instance view_frag_auth_valid_gives dq a b :
+    IsValidGives M (◯V b) (view_auth (rel := rel) dq a) (rel_holds_for a b).
+  Proof. apply is_valid_gives_comm, _. Qed.
 End view.
 
 Global Arguments rel_holds_for {A B M} rel _ _.
@@ -1364,47 +1379,64 @@ Section auth.
   Implicit Types a : A.
   Implicit Types P : uPred M.
 
-  Global Instance auth_frag_valid_op a a1 a2 P :
-    IsValidOp M a a1 a2 P →
-    IsValidOp M (◯ a) (◯ a1) (◯ a2) P.
-  Proof.
-    move => HPa. split; rewrite /IsValidGives -auth_frag_op auth_frag_validI //.
-    - rewrite is_valid_gives //.
-    - rewrite is_valid_op.
-      iIntros "H".
-      by iRewrite "H".
-  Qed.
-  Lemma auth_rel_holds a1 a2 : rel_holds_for auth_view_rel a1 a2 ⊣⊢@{uPredI M} a2 ≼ a1 ∧ ✓ a1.
+  Lemma auth_rel_holds a1 a2 : 
+    rel_holds_for auth_view_rel a1 a2 ⊣⊢@{uPredI M} a2 ≼ a1 ∧ ✓ a1.
   Proof. rewrite /includedI. by uPred.unseal. Qed.
-  Lemma auth_auth_dfrac_op_validI dq1 dq2 a1 a2 : ✓ (●{dq1} a1 ⋅ ●{dq2} a2) ⊣⊢@{uPredI M} ✓ (dq1 ⋅ dq2) ∧ ✓ a2 ∧ (a1 ≡ a2).
+
+  Lemma auth_auth_dfrac_op_validI dq1 dq2 a1 a2 : 
+    ✓ (●{dq1} a1 ⋅ ●{dq2} a2) ⊣⊢@{uPredI M} ✓ (dq1 ⋅ dq2) ∧ ✓ a2 ∧ (a1 ≡ a2).
   Proof.
     rewrite view_auth_dfrac_op_validI auth_rel_holds.
     eapply (anti_symm _); eauto with iFrame.
     - iIntros "($ & $ & _ & $)".
     - iIntros "($ & $ & $)". iExists a2. by rewrite left_id.
   Qed.
-  Global Instance auth_auth_dfrac_own_valid_op a1 a2 dq dq1 dq2 Pq :
-    IsValidOp M dq dq1 dq2 Pq →
-    IsValidOp M (●{dq} a1) (●{dq1} a1) (●{dq2} a2) (Pq ∧ a1 ≡ a2).
+
+
+  (** [IsValidGives] instances. *)
+  Global Instance auth_frag_valid_gives a1 a2 P :
+    IsValidGives M a1 a2 P →
+    IsValidGives M (◯ a1) (◯ a2) P.
+  Proof. by rewrite /IsValidGives -auth_frag_op auth_frag_validI. Qed.
+
+  Global Instance auth_auth_valid_gives a1 a2 dq1 dq2 Pq :
+    IsValidGives M dq1 dq2 Pq →
+    IsValidGives M (●{dq1} a1) (●{dq2} a2) (Pq ∧ a1 ≡ a2).
   Proof.
-    move => Hq. eapply is_valid_op_weaken. 
-    - rewrite /auth_auth. tc_solve. 
-    - iIntros "[_ #($ & $ & _)]".
+    move => Hq. rewrite /auth_auth.
+    eapply is_valid_gives_weaken, _.
+    iIntros "[_ #($ & $ & _)]".
   Qed.
 
-  (* We do not provide IsValidOp for combinations of ● and ◯: instead, we provide IsValidGives *)
-  Global Instance auth_frag_is_valid_gives dq a1 a2 P :
+  Global Instance auth_auth_frag_valid_gives dq a1 a2 P :
     IsIncluded M a2 a1 P →
     IsValidGives _ (●{dq} a1) (◯ a2) P.
   Proof.
-    rewrite /IsIncluded /IsValidGives auth_both_dfrac_validI => HP.
-    iIntros "(% & #Hle & #Ha)".
-    by iApply HP.
+    rewrite /IsIncluded => HP. rewrite /auth_auth /auth_frag.
+    eapply is_valid_gives_weaken, _. rewrite auth_rel_holds.
+    rewrite view_validI /= HP. iIntros "[_ [#H1 #H2]]".
+    iApply bi.intuitionistically_elim. by iApply "H2".
   Qed.
-  Global Instance auth_frag_is_valid_gives_swap dq a1 a2 P :
+
+  Global Instance auth_frag_auth_valid_gives dq a1 a2 P :
     IsIncluded M a2 a1 P →
     IsValidGives _ (◯ a2) (●{dq} a1) P.
   Proof. intros; eapply is_valid_gives_comm, _. Qed.
+
+
+  (** [IsValidOp] instances. *)
+  Global Instance auth_frag_valid_op a a1 a2 :
+    IsValidOp M a1 a2 a →
+    IsValidOp M (◯ a1) (◯ a2) (◯ a).
+  Proof.
+    rewrite /IsValidOp -auth_frag_op auth_frag_validI => ->.
+    iIntros "H". by iRewrite "H".
+  Qed.
+
+  Global Instance auth_auth_dfrac_own_valid_op a1 a2 dq dq1 dq2 :
+    IsValidOp M dq1 dq2 dq →
+    IsValidOp M (●{dq1} a1) (●{dq2} a2) (●{dq} a1).
+  Proof. move => Hq. rewrite /auth_auth. apply _. Qed.
 End auth.
 
 
