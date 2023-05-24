@@ -1232,6 +1232,9 @@ Section reservation_map.
 End reservation_map.
 
 
+(** Instances for [viewR]. We do not provide [IsIncluded] instances, since
+   that would be involved and only used for ghost state of the form [● (●V a)],
+   which we believe to be rare. *)
 From iris.algebra Require Import view.
 
 Section view.
@@ -1241,7 +1244,8 @@ Section view.
   Implicit Types P : uPred M.
   Implicit Types v : viewR rel.
 
-  (* embed the view relation in the logic, so we can state and work with it without dropping down to the model *)
+  (** We embed the view relation in the logic, so we can state and work with it
+     without dropping down to the model *)
   Program Definition rel_holds_for a b : uPred M := UPred _ (λ n _, rel n a b) _.
   Next Obligation.
     move => /= a b n1 n2 x1 x2 Hb Hx Hn.
@@ -1268,14 +1272,15 @@ Section view.
   Lemma view_validI v :
     ✓ v ⊣⊢@{uPredI M} match view_auth_proj v with
           | Some (dq, a) =>
-            ∃ a', a ≡ to_agree a' ∧ v ≡ ●V{dq} a' ⋅ ◯V (view_frag_proj v) ∧ rel_holds_for a' (view_frag_proj v) ∧ ✓ dq
-          | None => v ≡ ◯V (view_frag_proj v) ∧ ∃ a, rel_holds_for a (view_frag_proj v)
+            ∃ a', a ≡ to_agree a' ∧ v ≡ ●V{dq} a' ⋅ ◯V (view_frag_proj v) ∧ 
+                  rel_holds_for a' (view_frag_proj v) ∧ ✓ dq
+          | None => v ≡ ◯V (view_frag_proj v) ∧ 
+                  ∃ a, rel_holds_for a (view_frag_proj v)
           end.
   Proof.
     destruct v as [[[dq a]|] b] => /=.
     - uPred.unseal.
       split=> n y Hy.
-      rewrite /upred.uPred_cmra_valid_def /= /validN /cmra_validN /= /view_validN_instance /=.
       split.
       * case => Hdq [a' [Ha1 Ha2]].
         repeat (rewrite /uPred_holds /=).
@@ -1283,7 +1288,9 @@ Section view.
         split; first done.
         split; last done.
         rewrite Ha1 /op /cmra_op /= /view_op_instance /= right_id left_id //.
-      * repeat (rewrite /uPred_holds /=). naive_solver.
+      * repeat (rewrite /uPred_holds /=).
+        rewrite /upred.uPred_cmra_valid_def /validN /cmra_validN /=
+           /view_validN_instance /=. naive_solver.
     - uPred.unseal. split => n y Hy //=.
       repeat (rewrite /uPred_holds /=). naive_solver.
   Qed.
@@ -1292,17 +1299,9 @@ Section view.
     v1 ≡ v2 ⊣⊢@{uPredI M} view_auth_proj v1 ≡ view_auth_proj v2 ∧ view_frag_proj v1 ≡ view_frag_proj v2.
   Proof. by uPred.unseal. Qed.
 
-  Global Instance view_frag_valid_op b b1 b2 P :
-    IsOp b b1 b2 → (* generic views do not require the fragment to be valid! So this will usually not be enough *)
-    IsValidOp M (view_frag (rel := rel) b) (◯V b1) (◯V b2) (∃ a, rel_holds_for a b).
-  Proof.
-    rewrite /IsOp => Hb; split.
-    - rewrite /IsValidGives -view_frag_op view_validI /=.
-      iDestruct 1 as "[_ [%a #Ha]]". rewrite -Hb. eauto.
-    - rewrite Hb view_frag_op. eauto.
-  Qed.
-
-  Lemma view_auth_dfrac_op_validI dq1 dq2 a1 a2 : ✓ (view_auth (rel := rel) dq1 a1 ⋅ ●V{dq2} a2) ⊣⊢@{uPredI M} ✓ (dq1 ⋅ dq2) ∧ (a1 ≡ a2) ∧ rel_holds_for a2 ε.
+  Lemma view_auth_dfrac_op_validI dq1 dq2 a1 a2 : 
+    ✓ (view_auth (rel := rel) dq1 a1 ⋅ ●V{dq2} a2) ⊣⊢@{uPredI M} 
+      ✓ (dq1 ⋅ dq2) ∧ (a1 ≡ a2) ∧ rel_holds_for a2 ε.
   Proof.
     apply (anti_symm _); last first.
     - iIntros "(% & Ha & Hrel)".
@@ -1314,31 +1313,50 @@ Section view.
       iSplit; last eauto.
       rewrite {2}/op /= /cmra_op /= /view_op_instance /= !right_id //.
     - rewrite view_validI /=.
-      iDestruct 1 as (a) "Ha". rewrite agree_op_equiv_to_agreeI !agree_equivI /= right_id.
+      iDestruct 1 as (a) "Ha". 
+      rewrite agree_op_equiv_to_agreeI !agree_equivI /= right_id.
       iDestruct "Ha" as "([$ #Heq] & _ & H & $)".
       iRewrite "Heq". eauto.
   Qed.
 
-  Global Instance view_auth_dfrac_own_valid_op a1 a2 dq dq1 dq2 Pq :
-    IsValidOp M dq dq1 dq2 Pq →
-    IsValidOp M (view_auth (rel := rel) dq a1) (●V{dq1} a1) (●V{dq2} a2) (Pq ∧ a1 ≡ a2 ∧ rel_holds_for a2 ε)%I.
+  Global Instance view_frag_valid_gives b b1 b2 :
+    IsOp b b1 b2 →
+    IsValidGives M (view_frag (rel := rel) b1) (◯V b2) (∃ a, rel_holds_for a b)%I.
   Proof.
-    move => Hq; split.
-    - rewrite /IsValidGives view_auth_dfrac_op_validI is_valid_gives.
-      iIntros "(#$ & #$ & #$)".
-    - rewrite view_auth_dfrac_op_validI is_valid_op.
-      iIntros "(-> & Heq & _)".
-      iRewrite "Heq".
-      rewrite -view_auth_dfrac_op //.
+    rewrite /IsOp /IsValidGives => Hb.
+    rewrite view_validI /= -view_frag_op.
+    iDestruct 1 as "[_ [%a #Ha]]". rewrite -Hb. eauto.
   Qed.
-  (* it is possible to add IncludedMerge classes for views, but that would probably be painful, and only relevant
-     for the case where ●V appears nested under another ●. I think usually better ways should exist? *)  
 
+  Global Instance view_frag_valid_op b b1 b2 :
+    IsOp b b1 b2 →
+    IsValidOp M (◯V b1) (◯V b2) (view_frag (rel := rel) b).
+  Proof. rewrite /IsOp /IsValidOp -view_frag_op /= => <-. eauto. Qed.
+
+  Global Instance view_auth_valid_gives a1 a2 dq1 dq2 Pq :
+    IsValidGives M dq1 dq2 Pq →
+    IsValidGives M (view_auth (rel := rel) dq1 a1) (●V{dq2} a2) (Pq ∧ a1 ≡ a2 ∧ rel_holds_for a2 ε)%I.
+  Proof.
+    rewrite /IsValidGives view_auth_dfrac_op_validI => ->.
+    iIntros "(#$ & #$ & #$)".
+  Qed.
+
+  Global Instance view_auth_dfrac_own_valid_op a1 a2 dq dq1 dq2 :
+    IsValidOp M dq1 dq2 dq →
+    IsValidOp M (view_auth (rel := rel) dq1 a1) (●V{dq2} a2) (●V{dq} a1).
+  Proof.
+    rewrite /IsValidOp view_auth_dfrac_op_validI => ->.
+    iIntros "(-> & Heq & _)".
+    iRewrite "Heq".
+    rewrite -view_auth_dfrac_op //.
+  Qed.
 End view.
 
 Global Arguments rel_holds_for {A B M} rel _ _.
 
 
+(** Instances for [authR]. Like for [viewR], we do not provide instances for
+   [IsIncluded]. *)
 From iris.algebra Require Import auth.
 
 Section auth.
