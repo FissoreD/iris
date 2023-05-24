@@ -1107,6 +1107,7 @@ Section gmap.
   Qed.
 End gmap.
 
+
 (** Instances for [reservation_mapR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
 From iris.algebra Require Import reservation_map.
 
@@ -1440,6 +1441,7 @@ Section auth.
 End auth.
 
 
+(** Instances for [frac_authR], obtained by unfolding to [authR]. *)
 From iris.algebra.lib Require Import frac_auth.
 
 Section frac_auth.
@@ -1448,27 +1450,40 @@ Section frac_auth.
   Implicit Types P : uPred M.
 
   (* overcomes the typeclasses opaque instance on frac_auth_frag *)
-  Global Instance frac_auth_frag_valid_op a a1 a2 (q q1 q2 : Qp) P1 P2 :
-    IsValidOp M q q1 q2 P1 →
-    IsValidOp M a a1 a2 P2 →
-    IsValidOp M (◯F{q} a) (◯F{q1} a1) (◯F{q2} a2) (P1 ∧ P2).
-  Proof.
-    intros.
-    apply auth_frag_valid_op, option_some_valid_op.
-    by eapply prod_valid_op.
-  Qed.
+  Global Instance frac_auth_frag_valid_gives a1 a2 (q1 q2 : Qp) P1 P2 :
+    IsValidGives M q1 q2 P1 →
+    IsValidGives M a1 a2 P2 →
+    IsValidGives M (◯F{q1} a1) (◯F{q2} a2) (P1 ∧ P2).
+  Proof. intros. rewrite /frac_auth_frag. apply _. Qed.
 
-  Global Instance frac_auth_frag_is_valid_gives q a1 a2 P :
+  Global Instance frac_auth_auth_frag_valid_gives q a1 a2 P :
     IsIncluded M (Some (q, a2)) (Some (1%Qp, a1)) P →
     IsValidGives _ (●F a1) (◯F{q} a2) P.
-  Proof. eapply auth_frag_is_valid_gives. Qed.
-  Global Instance frac_auth_frag_is_valid_gives_swap q a1 a2 P :
+  Proof. rewrite /frac_auth_frag /frac_auth_auth. apply _. Qed.
+
+  Global Instance frac_auth_frag_auth_valid_gives q a1 a2 P :
     IsIncluded M (Some (q, a2)) (Some (1%Qp, a1)) P →
     IsValidGives _ (◯F{q} a2) (●F a1) P.
   Proof. intros; eapply is_valid_gives_comm, _. Qed.
+
+  Global Instance frac_auth_auth_valid_gives a1 a2 :
+    IsValidGives M (●F a1) (●F a2) False.
+  Proof.
+    rewrite /frac_auth_auth.
+    eapply is_valid_gives_weaken, _.
+    iIntros "[_ [%H _]]".
+    contradict H. eauto.
+  Qed.
+
+  Global Instance frac_auth_frag_valid_op a a1 a2 (q q1 q2 : Qp) :
+    IsValidOp M q1 q2 q →
+    IsValidOp M a1 a2 a →
+    IsValidOp M (◯F{q1} a1) (◯F{q2} a2) (◯F{q} a).
+  Proof. move => Hq Ha. rewrite /frac_auth_frag. apply _. Qed.
 End frac_auth.
 
 
+(** Instances for [excl_authR], again obtained by unfolding to [authR]. *)
 From iris.algebra.lib Require Import excl_auth.
 
 Section excl_auth.
@@ -1476,23 +1491,37 @@ Section excl_auth.
   Implicit Types a : A.
   Implicit Types P : uPred M.
 
-  (* overcomes the typeclasses opaque instance on excl_auth_frag *)
-  Global Instance excl_auth_frag_valid_op ea a1 a2 P :
-    IsValidOp M (Some ea) (Excl' a1) (Excl' a2) P →
-    IsValidOp M (◯ (Some ea)) (◯E a1) (◯E a2) P.
-  Proof. apply auth_frag_valid_op. Qed.
+  Global Instance excl_auth_frag_valid_gives a1 a2 P :
+    IsValidGives M (Excl' a1) (Excl' a2) P →
+    IsValidGives M (◯E a1) (◯E a2) P.
+  Proof. rewrite /excl_auth_frag. apply _. Qed.
 
-  Global Instance excl_auth_frag_is_valid_gives a1 a2 P :
+  Global Instance excl_auth_auth_frag_valid_gives a1 a2 P :
     IsIncluded M (Excl' a2) (Excl' a1) P →
-    IsValidGives _ (●E a1) (◯E a2) P.
-  Proof. eapply auth_frag_is_valid_gives. Qed.
+    IsValidGives M (●E a1) (◯E a2) P.
+  Proof. rewrite /excl_auth_auth /excl_auth_frag. apply _. Qed.
+
   Global Instance excl_auth_frag_is_valid_gives_swap a1 a2 P :
     IsIncluded M (Excl' a2) (Excl' a1) P →
-    IsValidGives _ (◯E a2) (●E a1) P.
+    IsValidGives M (◯E a2) (●E a1) P.
   Proof. intros; eapply is_valid_gives_comm, _. Qed.
+
+  Global Instance excl_auth_auth_valid_gives a1 a2 :
+    IsValidGives M (●E a1) (●E a2) False.
+  Proof.
+    rewrite /excl_auth_auth.
+    eapply is_valid_gives_weaken, _.
+    iIntros "[_ [%H _]]". contradict H. eauto.
+  Qed.
+
+  Global Instance excl_auth_frag_valid_op ea a1 a2 :
+    IsValidOp M (Excl' a1) (Excl' a2) (Some ea) →
+    IsValidOp M (◯E a1) (◯E a2) (◯ (Some ea)) .
+  Proof. rewrite /excl_auth_frag. apply _. Qed.
 End excl_auth.
 
 
+(** Instances for [dfrac_agreeR], again obtained by unfolding the definition. *)
 From iris.algebra.lib Require Import dfrac_agree.
 
 Section dfrac_agree.
@@ -1500,26 +1529,29 @@ Section dfrac_agree.
   Implicit Types a : A.
   Implicit Types P : uPred M.
 
-  (* overcomes the typeclasses opaque instance on to_dfrac_agree *)
-
-  Global Instance dfrac_agree_valid_op q a q1 a1 q2 a2 P :
-    IsValidOp M (q, to_agree a) (q1, to_agree a1) (q2, to_agree a2) P →
-    IsValidOp M (to_dfrac_agree q a) (to_dfrac_agree q1 a1) (to_dfrac_agree q2 a2) P.
+  Global Instance dfrac_agree_valid_gives q1 a1 q2 a2 P :
+    IsValidGives M (q1, to_agree a1) (q2, to_agree a2) P →
+    IsValidGives M (to_dfrac_agree q1 a1) (to_dfrac_agree q2 a2) P.
   Proof. by rewrite /to_dfrac_agree. Qed.
 
-  Global Instance dfrac_agree_included q1 a1 q2 a2 P :
+  Global Instance dfrac_agree_valid_op q a q1 a1 q2 a2 :
+    IsValidOp M (q1, to_agree a1) (q2, to_agree a2) (q, to_agree a) →
+    IsValidOp M (to_dfrac_agree q1 a1) (to_dfrac_agree q2 a2) (to_dfrac_agree q a).
+  Proof. by rewrite /to_dfrac_agree. Qed.
+
+  Global Instance dfrac_agree_is_included q1 a1 q2 a2 P :
     IsIncluded M (q1, to_agree a1) (q2, to_agree a2) P →
     IsIncluded M (to_dfrac_agree q1 a1) (to_dfrac_agree q2 a2) P.
   Proof. by rewrite /to_dfrac_agree. Qed.
 
-  Global Instance dfrac_agree_included_or_eq q1 a1 q2 a2 P1 P2 :
+  Global Instance dfrac_agree_is_included_or_eq q1 a1 q2 a2 P1 P2 :
     IsIncludedOrEq M (q1, to_agree a1) (q2, to_agree a2) P1 P2 →
     IsIncludedOrEq M (to_dfrac_agree q1 a1) (to_dfrac_agree q2 a2) P1 P2.
   Proof. by rewrite /to_dfrac_agree. Qed.
-
 End dfrac_agree.
 
 
+(** Instances for [gmap_viewR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
 From iris.algebra.lib Require Import gmap_view.
 
 Section gmap_view.
@@ -1554,35 +1586,31 @@ Section gmap_view.
       * rewrite lookup_singleton_ne //.
   Qed.
 
-  Global Instance gmap_view_frag_valid_op k dq dq1 dq2 v1 v2 P :
-    IsValidOp _ dq dq1 dq2 P →
-    IsValidOp _ (gmap_view_frag k dq v1) (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) (P ∧ v1 ≡ v2).
+
+  (** [IsValidGives] instances. *)
+  Global Instance gmap_view_frag_valid_gives k dq1 dq2 v1 v2 P :
+    IsValidGives M dq1 dq2 P →
+    IsValidGives M (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) (P ∧ v1 ≡ v2).
   Proof.
-    move => H0; split.
-    - rewrite /IsValidGives view_validI /=.
-      iDestruct 1 as "[_ [%m Hm]]".
-      rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
-      iDestruct "Hm" as "[%v3 (#Hv3 & Hv3' & _)]".
-      rewrite agree_op_equiv_to_agreeI is_valid_gives bi.and_elim_l agree_equivI bi.intuitionistically_and.
-      eauto.
-    - rewrite view_validI /=.
-      iDestruct 1 as "[_ [%m Hm]]".
-      rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
-      iDestruct "Hm" as "[%v3 (Hv3 & Hv3' & _)]".
-      rewrite agree_op_equiv_to_agreeI is_valid_op bi.and_elim_l agree_equivI.
-      iRewrite "Hv3". iRewrite "Hv3'". rewrite -gmap_view_frag_op //.
+    rewrite /IsValidGives view_validI /= => H.
+    iDestruct 1 as "[_ [%m Hm]]".
+    rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
+    iDestruct "Hm" as "[%v3 (#Hv3 & Hv3' & _)]".
+    rewrite agree_op_equiv_to_agreeI H bi.and_elim_l 
+      agree_equivI bi.intuitionistically_and.
+    eauto.
   Qed.
 
-  Global Instance gmap_view_auth_valid_op dq dq1 dq2 P m1 m2 :
-    IsValidOp _ dq dq1 dq2 P →
-    IsValidOp _ (gmap_view_auth dq m1) (gmap_view_auth dq1 m1) (gmap_view_auth dq2 m2) (P ∧ m1 ≡ m2).
+  Global Instance gmap_view_auth_valid_gives dq1 dq2 P m1 m2 :
+    IsValidGives M dq1 dq2 P →
+    IsValidGives M (gmap_view_auth dq1 m1) (gmap_view_auth dq2 m2) (P ∧ m1 ≡ m2).
   Proof.
-    intros. eapply is_valid_op_weaken.
-    - rewrite /gmap_view_auth. tc_solve.
-    - iIntros "(_ & #$ & #$ & _ )".
+    intros. rewrite /gmap_view_auth.
+    eapply is_valid_gives_weaken, _.
+    iIntros "(_ & #$ & #$ & _ )".
   Qed.
 
-  Global Instance gmap_view_auth_frag_gives dq1 m k dq2 v :
+  Global Instance gmap_view_auth_frag_valid_gives dq1 m k dq2 v :
     IsValidGives M (gmap_view_auth dq1 m) (gmap_view_frag k dq2 v) (m !! k ≡ Some v).
   Proof.
     rewrite /IsValidGives view_validI /=.
@@ -1592,5 +1620,28 @@ Section gmap_view.
     iDestruct 1 as (v') "(Hv1 & Hv2 & ->)". simpl.
     rewrite agree_equivI. by iRewrite "Hv1".
   Qed.
+
+  Global Instance gmap_view_frag_auth_valid_gives dq1 m k dq2 v :
+    IsValidGives M (gmap_view_frag k dq2 v) (gmap_view_auth dq1 m) (m !! k ≡ Some v).
+  Proof. apply is_valid_gives_comm, _. Qed.
+
+
+  (** [IsValidOp] instances. *)
+  Global Instance gmap_view_frag_valid_op k dq dq1 dq2 v1 v2 :
+    IsValidOp M dq1 dq2 dq →
+    IsValidOp M (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) (gmap_view_frag k dq v1).
+  Proof.
+    rewrite /IsValidOp => H0. rewrite view_validI /=.
+    iDestruct 1 as "[_ [%m Hm]]".
+    rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
+    iDestruct "Hm" as "[%v3 (Hv3 & Hv3' & _)]".
+    rewrite agree_op_equiv_to_agreeI H0 bi.and_elim_l agree_equivI.
+    iRewrite "Hv3". iRewrite "Hv3'". rewrite -gmap_view_frag_op //.
+  Qed.
+
+  Global Instance gmap_view_auth_valid_op dq dq1 dq2 m1 m2 :
+    IsValidOp M dq1 dq2 dq →
+    IsValidOp M (gmap_view_auth dq1 m1) (gmap_view_auth dq2 m2) (gmap_view_auth dq m1) .
+  Proof. intros. rewrite /gmap_view_auth. eapply is_valid_op_change, _. eauto. Qed.
 End gmap_view.
 
