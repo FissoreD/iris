@@ -64,7 +64,7 @@ Section proper.
   Qed.
 
   Lemma is_valid_op_change a1 a2 a a' :
-    (✓ (a1 ⋅ a2) ⊢@{uPred M} a ≡ a') →
+    (✓ (a1 ⋅ a2) ⊢@{uPredI M} a ≡ a') →
     IsValidOp M a1 a2 a →
     IsValidOp M a1 a2 a'.
   Proof.
@@ -1611,11 +1611,11 @@ Section gmap_view.
     IsValidGives M (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) 
                   (P ∧ v1 ≡ v2).
   Proof.
-    rewrite /IsValidGives view_validI /= => H.
+    rewrite /IsValidGives view_validI /= => HP.
     iDestruct 1 as "[_ [%m Hm]]".
     rewrite singleton_op -pair_op gmap_view_rel_holds_singleton /=.
     iDestruct "Hm" as "[%v3 (#Hv3 & Hv3' & _)]".
-    rewrite agree_op_equiv_to_agreeI H bi.and_elim_l 
+    rewrite agree_op_equiv_to_agreeI HP bi.and_elim_l 
       agree_equivI bi.intuitionistically_and.
     eauto.
   Qed.

@@ -79,7 +79,7 @@ Proof.
   iMod (Hwp (OwnPGS _ _ _ _ γσ) with "[Hσf]") as "[$ H]";
     first by rewrite /ownP; iFrame.
   iIntros "!> Hσ". iExists ∅. iMod "H" as (σ2') "[Hσf %]". rewrite /ownP.
-  iCombine "Hσ Hσf" gives %H. by simplify_eq.
+  iCombine "Hσ Hσf" gives %?. by simplify_eq.
 Qed.
 
 

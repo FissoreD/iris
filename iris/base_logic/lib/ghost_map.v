@@ -206,7 +206,7 @@ Section lemmas.
     ghost_map_auth γ q m -∗ k ↪[γ]{dq} v -∗ ⌜m !! k = Some v⌝.
   Proof.
     unseal. iIntros "Hauth Hel".
-    by iCombine "Hauth Hel" gives %H%leibniz_equiv_iff.
+    by iCombine "Hauth Hel" gives %?%leibniz_equiv_iff.
   Qed.
 
   Global Instance ghost_map_lookup_combine_gives_1 {γ q m k dq v} :
