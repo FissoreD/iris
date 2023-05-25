@@ -1,6 +1,5 @@
 From iris.algebra Require Import auth excl gmap.
 From iris.base_logic.lib Require Import own invariants gen_heap.
-From iris.base_logic Require Import validity_tactics.
 From iris.proofmode Require Import proofmode.
 From iris.prelude Require Import options.
 

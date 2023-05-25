@@ -10,8 +10,8 @@ increase the auth element. At any time the auth nat can be "snapshotted" with
 From iris.proofmode Require Import proofmode.
 From iris.algebra.lib Require Import mono_nat.
 From iris.bi.lib Require Import fractional.
-From iris.base_logic Require Import validity_tactics.
 From iris.base_logic.lib Require Export own.
+From iris.base_logic.lib Require Import combine_own_instances.
 From iris.prelude Require Import options.
 
 Class mono_natG Σ :=

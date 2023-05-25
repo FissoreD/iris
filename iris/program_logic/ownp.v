@@ -3,7 +3,6 @@ From iris.proofmode Require Import proofmode classes.
 From iris.program_logic Require Export weakestpre.
 From iris.program_logic Require Import lifting adequacy.
 From iris.program_logic Require ectx_language.
-From iris.base_logic Require Import validity_tactics.
 From iris.prelude Require Import options.
 
 (**

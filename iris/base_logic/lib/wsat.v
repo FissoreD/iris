@@ -2,7 +2,7 @@ From stdpp Require Export coPset.
 From iris.algebra Require Import gmap_view gset coPset.
 From iris.proofmode Require Import proofmode.
 From iris.base_logic.lib Require Export own.
-From iris.base_logic Require Import validity_tactics.
+From iris.base_logic.lib Require Import combine_own_instances.
 From iris.prelude Require Import options.
 
 (** All definitions in this file are internal to [fancy_updates] with the
