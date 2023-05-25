@@ -872,7 +872,8 @@ Section prod.
     MakeAnd P1_lt P2_lt P_lt →
     TCIf (HasRightId x2) (TCEq P_lt_case' True%I) (TCEq P_lt_case' P1_lt) →
     TCIf (HasRightId y2) (TCEq P_lt_case P_lt_case') (MakeAnd P_lt_case' P2_lt P_lt_case) →
-    MakeOr P_lt_case (x1 ≡ x2 ∧ y1 ≡ y2)%I P_case → (* MakeOr will simplify True ∨ P ⊣⊢ True and False ∨ P ⊣⊢ P *)
+    MakeOr P_lt_case (x1 ≡ x2 ∧ y1 ≡ y2)%I P_case → 
+    (** MakeOr will simplify True ∨ P ⊣⊢ True and False ∨ P ⊣⊢ P *)
     MakeAnd P_le' P_case P_le →
     IsIncludedOrEq M (x1, y1) (x2, y2) P_lt P_le.
   Proof.
@@ -1308,7 +1309,8 @@ Section view.
   Qed.
 
   Lemma view_equivI v1 v2 :
-    v1 ≡ v2 ⊣⊢@{uPredI M} view_auth_proj v1 ≡ view_auth_proj v2 ∧ view_frag_proj v1 ≡ view_frag_proj v2.
+    v1 ≡ v2 ⊣⊢@{uPredI M} view_auth_proj v1 ≡ view_auth_proj v2 ∧ 
+                          view_frag_proj v1 ≡ view_frag_proj v2.
   Proof. by uPred.unseal. Qed.
 
   Lemma view_auth_dfrac_op_validI dq1 dq2 a1 a2 : 
@@ -1347,7 +1349,8 @@ Section view.
 
   Global Instance view_auth_valid_gives a1 a2 dq1 dq2 Pq :
     IsValidGives M dq1 dq2 Pq →
-    IsValidGives M (view_auth (rel := rel) dq1 a1) (●V{dq2} a2) (Pq ∧ a1 ≡ a2 ∧ rel_holds_for a2 ε)%I.
+    IsValidGives M (view_auth (rel := rel) dq1 a1) (●V{dq2} a2) 
+                    (Pq ∧ a1 ≡ a2 ∧ rel_holds_for a2 ε)%I.
   Proof.
     rewrite /IsValidGives view_auth_dfrac_op_validI => ->.
     iIntros "(#$ & #$ & #$)".
@@ -1570,19 +1573,24 @@ Section gmap_view.
   Implicit Types P : uPred M.
 
   Lemma gmap_view_rel_holds (m : gmap K V) (f : gmap K (dfrac * agree V)) : 
-    rel_holds_for (gmap_view.gmap_view_rel K V) m f ⊣⊢@{uPredI M} ∀ (i : K) dq a, ⌜f !! i = Some (dq, a)⌝ → ∃ a', a ≡ to_agree a' ∧ ✓ dq ∧ ⌜m !! i = Some a'⌝.
+    rel_holds_for (gmap_view.gmap_view_rel K V) m f ⊣⊢@{uPredI M} 
+      ∀ (i : K) dq a, 
+        ⌜f !! i = Some (dq, a)⌝ → 
+        ∃ a', a ≡ to_agree a' ∧ ✓ dq ∧ ⌜m !! i = Some a'⌝.
   Proof. 
     split => n x Hx. rewrite /includedI. uPred.unseal.
     repeat (rewrite /uPred_holds /=).
     rewrite /gmap_view.gmap_view_rel_raw /=. split.
-    - move => /map_Forall_lookup Hm k dq a n' x' Hx' Hn Hx'' /Hm /= => [[v [Hv1 [Hv2 Hv3]]]].
+    - move => /map_Forall_lookup Hm k dq a n' x' Hx' Hn Hx'' /Hm /= 
+           => [[v [Hv1 [Hv2 Hv3]]]].
       exists v. rewrite Hv3. split; eauto using dist_le'.
     - move => H0. apply map_Forall_lookup => k [dq a] /= /H0 {H0} H0'.
       destruct (H0' n x) as [v Hv]; eauto.
   Qed.
 
   Lemma gmap_view_rel_holds_singleton k dv m :
-    rel_holds_for (gmap_view.gmap_view_rel K V) m {[ k := dv ]} ⊣⊢@{uPredI M} ∃ a', dv.2 ≡ to_agree a' ∧ ✓ dv.1 ∧ ⌜m !! k = Some a'⌝.
+    rel_holds_for (gmap_view.gmap_view_rel K V) m {[ k := dv ]} ⊣⊢@{uPredI M} 
+      ∃ a', dv.2 ≡ to_agree a' ∧ ✓ dv.1 ∧ ⌜m !! k = Some a'⌝.
   Proof.
     rewrite gmap_view_rel_holds.
     apply (anti_symm _).
@@ -1600,7 +1608,8 @@ Section gmap_view.
   (** [IsValidGives] instances. *)
   Global Instance gmap_view_frag_valid_gives k dq1 dq2 v1 v2 P :
     IsValidGives M dq1 dq2 P →
-    IsValidGives M (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) (P ∧ v1 ≡ v2).
+    IsValidGives M (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) 
+                  (P ∧ v1 ≡ v2).
   Proof.
     rewrite /IsValidGives view_validI /= => H.
     iDestruct 1 as "[_ [%m Hm]]".
@@ -1621,7 +1630,8 @@ Section gmap_view.
   Qed.
 
   Global Instance gmap_view_auth_frag_valid_gives dq1 m k dq2 v :
-    IsValidGives M (gmap_view_auth dq1 m) (gmap_view_frag k dq2 v) (m !! k ≡ Some v).
+    IsValidGives M (gmap_view_auth dq1 m) (gmap_view_frag k dq2 v) 
+                   (m !! k ≡ Some v).
   Proof.
     rewrite /IsValidGives view_validI /=.
     iDestruct 1 as (m') "(Hm' & _ & Hr & _)".
@@ -1632,14 +1642,16 @@ Section gmap_view.
   Qed.
 
   Global Instance gmap_view_frag_auth_valid_gives dq1 m k dq2 v :
-    IsValidGives M (gmap_view_frag k dq2 v) (gmap_view_auth dq1 m) (m !! k ≡ Some v).
+    IsValidGives M (gmap_view_frag k dq2 v) (gmap_view_auth dq1 m) 
+                   (m !! k ≡ Some v).
   Proof. apply is_valid_gives_comm, _. Qed.
 
 
   (** [IsValidOp] instances. *)
   Global Instance gmap_view_frag_valid_op k dq dq1 dq2 v1 v2 :
     IsValidOp M dq1 dq2 dq →
-    IsValidOp M (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) (gmap_view_frag k dq v1).
+    IsValidOp M (gmap_view_frag k dq1 v1) (gmap_view_frag k dq2 v2) 
+                  (gmap_view_frag k dq v1).
   Proof.
     rewrite /IsValidOp => H0. rewrite view_validI /=.
     iDestruct 1 as "[_ [%m Hm]]".
@@ -1651,7 +1663,11 @@ Section gmap_view.
 
   Global Instance gmap_view_auth_valid_op dq dq1 dq2 m1 m2 :
     IsValidOp M dq1 dq2 dq →
-    IsValidOp M (gmap_view_auth dq1 m1) (gmap_view_auth dq2 m2) (gmap_view_auth dq m1) .
-  Proof. intros. rewrite /gmap_view_auth. eapply is_valid_op_change, _. eauto. Qed.
+    IsValidOp M (gmap_view_auth dq1 m1) (gmap_view_auth dq2 m2) 
+                (gmap_view_auth dq m1).
+  Proof.
+    intros. rewrite /gmap_view_auth.
+    eapply is_valid_op_change, _. eauto.
+  Qed.
 End gmap_view.
 
