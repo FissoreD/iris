@@ -674,8 +674,7 @@ Section plainly_derived.
   Qed.
 
 Lemma fixpoint_plain_absorbing {A} (F : (A -d> bi_ofeO PROP) -> A -d> bi_ofeO PROP) `{Contractive F}:
-    (∀ Φ, (∀ x, Plain (Φ x)) → (∀ x, Absorbing (Φ x)) → (∀ x, Plain (F Φ x))) →
-    (∀ Φ, (∀ x, Plain (Φ x)) → (∀ x, Absorbing (Φ x)) → (∀ x, Absorbing (F Φ x))) →
+    (∀ Φ, (∀ x, Plain (Φ x)) → (∀ x, Absorbing (Φ x)) → (∀ x, Plain (F Φ x) ∧ Absorbing (F Φ x))) →
     ∀ x, Plain (fixpoint F x) ∧ Absorbing (fixpoint F x).
 Proof.
   intros ??.
