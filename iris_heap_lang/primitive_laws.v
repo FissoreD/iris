@@ -108,46 +108,19 @@ Implicit Types σ : state.
 Implicit Types v : val.
 Implicit Types l : loc.
 
-Lemma step_get_lb_get E :
-  ⊢ |~{E}~| steps_lb 0.
-Proof.
-  rewrite step_update.step_get_unseal.
-  iIntros (? m???) "(?&?&Hauth)".
-  iDestruct (primitive_laws.steps_lb_get with "Hauth") as "#Hlb".
-  iDestruct (primitive_laws.steps_lb_le with "Hlb") as "$"; [lia|].
-  by iFrame.
-Qed.
-
-Lemma step_update_lb_update E n :
-  steps_lb n -∗ |~{E}~> (steps_lb (S n)).
-Proof.
-  rewrite step_update.step_update_unseal.
-  iIntros "Hlb" (? m???) "(?&?&Hauth)".
-  iDestruct (primitive_laws.steps_lb_valid with "Hauth Hlb") as %Hvalid.
-  iFrame=> /=. iIntros "!>!>!>!>". iApply step_fupdN_intro; [done|].
-  iIntros "!>" (??) "(?&?&Hauth)".
-  iDestruct (primitive_laws.steps_lb_get with "Hauth") as "#Hlb'".
-  iDestruct (steps_lb_le _ (S n) with "Hlb'") as "Hlb''"; [lia|]. by iFrame.
-Qed.
-
-Lemma step_update_lb_step E P n :
-  steps_lb n -∗ (|={∅}▷=>^(S n) P) -∗ |~{E}~> P.
-Proof.
-  rewrite step_update.step_update_unseal.
-  iIntros "Hlb HP" (? m???) "(?&?&Hauth)".
-  iDestruct (primitive_laws.steps_lb_valid with "Hauth Hlb") as %Hvalid.
-  iModIntro. iFrame.
-  iApply (step_fupdN_le (S n))=> /=; [lia|done|].
-  iApply (step_fupdN_wand with "HP").
-  iIntros "!> HP" (??) "(?&?&Hauth)".
-  by iFrame.
-Qed.
-
 Lemma wp_lb_init s E e Φ :
   TCEq (to_val e) None →
   (steps_lb 0 -∗ WP e @ s; E {{ v, Φ v }}) -∗
   WP e @ s; E {{ Φ }}.
-Proof. iIntros (Hval). iApply wp_step_get. iApply step_get_lb_get. Qed.
+Proof.
+  (** TODO: We should try to use a generic lifting lemma (and avoid [wp_unfold])
+  here, since this breaks the WP abstraction. *)
+  rewrite !wp_unfold /wp_pre /=. iIntros (->) "Hwp".
+  iIntros (σ1 ns κ κs m) "(Hσ & Hκ & Hsteps)".
+  iDestruct (steps_lb_get with "Hsteps") as "#Hlb".
+  iDestruct (steps_lb_le _ 0 with "Hlb") as "Hlb0"; [lia|].
+  iSpecialize ("Hwp" with "Hlb0"). iApply ("Hwp" $! σ1 ns κ κs m). iFrame.
+Qed.
 
 Lemma wp_lb_update s n E e Φ :
   TCEq (to_val e) None →
@@ -155,9 +128,23 @@ Lemma wp_lb_update s n E e Φ :
   WP e @ s; E {{ v, steps_lb (S n) ={E}=∗ Φ v }} -∗
   WP e @ s; E {{ Φ }}.
 Proof.
-  iIntros (Hval) "Hlb Hwp".
-  iApply (wp_step_update with "[Hlb] Hwp").
-  by iApply step_update_lb_update.
+  (** TODO: We should try to use a generic lifting lemma (and avoid [wp_unfold])
+  here, since this breaks the WP abstraction. *)
+  rewrite !wp_unfold /wp_pre /=. iIntros (->) "Hlb Hwp".
+  iIntros (σ1 ns κ κs m) "(Hσ & Hκ & Hsteps)".
+  iDestruct (steps_lb_valid with "Hsteps Hlb") as %?.
+  iMod ("Hwp" $! σ1 ns κ κs m with "[$Hσ $Hκ $Hsteps]") as "[%Hs Hwp]".
+  iModIntro. iSplit; [done|].
+  iIntros (e2 σ2 efs Hstep) "Hcred".
+  iMod ("Hwp" with "[//] Hcred") as "Hwp".
+  iIntros "!> !>". iMod "Hwp" as "Hwp". iIntros "!>".
+  iApply (step_fupdN_wand with "Hwp").
+  iIntros "Hwp". iMod "Hwp" as "(($ & $ & Hsteps)& Hwp & $)".
+  iDestruct (steps_lb_get with "Hsteps") as "#HlbS".
+  iDestruct (steps_lb_le _ (S n) with "HlbS") as "#HlbS'"; [lia|].
+  iModIntro. iFrame "Hsteps".
+  iApply wp_fupd.
+  iApply (wp_wand with "Hwp"). iIntros (v) "HΦ". by iApply "HΦ".
 Qed.
 
 Lemma wp_step_fupdN_lb s n E e P Φ :
@@ -168,8 +155,36 @@ Lemma wp_step_fupdN_lb s n E e P Φ :
   WP e @ s; E {{ Φ }}.
 Proof.
   iIntros (He) "Hlb HP Hwp".
-  iApply (wp_step_update with "[Hlb HP] Hwp").
-  by iApply (step_update_lb_step with "Hlb").
+  iApply wp_step_fupdN; [done|].
+  iSplit; last first.
+  { iFrame. rewrite difference_diag_L. iModIntro.
+    iApply (step_fupdN_wand with "HP"). iIntros "HP!>". done. }
+  iIntros (σ ns κs nt) "(? & ? & Hsteps)".
+  iDestruct (steps_lb_valid with "Hsteps Hlb") as %Hle.
+  iApply fupd_mask_intro; [set_solver|].
+  iIntros "_". iPureIntro. rewrite /num_laters_per_step /=. lia.
+Qed.
+
+Lemma step_get_lb_get E :
+  ⊢ |~{E}~| steps_lb 0.
+Proof.
+  rewrite step_update.step_get_unseal.
+  iIntros (s e Φ Hval) "Hwp". iApply (wp_lb_init).
+  iIntros "Hlb". by iMod ("Hwp" with "Hlb").
+Qed.
+
+Lemma step_update_lb_update E n :
+  steps_lb n -∗ |~{E}~> (steps_lb (S n)).
+Proof.
+  rewrite step_update.step_update_unseal. iIntros "Hstep".
+  iIntros (s e Φ Hval). iApply (wp_lb_update with "Hstep").
+Qed.
+
+Lemma step_update_lb_step E P n :
+  steps_lb n -∗ (|={∅}▷=>^(S n) P) -∗ |~{E}~> P.
+Proof.
+  rewrite step_update.step_update_unseal. iIntros "Hstep HP".
+  iIntros (s e Φ Hval). iApply (wp_step_fupdN_lb with "Hstep HP").
 Qed.
 
 (** Recursive functions: we do not use this lemmas as it is easier to use Löb

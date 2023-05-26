@@ -2,13 +2,11 @@ From iris.prelude Require Import options.
 From iris.program_logic Require Import weakestpre.
 From iris.proofmode Require Import tactics.
 
-Definition step_gen `{!irisGS_gen hlc Λ Σ} E P : iProp Σ :=
-  ∀ σ n κ κs nt,
-    state_interp σ n (κ ++ κs) nt ={E}=∗ state_interp σ n (κ ++ κs) nt ∗
-    (P σ n κ κs nt).
-
 Local Definition step_get_def `{!irisGS_gen hlc Λ Σ} E (P : iProp Σ) : iProp Σ :=
-  step_gen E (λ _ _ _ _ _, |={E}=> P)%I.
+  ∀ e s Φ,
+    ⌜TCEq (to_val e) None⌝ →
+    (P ={E}=∗ WP e @ s; E {{ v, Φ v }}) -∗
+    WP e @ s; E {{ Φ }}.
 Local Definition step_get_aux : seal (@step_get_def).
 Proof. by eexists. Qed.
 Definition step_get := step_get_aux.(unseal).
@@ -22,10 +20,10 @@ Notation "|~~| P" := (|~{∅}~| P)%I
   (at level 99, P at level 200, format "'[  ' |~~|  '/' P ']'").
 
 Local Definition step_update_def `{!irisGS_gen hlc Λ Σ} E (P : iProp Σ) : iProp Σ :=
-  step_gen E (λ σ1 n κ κs nt,
-                (|={∅}▷=>^(S (num_laters_per_step n))
-                   ∀ σ2 nt', (state_interp σ2 (S n) κs (nt' + nt) ={E}=∗
-                              state_interp σ2 (S n) κs (nt' + nt) ∗ P)))%I.
+  ∀ e s Φ,
+    ⌜TCEq (to_val e) None⌝ →
+    WP e @ s; E {{ v, P ={E}=∗ Φ v }} -∗
+    WP e @ s; E {{ Φ }}.
 Local Definition step_update_aux : seal (@step_update_def).
 Proof. by eexists. Qed.
 Definition step_update := step_update_aux.(unseal).
@@ -42,58 +40,53 @@ Notation "|~~> P" := (|~{∅}~> P)%I
 Section with_Σ.
   Context `{!irisGS_gen hlc Λ Σ}.
 
-  Lemma step_fupdN_empty_sep n (R Q : iProp Σ) :
-    (|={∅}▷=>^n R) ∗ (|={∅}▷=>^n Q) -∗ |={∅}▷=>^n (R ∗ Q).
-  Proof.
-    induction n as [|n IH]; simpl; [done|].
-    iIntros "[HR HQ]". iApply IH.
-    iMod "HR". iMod "HQ". iIntros "!>!>". iMod "HR". iMod "HQ". by iFrame.
-  Qed.
-
   Lemma wp_step_get s E e P Φ :
     TCEq (to_val e) None →
     (|~{E}~| P) -∗
-    (P -∗ WP e @ s; E {{ Φ }}) -∗
+    (P ={E}=∗ WP e @ s; E {{ Φ }}) -∗
     WP e @ s; E {{ Φ }}.
   Proof.
     rewrite step_get_unseal.
-    iIntros (Hval) "HP Hwp". rewrite !wp_unfold /wp_pre /=.
-    destruct (to_val e); [by inversion Hval|].
-    iIntros (σ1 ns κ κs nt) "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iMod "HP".
-    by iDestruct ("Hwp" with "HP Hσ") as "Hwp".
+    iIntros (Hval) "HP Hwp". by iApply ("HP" with "[] Hwp").
   Qed.
 
   Lemma step_get_intro E P :
     P -∗ |~{E}~| P.
-  Proof. rewrite step_get_unseal. iIntros "HP" (σ n κ κs nt) "Hσ". by iFrame. Qed.
+  Proof.
+    rewrite step_get_unseal.
+    iIntros "HP". iIntros (s e Φ Hval) "Hwp". by iMod ("Hwp" with "HP").
+  Qed.
 
   Lemma step_get_comm E P Q :
     (|~{E}~| P) -∗ (|~{E}~| Q) -∗ |~{E}~| P ∗ Q.
   Proof.
     rewrite step_get_unseal.
-    iIntros "HP HQ" (σ n κ κs nt) "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iMod ("HQ" with "Hσ") as "[Hσ HQ]".
-    iMod "HP". iMod "HQ". by iFrame.
+    iIntros "HP HQ".
+    iIntros (s e Φ Hval) "HPQ".
+    iApply "HP"; [done|]. iIntros "HP!>".
+    iApply "HQ"; [done|]. iIntros "HQ!>".
+    iMod ("HPQ" with "[HP HQ]"); [iFrame|done].
   Qed.
 
   Lemma step_get_mono E P Q :
     (P -∗ Q) -∗ (|~{E}~| P) -∗ |~{E}~| Q.
   Proof.
     rewrite step_get_unseal.
-    iIntros "HPQ HP" (σ n κ κs nt) "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]". iIntros "!>". iFrame. by iApply "HPQ".
+    iIntros "HPQ Hstep".
+    iIntros (s e Φ Hval) "Hwp".
+    iApply "Hstep"; [done|].
+    iIntros "HP!>".
+    iDestruct ("HPQ" with "HP") as "HQ".
+    by iMod ("Hwp" with "HQ").
   Qed.
 
   Lemma fupd_step_get_fupd E P : (|={E}=> |~{E}~| |={E}=> P) -∗ |~{E}~| P.
   Proof.
     rewrite step_get_unseal.
-    iIntros "Hstep" (σ n κ κs nt) "Hσ".
-    iMod "Hstep". iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
-    iIntros "!>". iFrame=> /=.
-    by iMod "Hstep".
+    iIntros "Hstep".
+    iIntros (s e Φ Hval) "Hwp".
+    iMod "Hstep". iApply "Hstep"; [done|].
+    iMod 1 as "HP". by iMod ("Hwp" with "HP").
   Qed.
 
   Lemma step_get_fupd E P : (|~{E}~| |={E}=> P) -∗ |~{E}~| P.
@@ -118,33 +111,19 @@ Section with_Σ.
     WP e @ s; E {{ Φ }}.
   Proof.
     rewrite step_update_unseal.
-    iIntros (Hval) "Hstep Hwp". rewrite !wp_unfold /wp_pre /=.
-    destruct (to_val e); [by inversion Hval|].
-    iIntros (σ1 n κ κs nt) "Hσ".
-    iMod ("Hstep" with "Hσ") as "[Hσ Hstep]"=> /=.
-    iMod ("Hwp" with "Hσ") as "[% Hwp]". iMod "Hstep".
-    iModIntro. iSplit; [done|].
-    iIntros (e2 σ2 efs Hstep) "H£".
-    iMod ("Hwp" with "[//] H£") as "Hwp". iIntros "!> !>".
-    iMod "Hstep". iMod "Hwp". iIntros "!>".
-    iAssert (|={∅}▷=>^(num_laters_per_step n) _ ∗ _)%I
-      with "[Hwp Hstep]" as "Hwp".
-    { iApply step_fupdN_empty_sep. iFrame. }
-    iApply (step_fupdN_wand with "Hwp").
-    iIntros "[Hstep Hwp]". iMod "Hwp" as "(Hσ & Hwp & Hwps)".
-    iMod ("Hstep" with "Hσ") as "[Hσ HP]".
-    iModIntro. iFrame.
-    iApply (wp_strong_mono with "Hwp"); [done|done|..].
-    iIntros (v) "H". by iApply ("H").
+    iIntros (Hval) "Hstep Hwp".
+    by iApply "Hstep".
   Qed.
 
   Lemma step_update_later E P :
     ▷ P -∗ |~{E}~> P.
   Proof.
     rewrite step_update_unseal.
-    iIntros "HP". iIntros (σ n κ κs nt) "Hσ".
-    iFrame. iApply step_fupdN_intro; [set_solver|].
-    iIntros "!>!>!>" (σ2 nt') "Hσ". by iFrame.
+    iIntros "HP".
+    iIntros (e s Φ Hval) "Hwp".
+    iApply (wp_step_fupd with "[HP]"); [set_solver| |].
+    { iIntros "!>!>!>". iExact "HP". }
+    done.
   Qed.
 
   Lemma step_update_intro E P : P -∗ |~{E}~> P.
@@ -154,47 +133,33 @@ Section with_Σ.
     (|~{E}~> P) -∗ (|~{E}~> Q) -∗ |~{E}~> P ∗ Q.
   Proof.
     rewrite step_update_unseal.
-    iIntros "HP HQ". iIntros (σ n κ κs nt) "Hσ".
-    iDestruct ("HP" with "Hσ") as "HP".
-    iMod "HP" as "[Hσ HP]".
-    iMod ("HQ" with "Hσ") as "[Hσ HQ]".
-    iIntros "!>". iFrame=> /=.
-    iMod "HP". iMod "HQ". iIntros "!>!>". iMod "HP". iMod "HQ". iIntros "!>".
-    iDestruct (step_fupdN_empty_sep with "[$HP $HQ]") as "HPQ".
-    iApply (step_fupdN_wand with "[HPQ]"); first by iApply "HPQ".
-    iIntros "[HP HQ]" (σ2 nt') "Hσ".
-    iMod ("HQ" with "Hσ") as "[Hσ HQ]".
-    iDestruct ("HP" with "Hσ") as "HP".
-    iMod "HP". by iFrame.
+    iIntros "HP HQ".
+    iIntros (e s Φ Hval) "Hwp".
+    iApply "HQ"; [done|]. iApply "HP"; [done|].
+    iApply (wp_mono with "Hwp").
+    iIntros (v) "HPQ". iIntros "HP !> HQ". iApply "HPQ". iFrame.
   Qed.
 
   Lemma step_update_mono E P Q : (P -∗ Q) -∗ (|~{E}~> P) -∗ |~{E}~> Q.
   Proof.
     rewrite step_update_unseal.
-    iIntros "HPQ HP". iIntros (σ n κ κs nt) "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iIntros "!>". iFrame=> /=.
-    iMod "HP". iIntros "!>!>". iMod "HP". iIntros "!>".
-    iAssert (|={∅}▷=>^(num_laters_per_step n) _ ∗ _)%I with "[HPQ HP]" as "H".
-    { iApply step_fupdN_frame_l. iFrame. iExact "HPQ". }
-    iApply (step_fupdN_wand with "H").
-    iIntros "[HPQ HP]" (??) "Hσ".
-    iMod ("HP" with "Hσ") as "[Hσ HP]".
-    iDestruct ("HPQ" with "HP") as "HQ".
-    by iFrame.
+    iIntros "HPQ HP".
+    iIntros (e s Φ Hval) "Hwp".
+    iApply "HP"; [done|].
+    iApply (wp_wand with "Hwp").
+    iIntros (v) "HΦ HP". iDestruct ("HPQ" with "HP") as "HQ".
+    by iMod ("HΦ" with "HQ").
   Qed.
 
   Lemma fupd_step_update_fupd E P : (|={E}=> |~{E}~> |={E}=> P) -∗ |~{E}~> P.
   Proof.
     rewrite step_update_unseal.
-    iIntros "Hstep" (σ n κ κs nt) "Hσ".
-    iMod "Hstep". iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
-    iIntros "!>". iFrame=> /=.
-    iMod "Hstep". iIntros "!>!>". iMod "Hstep". iIntros "!>".
-    iApply (step_fupdN_wand with "Hstep").
-    iIntros "Hstep" (??) "Hσ".
-    iMod ("Hstep" with "Hσ") as "[Hσ Hstep]".
-    iMod "Hstep". iModIntro. by iFrame.
+    iIntros "Hstep".
+    iIntros (e s Φ Hval) "Hwp".
+    iMod "Hstep".
+    iApply "Hstep"; [done|].
+    iApply (wp_mono with "Hwp").
+    iIntros (v) "HΦ HP". iMod "HP". by iMod ("HΦ" with "HP").
   Qed.
 
   Lemma step_update_fupd E P : (|~{E}~> |={E}=> P) -∗ |~{E}~> P.
