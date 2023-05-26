@@ -2,24 +2,24 @@ From iris.algebra Require Export dfrac agree updates local_updates.
 From iris.algebra Require Import proofmode_classes.
 From iris.prelude Require Import options.
 
-Definition dfrac_agreeR (A : ofe) : cmra := prodR dfracR (agreeR A).
+Definition dfrac_agreeR `{SI : indexT} (A : ofe) : cmra := prodR dfracR (agreeR A).
 
-Definition to_dfrac_agree {A : ofe} (d : dfrac) (a : A) : dfrac_agreeR A :=
+Definition to_dfrac_agree `{SI : indexT} {A : ofe} (d : dfrac) (a : A) : dfrac_agreeR A :=
   (d, to_agree a).
-Global Instance: Params (@to_dfrac_agree) 2 := {}.
+Global Instance: Params (@to_dfrac_agree) 3 := {}.
 (** To make it easier to work with the [Qp] version of this, we also provide
     [to_frac_agree] and appropriate lemmas. *)
-Definition to_frac_agree {A : ofe} (q : Qp) (a : A) : dfrac_agreeR A :=
+Definition to_frac_agree `{SI : indexT} {A : ofe} (q : Qp) (a : A) : dfrac_agreeR A :=
   to_dfrac_agree (DfracOwn q) a.
-Global Instance: Params (@to_frac_agree) 2 := {}.
+Global Instance: Params (@to_frac_agree) 3 := {}.
 
 Section lemmas.
-  Context {A : ofe}.
+  Context `{SI : indexT} {A : ofe}.
   Implicit Types (q : Qp) (d : dfrac) (a : A).
 
-  Global Instance to_dfrac_agree_ne d : NonExpansive (@to_dfrac_agree A d).
+  Global Instance to_dfrac_agree_ne d : NonExpansive (@to_dfrac_agree SI A d).
   Proof. solve_proper. Qed.
-  Global Instance to_dfrac_agree_proper d : Proper ((≡) ==> (≡)) (@to_dfrac_agree A d).
+  Global Instance to_dfrac_agree_proper d : Proper ((≡) ==> (≡)) (@to_dfrac_agree SI A d).
   Proof. solve_proper. Qed.
 
   Global Instance to_dfrac_agree_exclusive a :
@@ -27,9 +27,9 @@ Section lemmas.
   Proof. apply _. Qed.
   Global Instance to_dfrac_agree_discrete d a : Discrete a → Discrete (to_dfrac_agree d a).
   Proof. apply _. Qed.
-  Global Instance to_dfrac_agree_injN n : Inj2 (dist n) (dist n) (dist n) (@to_dfrac_agree A).
+  Global Instance to_dfrac_agree_injN n : Inj2 (dist n) (dist n) (dist n) (@to_dfrac_agree SI A).
   Proof. by intros d1 a1 d2 a2 [??%(inj to_agree)]. Qed.
-  Global Instance to_dfrac_agree_inj : Inj2 (≡) (≡) (≡) (@to_dfrac_agree A).
+  Global Instance to_dfrac_agree_inj : Inj2 (≡) (≡) (≡) (@to_dfrac_agree SI A).
   Proof. by intros d1 a1 d2 a2 [??%(inj to_agree)]. Qed.
 
   Lemma dfrac_agree_op d1 d2 a :
@@ -133,10 +133,10 @@ Section lemmas.
 
 End lemmas.
 
-Definition dfrac_agreeRF (F : oFunctor) : rFunctor :=
+Definition dfrac_agreeRF `{SI : indexT} (F : oFunctor) : rFunctor :=
   prodRF (constRF dfracR) (agreeRF F).
 
-Global Instance dfrac_agreeRF_contractive F :
+Global Instance dfrac_agreeRF_contractive `{SI : indexT} F :
   oFunctorContractive F → rFunctorContractive (dfrac_agreeRF F).
 Proof. apply _. Qed.
 

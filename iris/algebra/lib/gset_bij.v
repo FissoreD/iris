@@ -16,7 +16,7 @@ From iris.algebra Require Import updates.
 From iris.prelude Require Import options.
 
 Section gset_bijective.
-  Context `{Countable A, Countable B}.
+  Context `{Countable A, Countable B} `{SI : indexT} .
   Implicit Types (a : A) (b : B).
 
   (** [gset_bijective] states that for a graph [L] of [(a, b)] pairs, [L] maps
@@ -59,17 +59,17 @@ Section gset_bijective.
 End gset_bijective.
 
 Section gset_bij_view_rel.
-  Context `{Countable A, Countable B}.
+  Context {A B: Type} `{!EqDecision A, !EqDecision B} `{!Countable A, !Countable B} `{SI : indexT} .
   Implicit Types (bijL : gset (A * B)) (L : gsetUR (A * B)).
 
-  Local Definition gset_bij_view_rel_raw (n : nat) bijL L: Prop :=
+  Local Definition gset_bij_view_rel_raw (n : index) bijL L: Prop :=
     L ⊆ bijL ∧ gset_bijective bijL.
 
   Local Lemma gset_bij_view_rel_raw_mono n1 n2 bijL1 bijL2 L1 L2 :
     gset_bij_view_rel_raw n1 bijL1 L1 →
     bijL1 ≡{n2}≡ bijL2 →
     L2 ≼{n2} L1 →
-    n2 ≤ n1 →
+    n2 ⪯ᵢ n1 →
     gset_bij_view_rel_raw n2 bijL2 L2.
   Proof.
     intros [??] <-%(discrete_iff _ _)%leibniz_equiv ?%gset_included _.
@@ -96,23 +96,23 @@ Section gset_bij_view_rel.
   Proof. done. Qed.
 End gset_bij_view_rel.
 
-Definition gset_bij A B `{Countable A, Countable B} :=
+Definition gset_bij A B `{!EqDecision A, !EqDecision B} `{!Countable A, !Countable B} `{SI : indexT} :=
   view (gset_bij_view_rel_raw (A:=A) (B:=B)).
-Definition gset_bijO A B `{Countable A, Countable B} : ofe :=
+Definition gset_bijO A B `{!EqDecision A, !EqDecision B} `{!Countable A, !Countable B} `{SI : indexT} : ofe :=
   viewO (gset_bij_view_rel (A:=A) (B:=B)).
-Definition gset_bijR A B `{Countable A, Countable B} : cmra :=
+Definition gset_bijR A B `{!EqDecision A, !EqDecision B} `{!Countable A, !Countable B} `{SI : indexT} : cmra :=
   viewR (gset_bij_view_rel (A:=A) (B:=B)).
-Definition gset_bijUR A B `{Countable A, Countable B} : ucmra :=
+Definition gset_bijUR A B `{!EqDecision A, !EqDecision B} `{!Countable A, !Countable B} `{SI : indexT} : ucmra :=
   viewUR (gset_bij_view_rel (A:=A) (B:=B)).
 
-Definition gset_bij_auth `{Countable A, Countable B}
+Definition gset_bij_auth {A B} `{!EqDecision A, !EqDecision B} `{!Countable A, !Countable B} `{SI : indexT}
   (dq : dfrac) (L : gset (A * B)) : gset_bij A B := ●V{dq} L ⋅ ◯V L.
-Definition gset_bij_elem `{Countable A, Countable B}
+Definition gset_bij_elem {A B} `{!EqDecision A, !EqDecision B} `{!Countable A, !Countable B} `{SI : indexT}
   (a : A) (b : B) : gset_bij A B := ◯V {[ (a, b) ]}.
 
 
 Section gset_bij.
-  Context `{Countable A, Countable B}.
+  Context A B `{!EqDecision A, !EqDecision B} `{!Countable A, !Countable B} `{SI : indexT}.
   Implicit Types (a:A) (b:B).
   Implicit Types (L : gset (A*B)).
   Implicit Types dq : dfrac.
@@ -132,7 +132,7 @@ Section gset_bij.
   Proof.
     rewrite /gset_bij_auth view_both_dfrac_valid.
     setoid_rewrite gset_bij_view_rel_iff.
-    naive_solver eauto using O.
+    naive_solver eauto using zero.
   Qed.
   Lemma gset_bij_auth_valid L : ✓ gset_bij_auth (DfracOwn 1) L ↔ gset_bijective L.
   Proof. rewrite gset_bij_auth_dfrac_valid. naive_solver by done. Qed.
@@ -151,7 +151,7 @@ Section gset_bij.
     rewrite /gset_bij_auth (comm _ (●V{dq2} _)) -!assoc (assoc _ (◯V _)).
     rewrite -view_frag_op (comm _ (◯V _)) assoc. split.
     - move=> /cmra_valid_op_l /view_auth_dfrac_op_valid.
-      setoid_rewrite gset_bij_view_rel_iff. naive_solver eauto using 0.
+      setoid_rewrite gset_bij_view_rel_iff. naive_solver eauto using zero.
     - intros (?&->&?). rewrite -core_id_dup -view_auth_dfrac_op.
       apply view_both_dfrac_valid. setoid_rewrite gset_bij_view_rel_iff. naive_solver.
   Qed.
@@ -164,7 +164,7 @@ Section gset_bij.
   Proof.
     rewrite /gset_bij_auth /gset_bij_elem -assoc -view_frag_op view_both_dfrac_valid.
     setoid_rewrite gset_bij_view_rel_iff.
-    set_solver by eauto using O.
+    set_solver by eauto using zero.
   Qed.
   Lemma bij_both_valid L a b :
     ✓ (gset_bij_auth (DfracOwn 1) L ⋅ gset_bij_elem a b) ↔ gset_bijective L ∧ (a, b) ∈ L.
@@ -175,7 +175,7 @@ Section gset_bij.
   Proof.
     rewrite /gset_bij_elem -view_frag_op gset_op view_frag_valid.
     setoid_rewrite gset_bij_view_rel_iff. intros. apply gset_bijective_pair.
-    naive_solver eauto using subseteq_gset_bijective, O.
+    naive_solver eauto using subseteq_gset_bijective, zero.
   Qed.
 
   Lemma bij_view_included dq L a b :

@@ -3,6 +3,7 @@ From iris.prelude Require Import options.
 
 (** ** Natural numbers with [add] as the operation. *)
 Section nat.
+  Context `{SI : indexT}.
   Local Instance nat_valid_instance : Valid nat := λ x, True.
   Local Instance nat_validN_instance : ValidN nat := λ n x, True.
   Local Instance nat_pcore_instance : PCore nat := λ x, Some 0.
@@ -50,9 +51,10 @@ End nat.
 Record max_nat := MaxNat { max_nat_car : nat }.
 Add Printing Constructor max_nat.
 
-Canonical Structure max_natO := leibnizO max_nat.
+Canonical Structure max_natO `{SI : indexT} := leibnizO max_nat.
 
 Section max_nat.
+  Context `{SI : indexT}.
   Local Instance max_nat_unit_instance : Unit max_nat := MaxNat 0.
   Local Instance max_nat_valid_instance : Valid max_nat := λ x, True.
   Local Instance max_nat_validN_instance : ValidN max_nat := λ n x, True.
@@ -106,9 +108,10 @@ End max_nat.
 Record min_nat := MinNat { min_nat_car : nat }.
 Add Printing Constructor min_nat.
 
-Canonical Structure min_natO := leibnizO min_nat.
+Canonical Structure min_natO `{SI : indexT} := leibnizO min_nat.
 
 Section min_nat.
+  Context `{SI : indexT}.
   Local Instance min_nat_valid_instance : Valid min_nat := λ x, True.
   Local Instance min_nat_validN_instance : ValidN min_nat := λ n x, True.
   Local Instance min_nat_pcore_instance : PCore min_nat := Some.
@@ -161,6 +164,7 @@ End min_nat.
 
 (** ** Positive integers with [Pos.add] as the operation. *)
 Section positive.
+  Context `{SI : indexT}.
   Local Instance pos_valid_instance : Valid positive := λ x, True.
   Local Instance pos_validN_instance : ValidN positive := λ n x, True.
   Local Instance pos_pcore_instance : PCore positive := λ x, None.
@@ -196,6 +200,7 @@ End positive.
 
 (** ** Integers (positive and negative) with [Z.add] as the operation. *)
 Section Z.
+  Context `{SI : indexT}.
   Local Open Scope Z_scope.
   Local Instance Z_valid_instance : Valid Z := λ x, True.
   Local Instance Z_validN_instance : ValidN Z := λ n x, True.
@@ -241,9 +246,10 @@ End Z.
 Record max_Z := MaxZ { max_Z_car : Z }.
 Add Printing Constructor max_Z.
 
-Canonical Structure max_ZO := leibnizO max_Z.
+Canonical Structure max_ZO `{SI : indexT} := leibnizO max_Z.
 
 Section max_Z.
+  Context `{SI : indexT}.
   Local Open Scope Z_scope.
 
   Local Instance max_Z_unit_instance : Unit max_Z := MaxZ 0.

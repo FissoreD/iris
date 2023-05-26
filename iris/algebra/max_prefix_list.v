@@ -6,8 +6,8 @@ From iris.algebra Require Import local_updates proofmode_classes.
 From iris.prelude Require Import options.
 
 Definition max_prefix_list (A : Type) := gmap nat (agree A).
-Definition max_prefix_listR (A : ofe) := gmapUR nat (agreeR A).
-Definition max_prefix_listUR (A : ofe) := gmapUR nat (agreeR A).
+Definition max_prefix_listR `{SI : indexT} (A : ofe) := gmapUR nat (agreeR A).
+Definition max_prefix_listUR `{SI : indexT} (A : ofe) := gmapUR nat (agreeR A).
 
 Definition to_max_prefix_list {A} (l : list A) : gmap nat (agree A) :=
   to_agree <$> map_seq 0 l.
@@ -15,7 +15,7 @@ Global Instance: Params (@to_max_prefix_list) 1 := {}.
 Global Typeclasses Opaque to_max_prefix_list.
 
 Section max_prefix_list.
-  Context {A : ofe}.
+  Context `{SI : indexT} {A : ofe}.
   Implicit Types l : list A.
 
   Global Instance to_max_prefix_list_ne : NonExpansive (@to_max_prefix_list A).
@@ -172,16 +172,16 @@ Section max_prefix_list.
   Qed.
 End max_prefix_list.
 
-Definition max_prefix_listURF (F : oFunctor) : urFunctor :=
+Definition max_prefix_listURF `{SI : indexT} (F : oFunctor) : urFunctor :=
   gmapURF nat (agreeRF F).
 
-Global Instance max_prefix_listURF_contractive F :
+Global Instance max_prefix_listURF_contractive `{SI : indexT} F :
   oFunctorContractive F → urFunctorContractive (max_prefix_listURF F).
 Proof. apply _. Qed.
 
-Definition max_prefix_listRF (F : oFunctor) : rFunctor :=
+Definition max_prefix_listRF `{SI : indexT} (F : oFunctor) : rFunctor :=
   gmapRF nat (agreeRF F).
 
-Global Instance max_prefix_listRF_contractive F :
+Global Instance max_prefix_listRF_contractive `{SI : indexT} F :
   oFunctorContractive F → rFunctorContractive (max_prefix_listRF F).
 Proof. apply _. Qed.

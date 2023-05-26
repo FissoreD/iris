@@ -9,36 +9,36 @@ From iris.prelude Require Import options.
   split the authoritative part into fractions.
 *)
 
-Definition frac_authR (A : cmra) : cmra :=
+Definition frac_authR `{SI : indexT} (A : cmra) : cmra :=
   authR (optionUR (prodR fracR A)).
-Definition frac_authUR (A : cmra) : ucmra :=
+Definition frac_authUR `{SI : indexT} (A : cmra) : ucmra :=
   authUR (optionUR (prodR fracR A)).
 
-Definition frac_auth_auth {A : cmra} (x : A) : frac_authR A :=
+Definition frac_auth_auth `{SI : indexT} {A : cmra} (x : A) : frac_authR A :=
   ● (Some (1%Qp,x)).
-Definition frac_auth_frag {A : cmra} (q : frac) (x : A) : frac_authR A :=
+Definition frac_auth_frag `{SI : indexT} {A : cmra} (q : frac) (x : A) : frac_authR A :=
   ◯ (Some (q,x)).
 
 Global Typeclasses Opaque frac_auth_auth frac_auth_frag.
 
-Global Instance: Params (@frac_auth_auth) 1 := {}.
-Global Instance: Params (@frac_auth_frag) 2 := {}.
+Global Instance: Params (@frac_auth_auth) 2 := {}.
+Global Instance: Params (@frac_auth_frag) 3 := {}.
 
 Notation "●F a" := (frac_auth_auth a) (at level 10).
 Notation "◯F{ q } a" := (frac_auth_frag q a) (at level 10, format "◯F{ q }  a").
 Notation "◯F a" := (frac_auth_frag 1 a) (at level 10).
 
 Section frac_auth.
-  Context {A : cmra}.
+  Context `{SI : indexT} {A : cmra}.
   Implicit Types a b : A.
 
-  Global Instance frac_auth_auth_ne : NonExpansive (@frac_auth_auth A).
+  Global Instance frac_auth_auth_ne : NonExpansive (@frac_auth_auth SI A).
   Proof. solve_proper. Qed.
-  Global Instance frac_auth_auth_proper : Proper ((≡) ==> (≡)) (@frac_auth_auth A).
+  Global Instance frac_auth_auth_proper : Proper ((≡) ==> (≡)) (@frac_auth_auth SI A).
   Proof. solve_proper. Qed.
-  Global Instance frac_auth_frag_ne q : NonExpansive (@frac_auth_frag A q).
+  Global Instance frac_auth_frag_ne q : NonExpansive (@frac_auth_frag SI A q).
   Proof. solve_proper. Qed.
-  Global Instance frac_auth_frag_proper q : Proper ((≡) ==> (≡)) (@frac_auth_frag A q).
+  Global Instance frac_auth_frag_proper q : Proper ((≡) ==> (≡)) (@frac_auth_frag SI A q).
   Proof. solve_proper. Qed.
 
   Global Instance frac_auth_auth_discrete a : Discrete a → Discrete (●F a).
@@ -122,16 +122,16 @@ Section frac_auth.
   Qed.
 End frac_auth.
 
-Definition frac_authURF (F : rFunctor) : urFunctor :=
+Definition frac_authURF `{SI : indexT} (F : rFunctor) : urFunctor :=
   authURF (optionURF (prodRF (constRF fracR) F)).
 
-Global Instance frac_authURF_contractive F :
+Global Instance frac_authURF_contractive `{SI : indexT} F :
   rFunctorContractive F → urFunctorContractive (frac_authURF F).
 Proof. apply _. Qed.
 
-Definition frac_authRF (F : rFunctor) : rFunctor :=
+Definition frac_authRF `{SI : indexT} (F : rFunctor) : rFunctor :=
   authRF (optionURF (prodRF (constRF fracR) F)).
 
-Global Instance frac_authRF_contractive F :
+Global Instance frac_authRF_contractive `{SI : indexT} F :
   rFunctorContractive F → rFunctorContractive (frac_authRF F).
 Proof. apply _. Qed.

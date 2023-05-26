@@ -17,23 +17,23 @@ we do not have a canonical structure for setoids, we do not go that way.
 Note that we do not declare any of the projections as type class instances. That
 is because we only need them in the [big_op] file, and nowhere else. Hence, we
 declare these instances locally there to avoid them being used elsewhere. *)
-Class Monoid {M : ofe} (o : M → M → M) := {
+Class Monoid `{SI : indexT} {M : ofe} (o : M → M → M) := {
   monoid_unit : M;
   monoid_ne : NonExpansive2 o;
   monoid_assoc : Assoc (≡) o;
   monoid_comm : Comm (≡) o;
   monoid_left_id : LeftId (≡) monoid_unit o;
 }.
-Lemma monoid_proper {M : ofe} {o : M → M → M} `{!Monoid o} : Proper ((≡) ==> (≡) ==> (≡)) o.
+Lemma monoid_proper `{SI : indexT} `{Monoid M o} : Proper ((≡) ==> (≡) ==> (≡)) o.
 Proof. apply ne_proper_2, monoid_ne. Qed.
-Lemma monoid_right_id {M : ofe} {o : M → M → M} `{!Monoid o} : RightId (≡) monoid_unit o.
+Lemma monoid_right_id `{SI : indexT} `{Monoid M o} : RightId (≡) monoid_unit o.
 Proof. intros x. etrans; [apply monoid_comm|apply monoid_left_id]. Qed.
 
 (** The [Homomorphism] classes give rise to generic lemmas about big operators
 commuting with each other. We also consider a [WeakMonoidHomomorphism] which
 does not necessarily commute with unit; an example is the [own] connective: we
 only have `True ==∗ own γ ∅`, not `True ↔ own γ ∅`. *)
-Class WeakMonoidHomomorphism {M1 M2 : ofe}
+Class WeakMonoidHomomorphism `{SI : !indexT} {M1 M2 : ofe}
     (o1 : M1 → M1 → M1) (o2 : M2 → M2 → M2) `{!Monoid o1, !Monoid o2}
     (R : relation M2) (f : M1 → M2) := {
   monoid_homomorphism_rel_po : PreOrder R;
@@ -43,13 +43,13 @@ Class WeakMonoidHomomorphism {M1 M2 : ofe}
   monoid_homomorphism x y : R (f (o1 x y)) (o2 (f x) (f y))
 }.
 
-Class MonoidHomomorphism {M1 M2 : ofe}
+Class MonoidHomomorphism `{SI : !indexT} {M1 M2 : ofe}
     (o1 : M1 → M1 → M1) (o2 : M2 → M2 → M2) `{!Monoid o1, !Monoid o2}
     (R : relation M2) (f : M1 → M2) := {
   #[global] monoid_homomorphism_weak :: WeakMonoidHomomorphism o1 o2 R f;
   monoid_homomorphism_unit : R (f monoid_unit) monoid_unit
 }.
 
-Lemma weak_monoid_homomorphism_proper
+Lemma weak_monoid_homomorphism_proper `{SI : !indexT}
   `{WeakMonoidHomomorphism M1 M2 o1 o2 R f} : Proper ((≡) ==> (≡)) f.
 Proof. apply ne_proper, monoid_homomorphism_ne. Qed.

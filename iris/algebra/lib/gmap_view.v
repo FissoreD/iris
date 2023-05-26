@@ -20,13 +20,14 @@ NOTE: The API surface for [gmap_view] is experimental and subject to change.  We
 plan to add notations for authoritative elements and fragments, and hope to
 support arbitrary maps as fragments. *)
 
-Local Definition gmap_view_fragUR (K : Type) `{Countable K} (V : cmra) : ucmra :=
+Local Definition gmap_view_fragUR (K : Type) `{Countable K}
+    `{SI : indexT} (V : cmra) : ucmra :=
   gmapUR K (prodR dfracR V).
 
 (** View relation. *)
 Section rel.
-  Context (K : Type) `{Countable K} (V : cmra).
-  Implicit Types (m : gmap K V) (k : K) (v : V) (n : nat).
+  Context (K : Type) `{Countable K} `{SI : indexT} (V : cmra).
+  Implicit Types (m : gmap K V) (k : K) (v : V) (n : index).
   Implicit Types (f : gmap K (dfrac * V)).
 
   (* If we exactly followed [auth], we'd write something like [f ≼{n} m ∧ ✓{n} m],
@@ -55,7 +56,7 @@ Section rel.
     gmap_view_rel_raw n1 m1 f1 →
     m1 ≡{n2}≡ m2 →
     f2 ≼{n2} f1 →
-    n2 ≤ n1 →
+    n2 ⪯ᵢ n1 →
     gmap_view_rel_raw n2 m2 f2.
   Proof.
     intros Hrel Hm Hf Hn k [dqa va] Hk.
@@ -130,16 +131,16 @@ Local Existing Instance gmap_view_rel_discrete.
 
 (** [gmap_view] is a notation to give canonical structure search the chance
 to infer the right instances (see [auth]). *)
-Notation gmap_view K V := (view (@gmap_view_rel_raw K _ _ V)).
-Definition gmap_viewO (K : Type) `{Countable K} (V : cmra) : ofe :=
+Notation gmap_view K V := (view (@gmap_view_rel_raw K _ _ _ V)).
+Definition gmap_viewO (K : Type) `{Countable K} `{SI : indexT} (V : cmra) : ofe :=
   viewO (gmap_view_rel K V).
-Definition gmap_viewR (K : Type) `{Countable K} (V : cmra) : cmra :=
+Definition gmap_viewR (K : Type) `{Countable K} `{SI : indexT}(V : cmra) : cmra :=
   viewR (gmap_view_rel K V).
-Definition gmap_viewUR (K : Type) `{Countable K} (V : cmra) : ucmra :=
+Definition gmap_viewUR (K : Type) `{Countable K} `{SI : indexT} (V : cmra) : ucmra :=
   viewUR (gmap_view_rel K V).
 
 Section definitions.
-  Context {K : Type} `{Countable K} {V : cmra}.
+  Context {K : Type} `{Countable K} `{SI : indexT} {V : cmra}.
 
   Definition gmap_view_auth (dq : dfrac) (m : gmap K V) : gmap_viewR K V :=
     ●V{dq} m.
@@ -148,16 +149,16 @@ Section definitions.
 End definitions.
 
 Section lemmas.
-  Context {K : Type} `{Countable K} {V : cmra}.
+  Context {K : Type} `{Countable K} `{SI : indexT} {V : cmra}.
   Implicit Types (m : gmap K V) (k : K) (q : Qp) (dq : dfrac) (v : V).
 
-  Global Instance : Params (@gmap_view_auth) 5 := {}.
+  Global Instance : Params (@gmap_view_auth) 6 := {}.
   Global Instance gmap_view_auth_ne dq : NonExpansive (gmap_view_auth (K:=K) (V:=V) dq).
   Proof. solve_proper. Qed.
   Global Instance gmap_view_auth_proper dq : Proper ((≡) ==> (≡)) (gmap_view_auth (K:=K) (V:=V) dq).
   Proof. apply ne_proper, _. Qed.
 
-  Global Instance : Params (@gmap_view_frag) 6 := {}.
+  Global Instance : Params (@gmap_view_frag) 7 := {}.
   Global Instance gmap_view_frag_ne k oq : NonExpansive (gmap_view_frag (V:=V) k oq).
   Proof. solve_proper. Qed.
   Global Instance gmap_view_frag_proper k oq : Proper ((≡) ==> (≡)) (gmap_view_frag (V:=V) k oq).
@@ -232,7 +233,7 @@ Section lemmas.
   Lemma gmap_view_frag_valid k dq v : ✓ gmap_view_frag k dq v ↔ ✓ dq ∧ ✓ v.
   Proof.
     rewrite cmra_valid_validN. setoid_rewrite gmap_view_frag_validN.
-    rewrite cmra_valid_validN. naive_solver eauto using O.
+    rewrite cmra_valid_validN. naive_solver eauto using zero.
   Qed.
 
   Lemma gmap_view_frag_op k dq1 dq2 v1 v2 :
@@ -316,7 +317,7 @@ Section lemmas.
                 Some (dq, v) ≼ Some (dq', v').
   Proof.
     rewrite cmra_valid_validN. setoid_rewrite gmap_view_both_dfrac_validN. split.
-    - intros Hvalid. specialize (Hvalid 0).
+    - intros Hvalid. specialize (Hvalid zero).
       destruct Hvalid as (v' & dq' & Hdp & Hlookup & Hvalid & Hincl).
       exists v', dq'. do 2 (split; first done).
       split; first by apply cmra_discrete_valid.
@@ -352,7 +353,7 @@ Section lemmas.
   Proof.
     rewrite cmra_valid_validN. setoid_rewrite gmap_view_both_validN. split.
     - intros Hvalid. split; last split.
-      + eapply (Hvalid 0).
+      + eapply (Hvalid zero).
       + apply cmra_valid_validN. intros n. eapply Hvalid.
       + apply equiv_dist. intros n. eapply Hvalid.
     - intros (Hdp & Hval & Hlookup). intros n.
@@ -622,7 +623,8 @@ Section lemmas.
 End lemmas.
 
 (** Functor *)
-Program Definition gmap_viewURF (K : Type) `{Countable K} (F : rFunctor) : urFunctor := {|
+Program Definition gmap_viewURF (K : Type) `{Countable K}
+    `{SI : indexT} (F : rFunctor) : urFunctor := {|
   urFunctor_car A _ B _ := gmap_viewUR K (rFunctor_car F A B);
   urFunctor_map A1 _ A2 _ B1 _ B2 _ fg :=
     viewO_map (rel:=gmap_view_rel K (rFunctor_car F A1 B1))
@@ -631,14 +633,14 @@ Program Definition gmap_viewURF (K : Type) `{Countable K} (F : rFunctor) : urFun
               (gmapO_map (K:=K) (prodO_map cid (rFunctor_map F fg)))
 |}.
 Next Obligation.
-  intros K ?? F A1 ? A2 ? B1 ? B2 ? n f g Hfg.
+  intros K ?? ? F A1 ? A2 ? B1 ? B2 ? n f g Hfg.
   apply viewO_map_ne.
   - apply gmapO_map_ne, rFunctor_map_ne. done.
   - apply gmapO_map_ne. apply prodO_map_ne; first done.
     apply rFunctor_map_ne. done.
 Qed.
 Next Obligation.
-  intros K ?? F A ? B ? x; simpl in *. rewrite -{2}(view_map_id x).
+  intros K ?? ? F A ? B ? x; simpl in *. rewrite -{2}(view_map_id x).
   apply (view_map_ext _ _ _ _)=> y.
   - rewrite /= -{2}(map_fmap_id y).
     apply map_fmap_equiv_ext=>k ??.
@@ -649,7 +651,7 @@ Next Obligation.
     apply rFunctor_map_id.
 Qed.
 Next Obligation.
-  intros K ?? F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x; simpl in *.
+  intros K ?? ? F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x; simpl in *.
   rewrite -view_map_compose.
   apply (view_map_ext _ _ _ _)=> y.
   - rewrite /= -map_fmap_compose.
@@ -661,9 +663,9 @@ Next Obligation.
     apply rFunctor_map_compose.
 Qed.
 Next Obligation.
-  intros K ?? F A1 ? A2 ? B1 ? B2 ? fg; simpl.
+  intros K ?? ? F A1 ? A2 ? B1 ? B2 ? fg; simpl.
   (* [apply] does not work, probably the usual unification probem (Coq #6294) *)
-  apply: view_map_cmra_morphism; [apply _..|]=> n m f.
+  eapply @view_map_cmra_morphism; [apply _..|]=> n m f.
   intros Hrel k [df va] Hf. move: Hf.
   rewrite !lookup_fmap.
   destruct (f !! k) as [[df' va']|] eqn:Hfk; rewrite Hfk; last done.
@@ -684,7 +686,8 @@ Next Obligation.
       simpl. f_equiv. apply Hincl.
 Qed.
 
-Global Instance gmap_viewURF_contractive (K : Type) `{Countable K} F :
+Global Instance gmap_viewURF_contractive (K : Type) `{Countable K}
+    `{SI : indexT} F :
   rFunctorContractive F → urFunctorContractive (gmap_viewURF K F).
 Proof.
   intros ? A1 ? A2 ? B1 ? B2 ? n f g Hfg.
@@ -694,7 +697,8 @@ Proof.
     apply rFunctor_map_contractive. done.
 Qed.
 
-Program Definition gmap_viewRF (K : Type) `{Countable K} (F : rFunctor) : rFunctor := {|
+Program Definition gmap_viewRF (K : Type) `{Countable K}
+    `{SI : indexT} (F : rFunctor) : rFunctor := {|
   rFunctor_car A _ B _ := gmap_viewR K (rFunctor_car F A B);
   rFunctor_map A1 _ A2 _ B1 _ B2 _ fg :=
     viewO_map (rel:=gmap_view_rel K (rFunctor_car F A1 B1))
@@ -704,7 +708,8 @@ Program Definition gmap_viewRF (K : Type) `{Countable K} (F : rFunctor) : rFunct
 |}.
 Solve Obligations with apply gmap_viewURF.
 
-Global Instance gmap_viewRF_contractive (K : Type) `{Countable K} F :
+Global Instance gmap_viewRF_contractive (K : Type) `{Countable K}
+    `{SI : indexT} F :
   rFunctorContractive F → rFunctorContractive (gmap_viewRF K F).
 Proof. apply gmap_viewURF_contractive. Qed.
 

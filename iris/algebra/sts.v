@@ -209,7 +209,7 @@ Notation Sts := sts.Sts.
 
 (** * STSs form an RA *)
 Section sts_res.
-Context {sts : stsT}.
+Context `{SI : indexT} {sts : stsT}.
 Import sts.
 Implicit Types S : states sts.
 Implicit Types T : tokens sts.
@@ -328,7 +328,7 @@ Qed.
 Local Hint Immediate sts_car_disjoint_move_l sts_car_disjoint_move_r : core.
 
 Local Lemma sts_car_core_disjoint_l (x : car sts) : ✓ x → core x ## x.
-Proof. destruct x; constructor; eauto with sts. Qed. 
+Proof. destruct x; constructor; eauto with sts. Qed.
 Local Lemma sts_car_core_l (x : car sts) : ✓ x → core x ⋅ x ≡ x.
 Proof. destruct x; constructor; eauto with sts. Qed.
 Local Lemma sts_car_core_idemp (x : car sts) : ✓ x → core (core x) ≡ core x.
@@ -376,7 +376,7 @@ Proof.
   - intros [x px ?] [y py ?] [z pz ?] [? Hxy] [? Hyz]; simpl in *.
     split; [|intros; trans y]; tauto.
 Qed.
-Canonical Structure sts_resO : ofe := discreteO sts_res.
+Canonical Structure sts_resO `{SI : indexT} : ofe := discreteO sts_res.
 
 (** RA for [sts_res]. *)
 Local Instance sts_res_valid_instance : Valid sts_res := sts_valid.
@@ -435,12 +435,12 @@ Proof. split; naive_solver eauto using sts_car_op_valid. Qed.
 
 End sts_res.
 
-Global Arguments sts_resR : clear implicits.
+Global Arguments sts_resR {_} _.
 
 (** Finally, the general theory of STS that should be used by users *)
 
 Section sts_definitions.
-  Context {sts : stsT}.
+  Context `{SI : indexT} {sts : stsT}.
   Definition sts_auth (s : sts.state sts) (T : sts.tokens sts) : sts_resR sts :=
     to_sts_res (sts.auth s T).
   Definition sts_frag (S : sts.states sts) (T : sts.tokens sts) : sts_resR sts :=
@@ -448,13 +448,13 @@ Section sts_definitions.
   Definition sts_frag_up (s : sts.state sts) (T : sts.tokens sts) : sts_resR sts :=
     sts_frag (sts.up s T) T.
 End sts_definitions.
-Global Instance: Params (@sts_auth) 2 := {}.
-Global Instance: Params (@sts_frag) 1 := {}.
-Global Instance: Params (@sts_frag_up) 2 := {}.
+Global Instance: Params (@sts_auth) 3 := {}.
+Global Instance: Params (@sts_frag) 2 := {}.
+Global Instance: Params (@sts_frag_up) 3 := {}.
 
 Section stsRA.
 Import sts.
-Context {sts : stsT}.
+Context `{SI : indexT} {sts : stsT}.
 Implicit Types s : state sts.
 Implicit Types S : states sts.
 Implicit Types T : tokens sts.
@@ -463,7 +463,7 @@ Local Arguments cmra_valid _ !_/.
 (** Setoids *)
 Global Instance sts_auth_proper s : Proper ((≡) ==> (≡)) (sts_auth s).
 Proof. solve_proper. Qed.
-Global Instance sts_frag_proper : Proper ((≡) ==> (≡) ==> (≡)) (@sts_frag sts).
+Global Instance sts_frag_proper : Proper ((≡) ==> (≡) ==> (≡)) (@sts_frag SI sts).
 Proof. solve_proper. Qed.
 Global Instance sts_frag_up_proper s : Proper ((≡) ==> (≡)) (sts_frag_up s).
 Proof. solve_proper. Qed.
@@ -670,7 +670,7 @@ Notation sts_notokT := sts_notok.stsT.
 Notation Sts_NoTok := sts_notok.Sts.
 
 Section sts_notokRA.
-  Context {sts : sts_notokT}.
+  Context `{SI : indexT} {sts : sts_notokT}.
   Import sts_notok.
   Implicit Types s : state sts.
   Implicit Types S : states sts.

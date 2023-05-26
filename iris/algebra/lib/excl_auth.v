@@ -6,35 +6,35 @@ From iris.prelude Require Import options.
 This is effectively a single "ghost variable" with two views, the frament [◯E a]
 and the authority [●E a]. *)
 
-Definition excl_authR (A : ofe) : cmra :=
+Definition excl_authR `{SI : indexT} (A : ofe) : cmra :=
   authR (optionUR (exclR A)).
-Definition excl_authUR (A : ofe) : ucmra :=
+Definition excl_authUR `{SI : indexT} (A : ofe) : ucmra :=
   authUR (optionUR (exclR A)).
 
-Definition excl_auth_auth {A : ofe} (a : A) : excl_authR A :=
+Definition excl_auth_auth `{SI : indexT} {A : ofe} (a : A) : excl_authR A :=
   ● (Some (Excl a)).
-Definition excl_auth_frag {A : ofe} (a : A) : excl_authR A :=
+Definition excl_auth_frag `{SI : indexT} {A : ofe} (a : A) : excl_authR A :=
   ◯ (Some (Excl a)).
 
 Global Typeclasses Opaque excl_auth_auth excl_auth_frag.
 
-Global Instance: Params (@excl_auth_auth) 1 := {}.
-Global Instance: Params (@excl_auth_frag) 2 := {}.
+Global Instance: Params (@excl_auth_auth) 2 := {}.
+Global Instance: Params (@excl_auth_frag) 3 := {}.
 
 Notation "●E a" := (excl_auth_auth a) (at level 10).
 Notation "◯E a" := (excl_auth_frag a) (at level 10).
 
 Section excl_auth.
-  Context {A : ofe}.
+  Context `{SI : indexT} {A : ofe}.
   Implicit Types a b : A.
 
-  Global Instance excl_auth_auth_ne : NonExpansive (@excl_auth_auth A).
+  Global Instance excl_auth_auth_ne : NonExpansive (@excl_auth_auth SI A).
   Proof. solve_proper. Qed.
-  Global Instance excl_auth_auth_proper : Proper ((≡) ==> (≡)) (@excl_auth_auth A).
+  Global Instance excl_auth_auth_proper : Proper ((≡) ==> (≡)) (@excl_auth_auth SI A).
   Proof. solve_proper. Qed.
-  Global Instance excl_auth_frag_ne : NonExpansive (@excl_auth_frag A).
+  Global Instance excl_auth_frag_ne : NonExpansive (@excl_auth_frag SI A).
   Proof. solve_proper. Qed.
-  Global Instance excl_auth_frag_proper : Proper ((≡) ==> (≡)) (@excl_auth_frag A).
+  Global Instance excl_auth_frag_proper : Proper ((≡) ==> (≡)) (@excl_auth_frag SI A).
   Proof. solve_proper. Qed.
 
   Global Instance excl_auth_auth_discrete a : Discrete a → Discrete (●E a).
@@ -75,16 +75,16 @@ Section excl_auth.
   Qed.
 End excl_auth.
 
-Definition excl_authURF (F : oFunctor) : urFunctor :=
+Definition excl_authURF `{SI : indexT} (F : oFunctor) : urFunctor :=
   authURF (optionURF (exclRF F)).
 
-Global Instance excl_authURF_contractive F :
+Global Instance excl_authURF_contractive `{SI : indexT} F :
   oFunctorContractive F → urFunctorContractive (excl_authURF F).
 Proof. apply _. Qed.
 
-Definition excl_authRF (F : oFunctor) : rFunctor :=
+Definition excl_authRF `{SI : indexT} (F : oFunctor) : rFunctor :=
   authRF (optionURF (exclRF F)).
 
-Global Instance excl_authRF_contractive F :
+Global Instance excl_authRF_contractive `{SI : indexT} F :
   oFunctorContractive F → rFunctorContractive (excl_authRF F).
 Proof. apply _. Qed.
