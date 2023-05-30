@@ -179,7 +179,7 @@ Structure bi := Bi {
   bi_car :> Type@{Logic};
   bi_dist : Dist bi_car;
   bi_equiv : Equiv bi_car;
-  #[canonical=no] bi_entails : bi_car → bi_car → Prop;
+  bi_entails : bi_car → bi_car → Prop;
   #[canonical=no] bi_emp : bi_car;
   #[canonical=no] bi_pure : Prop → bi_car;
   #[canonical=no] bi_and : bi_car → bi_car → bi_car;
