@@ -375,13 +375,13 @@ Section proofmode_instances.
     IsOp a b1 b2 → FromSep (own γ a) (own γ b1) (own γ b2).
   Proof. intros. by rewrite /FromSep -own_op -is_op. Qed.
   (** This is the fallback instance, [combine_own_instances.v] should provide
-     better combinations.
+     better combinations via [IsValidOp].
      It has cost > 50 to give priority to [combine_sep_as_fractional]. *)
   Global Instance combine_sep_as_own γ a b1 b2 :
     IsOp a b1 b2 → CombineSepAs (own γ b1) (own γ b2) (own γ a) | 60.
   Proof. intros. by rewrite /CombineSepAs -own_op -is_op. Qed.
   (** This is the fallback instance, [combine_own_instances.v] should provide
-     better validity information. *)
+     better validity information via [IsValidGives]. *)
   Global Instance combine_sep_gives_own γ b1 b2 :
     CombineSepGives (own γ b1) (own γ b2) (✓ (b1 ⋅ b2)) | 100.
   Proof.

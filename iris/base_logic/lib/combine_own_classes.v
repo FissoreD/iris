@@ -15,9 +15,8 @@ Global Hint Mode IsValidGives ! ! ! ! - : typeclass_instances.
 
 (* Often we can simplify [a1 ⋅ a2] to some new element [a]. This may itself
   make use of validity, for example in the case of [GSet]. The class
-  [IsValidOp _ a a1 a2 P] says that [a] is a simplified element equivalent to
-  [a1 ⋅ a2], and [P] a simplified proposition following from the validity of 
-  [a1] and [a2] *)
+  [IsValidOp _ a a1 a2] says that if [a1 ⋅ a2] is valid, then [a] is a
+  simplified element equivalent to [a1 ⋅ a2]. *)
 Class IsValidOp {A : cmra} M (a1 a2 : A) (a : A) := 
   is_valid_op : ✓ (a1 ⋅ a2) ⊢@{uPredI M} a ≡ a1 ⋅ a2
 .
@@ -26,7 +25,9 @@ Global Hint Mode IsValidOp ! ! ! ! - : typeclass_instances.
 
 
 (* We can now use [IsValidGives] and [IsValidOp] to compute appropriate 'as' 
-  and 'gives' clauses for [iCombine]. *)
+  and 'gives' clauses for [iCombine]. The cost of these instances is made
+  lower than that of the fallback instances [combine_sep_as_own] and
+  [combine_sep_gives_own] from [iris/base_logic/own.v]. *)
 Global Instance combine_sep_from_valid_gives `{!inG Σ A} (a1 a2 a : A) γ :
   IsValidOp (iResUR Σ) a1 a2 a →
   CombineSepAs (own γ a1) (own γ a2) (own γ a) | 50.
@@ -64,8 +65,8 @@ Notation "a ≼ b" := (includedI a b) : bi_scope.
 (* Next, we need simplification machinery for [a1 ≼ a2].
   [IsIncluded _ a1 a2 P] computes a simplified proposition [P],
   which is equivalent to [a1 ≼ a2] if we assume [✓ a2].
-  All we need is that [P] follows from [a1 ≼ a2], but we use 
-  equivalence to ensure we are not forgetting any consequence. *)
+  All we really need is that [P] follows from [a1 ≼ a2], but we use
+  equivalence to ensure we are accidentally using weakening. *)
 
 Class IsIncluded {A : cmra} M (a1 a2 : A) (P : uPred M) := 
   is_included_merge : ✓ a2 ⊢ a1 ≼ a2 ∗-∗ □ P.

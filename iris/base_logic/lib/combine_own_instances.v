@@ -50,7 +50,7 @@ Section proper.
   Qed.
 
 
-  (** The following lemma's are similar to [Proper] instances, but tailored to
+  (** The following lemmas are similar to [Proper] instances, but tailored to
     frequent usage in actual instances further on in the file. *)
   Lemma is_valid_gives_weaken a1 a2 P1 P2 :
     (✓ (a1 ⋅ a2) ∗ □ P1 ⊢ P2) →
