@@ -193,9 +193,9 @@ Structure bi := Bi {
   #[canonical=no] bi_later : bi_car → bi_car;
   bi_ofe_mixin : OfeMixin bi_car;
   bi_cofe_aux : Cofe (Ofe bi_car bi_ofe_mixin);
-  bi_bi_mixin : BiMixin bi_entails bi_emp bi_pure bi_and bi_or bi_impl bi_forall
+  #[canonical=no] bi_bi_mixin : BiMixin bi_entails bi_emp bi_pure bi_and bi_or bi_impl bi_forall
                         bi_exist bi_sep bi_wand bi_persistently;
-  bi_bi_later_mixin : BiLaterMixin bi_entails bi_pure bi_or bi_impl
+  #[canonical=no] bi_bi_later_mixin : BiLaterMixin bi_entails bi_pure bi_or bi_impl
                                    bi_forall bi_exist bi_sep bi_persistently bi_later;
 }.
 Bind Scope bi_scope with bi_car.
