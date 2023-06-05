@@ -215,6 +215,17 @@ thus should never be used. The instance [bi_cofe] has the proper result type
 [Cofe (bi_ofeO PROP)]. *)
 Global Instance bi_cofe (PROP : bi) : Cofe PROP := bi_cofe_aux PROP.
 
+(*
+We improve performance by making some [bi] projections non-canonical: we can do
+this whenever unification need not _reduce_ those fields.
+- To solve [bi_ofeO ?bi ~= uPredO], tactic unification requires all involved
+  fields to be canonical (while evarconv seems smarter), including mixins.
+  Non-ofe [bi] fields are not involved in any hierarchy, so Coq never unifies [bi]
+  by unifying their fields.
+- Mixins are proof-irrelevant so not involved in unification.
+- [bi] connectives like [bi_sep] are only used as-is in terms, so all
+  unification problems about them are [bi_sep ?BI ~= bi_sep bi].
+ *)
 Global Instance: Params (@bi_entails) 1 := {}.
 Global Instance: Params (@bi_emp) 1 := {}.
 Global Instance: Params (@bi_pure) 1 := {}.
