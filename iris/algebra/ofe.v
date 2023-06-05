@@ -68,7 +68,13 @@ Record OfeMixin A `{Equiv A, Dist A} := {
   mixin_dist_lt n m (x y : A) : x ≡{n}≡ y → m < n → x ≡{m}≡ y;
 }.
 
-(** Bundled version *)
+(** Bundled version.
+In the ofe/cmra/ucmra hierarchy, all fields (even mixins) need be canonical
+projections: sometimes, tactic unification infers structures by unifying all
+their fields, producing equations like [ofe_mixin ?O ~= cmra_ofe_mixin ?C].
+
+"Evarconv" unification appears significantly smarter.
+*)
 Structure ofe := Ofe {
   ofe_car :> Type;
   ofe_equiv : Equiv ofe_car;

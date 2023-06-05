@@ -175,6 +175,12 @@ Module Import universes.
   Universe Quant.
 End universes.
 
+(*
+Implementation note: For performance, we only make [bi] projections canonical
+when Coq must understand how they reduce, that is, [bi_car] and
+projections used by [bi_ofeO]. Tactic unification requires that to solve
+[bi_ofeO ?bi ~= uPredO] by unifying all [ofe] fields, including mixins.
+ *)
 Structure bi := Bi {
   bi_car :> Type@{Logic};
   bi_dist : Dist bi_car;
