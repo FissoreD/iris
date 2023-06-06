@@ -10,140 +10,13 @@ Set Default Proof Using "Type".
   instances of the [IsValidGives], [IsValidOp], [IsIncluded] and 
   [IsIncludedOrEq] classes. *)
 
-Global Opaque internal_included.
-
-Section included_extra.
-  Context `{!BiInternalEq PROP}.
-  Implicit Type A B : cmra.
-
-  Notation "P ⊢ Q" := (P ⊢@{PROP} Q).
-  Notation "P ⊣⊢ Q" := (P ⊣⊢@{PROP} Q).
-
-  Global Instance into_exist_internal_included {A} (a b : A) :
-    IntoExist (PROP := PROP) (a ≼ b) (λ c, b ≡ a ⋅ c)%I (λ x, x).
-  Proof. by rewrite /IntoExist. Qed.
-
-  Global Instance from_exist_internal_included {A} (a b : A) :
-    FromExist (PROP := PROP) (a ≼ b) (λ c, b ≡ a ⋅ c)%I.
-  Proof. by rewrite /FromExist. Qed.
-
-  Global Instance internal_included_persistent {A} (a b : A) : 
-    Persistent (PROP := PROP) (a ≼ b).
-  Proof. rewrite /Persistent. iIntros "[%c #Hc] !>". by iExists _. Qed.
-
-  Global Instance internal_included_absorbing {A} (a b : A) : 
-    Absorbing (PROP := PROP) (a ≼ b).
-  Proof. rewrite /Absorbing. iIntros "[%c Hc]". iExists _. by iApply absorbing. Qed.
-
-  Lemma internal_included_def {A} (a b : A) : a ≼ b ⊣⊢ (∃ c, b ≡ a ⋅ c).
-  Proof. apply (anti_symm _); iIntros "[%c Hc]"; by iExists _. Qed.
-
-
-  Lemma csum_equivI_eq {A B} (sx sy : csum A B) :
-    sx ≡ sy ⊣⊢
-              match sx, sy with
-               | Cinl x, Cinl y => x ≡ y
-               | Cinr x, Cinr y => x ≡ y
-               | CsumBot, CsumBot => True
-               | _, _ => False
-               end.
-  Proof.
-    apply (anti_symm _).
-    - apply (internal_eq_rewrite' sx sy (λ sy',
-               match sx, sy' with
-               | Cinl x, Cinl y => x ≡ y
-               | Cinr x, Cinr y => x ≡ y
-               | CsumBot, CsumBot => True
-               | _, _ => False
-               end)%I); [solve_proper|auto|].
-      destruct sx; eauto.
-    - destruct sx; destruct sy; eauto;
-      iIntros "H"; by iRewrite "H".
-  Qed.
-
-  Lemma csum_includedI {A B} (sx sy : csum A B) :
-    sx ≼ sy ⊣⊢ match sx, sy with
-               | Cinl x, Cinl y => (x ≼ y)
-               | Cinr x, Cinr y => (x ≼ y)
-               | _, CsumBot => True
-               | _, _ => False
-               end.
-  Proof.
-    destruct sx as [x|x|]; destruct sy as [y|y|].
-    - apply (anti_symm _); iIntros "[%c Hc]".
-      * rewrite csum_equivI_eq. destruct c; [|done..]. by iExists _.
-      * iRewrite "Hc". by iExists (Cinl c).
-    - apply (anti_symm _); last eauto.
-      iIntros "[%c Hc]". rewrite csum_equivI_eq. by destruct c.
-    - apply (anti_symm _); first eauto. iIntros "_". by iExists CsumBot.
-    - apply (anti_symm _); last eauto.
-      iIntros "[%c Hc]". rewrite csum_equivI_eq. by destruct c.
-    - apply (anti_symm _); iIntros "[%c Hc]".
-      * rewrite csum_equivI_eq. destruct c; [done| |done]. by iExists _.
-      * iRewrite "Hc". by iExists (Cinr c).
-    - apply (anti_symm _); first eauto. iIntros "_". by iExists CsumBot.
-    - apply (anti_symm _); last eauto.
-      iIntros "[%c Hc]". rewrite csum_equivI_eq. by destruct c.
-    - apply (anti_symm _); last eauto.
-      iIntros "[%c Hc]". rewrite csum_equivI_eq. by destruct c.
-    - apply (anti_symm _); first eauto. iIntros "_". by iExists CsumBot.
-  Qed.
-
-  Lemma excl_equivI {O : ofe} (x y : excl O) :
-    x ≡ y ⊣⊢ match x, y with
-             | Excl a, Excl b => a ≡ b
-             | ExclBot, ExclBot => True
-             | _, _ => False
-             end.
-  Proof.
-    apply (anti_symm _).
-    - apply (internal_eq_rewrite' x y (λ y',
-               match x, y' with
-               | Excl a, Excl b => a ≡ b
-               | ExclBot, ExclBot => True
-               | _, _ => False
-               end)%I); [solve_proper|auto|].
-      destruct x; eauto.
-    - destruct x as [e1|]; destruct y as [e2|]; [|by eauto..].
-      iIntros "H"; by iRewrite "H".
-  Qed.
-
-  Lemma excl_includedI {O : ofe} (x y : excl O) :
-    x ≼ y ⊣⊢ match x, y with
-             | _, ExclBot => True
-             | _, _ => False
-             end.
-  Proof.
-    apply (anti_symm _).
-    - iIntros "[%z Hz]". iStopProof.
-      apply (internal_eq_rewrite' (x ⋅ z) y (λ y',
-               match x, y' with
-             | _, ExclBot => True
-             | _, _ => False
-             end)%I); [solve_proper|apply internal_eq_sym|].
-      iIntros "Hz". by destruct x; destruct z.
-    - destruct y; first eauto.
-      iPureIntro => _. exists ExclBot. by destruct x.
-  Qed.
-
-  Lemma agree_includedI {O : ofe} (x y : agree O) : x ≼ y ⊣⊢ y ≡ x ⋅ y.
-  Proof.
-    apply (anti_symm _); last (iIntros "H"; by iExists _).
-    iIntros "[%c Hc]".
-    iRewrite "Hc". rewrite assoc. by rewrite agree_idemp.
-  Qed.
-End included_extra.
-
-(* Not a hint immediate due to unification problems of cmra <-> ucmra *)
-Global Hint Extern 0 (ε ≼ _) => apply ucmra_unit_least : core.
-
-
 Section included_upred.
   Context {M : ucmra}.
   Implicit Type A : cmra.
   Notation "P ⊢ Q" := (P ⊢@{uPredI M} Q).
   Notation "P ⊣⊢ Q" := (P ⊣⊢@{uPredI M} Q).
 
+  (** TODO: Move to !944. I dont think this can be proven inside the model. *)
   Lemma internal_included_id_free {A} (a : A) `{!IdFree a} : a ≼ a ∗ ✓ a ⊢ False.
   Proof.
     iIntros "[[%c Hc] Hv]". iStopProof. rewrite bi.sep_and.
@@ -378,7 +251,7 @@ Section numbers.
     rewrite /IsIncluded.
     iIntros "_"; iSplit.
     - by iDestruct 1 as %?%nat_included.
-    - iIntros (H). iPureIntro. by apply nat_included.
+    - iIntros (?). iPureIntro. by apply nat_included.
   Qed.
 
   (** Instances for [max_natR]. This is a [ucmra], so [IsIncludedOrEq] is omitted. *)
@@ -396,7 +269,7 @@ Section numbers.
   Proof.
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%max_nat_included.
-    - iIntros (H). iPureIntro. by apply max_nat_included.
+    - iIntros (?). iPureIntro. by apply max_nat_included.
   Qed.
 
 
@@ -415,7 +288,7 @@ Section numbers.
   Proof.
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%min_nat_included.
-    - iIntros (H). iPureIntro. by apply min_nat_included.
+    - iIntros (?). iPureIntro. by apply min_nat_included.
   Qed.
   (* Although not a [ucmra], every [min_nat] has a right_id, which gives us
     access to the [unital_from_right_id] instance for [IsIncludedOrEq] *)
@@ -440,7 +313,7 @@ Section numbers.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%pos_included.
-    - iIntros (H). iPureIntro. by apply pos_included.
+    - iIntros (?). iPureIntro. by apply pos_included.
   Qed.
 
   Global Instance positive_is_included_or_eq (a1 a2 : positive) : 
@@ -467,7 +340,7 @@ Section numbers.
   Proof. 
     rewrite /IsIncluded. iIntros "_" ; iSplit.
     - by iDestruct 1 as %?%frac_included.
-    - iIntros (H). iPureIntro. by apply frac_included.
+    - iIntros (?). iPureIntro. by apply frac_included.
   Qed.
 
   Global Instance frac_is_included_or_eq (q1 q2 : Qp) : 
@@ -589,7 +462,7 @@ Section sets.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gset_included. 
-    - iIntros (H). iPureIntro. by apply gset_included.
+    - iIntros (?). iPureIntro. by apply gset_included.
   Qed.
 
 
@@ -611,7 +484,7 @@ Section sets.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gset_disj_included. 
-    - iIntros (H). iPureIntro. by apply gset_disj_included.
+    - iIntros (?). iPureIntro. by apply gset_disj_included.
   Qed.
 
   (** TODO: I used to give explicit instances for combining with
@@ -637,7 +510,7 @@ Section multisets.
   Proof.
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%gmultiset_included. 
-    - iIntros (H). iPureIntro. by apply gmultiset_included.
+    - iIntros (?). iPureIntro. by apply gmultiset_included.
   Qed.
 End multisets.
 
@@ -661,7 +534,7 @@ Section coPsets.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%coPset_included. 
-    - iIntros (H). iPureIntro. by apply coPset_included.
+    - iIntros (?). iPureIntro. by apply coPset_included.
   Qed.
 
 
@@ -683,7 +556,7 @@ Section coPsets.
   Proof. 
     rewrite /IsIncluded. iIntros "_"; iSplit.
     - by iDestruct 1 as %?%coPset_disj_included. 
-    - iIntros (H). iPureIntro. by apply coPset_disj_included.
+    - iIntros (?). iPureIntro. by apply coPset_disj_included.
   Qed.
 
   (** TODO:  I used to give explicit instances for combining with
@@ -1320,7 +1193,7 @@ Section auth.
 
   Lemma auth_rel_holds a1 a2 : 
     rel_holds_for auth_view_rel a1 a2 ⊣⊢@{uPredI M} a2 ≼ a1 ∧ ✓ a1.
-  Proof. rewrite internal_included_def. by uPred.unseal. Qed.
+  Proof. rewrite /internal_included. by uPred.unseal. Qed.
 
   Lemma auth_auth_dfrac_op_validI dq1 dq2 a1 a2 : 
     ✓ (●{dq1} a1 ⋅ ●{dq2} a2) ⊣⊢@{uPredI M} ✓ (dq1 ⋅ dq2) ∧ ✓ a2 ∧ (a1 ≡ a2).
