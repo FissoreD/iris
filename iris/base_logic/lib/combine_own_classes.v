@@ -1,6 +1,7 @@
 From iris.algebra Require Import cmra.
 From iris.base_logic Require Import own.
 From iris.proofmode Require Import proofmode.
+From iris.bi.lib Require Export cmra.
 From iris.prelude Require Import options.
 
 
@@ -51,18 +52,8 @@ Proof.
 Qed.
 
 
-(* We are often interested in the consequences of [✓ (● _ ⋅ ◯ _)].
-  The consequence of ✓{n} (● a ⋅ ◯ b) in the model is that b ≼{n} a ∧ ✓{n} a.
-  To cleanly reason about this in the logic, we provide notation for
-  the lifted version of ≼{n} *)
-
-Definition includedI {M : ucmra} {A : cmra} (a b : A) : uPred M
-  := (∃ c, b ≡ a ⋅ c)%I.
-
-Notation "a ≼ b" := (includedI a b) : bi_scope.
-
-
-(* Next, we need simplification machinery for [a1 ≼ a2].
+(* We are often interested in the consequences of [✓ (● a2 ⋅ ◯ a1) ⊣⊢ a1 ≼ a2].
+  We also provide additional simplification machinery for this resource.
   [IsIncluded _ a1 a2 P] computes a simplified proposition [P],
   which is equivalent to [a1 ≼ a2] if we assume [✓ a2].
   All we really need is that [P] follows from [a1 ≼ a2], but we use
