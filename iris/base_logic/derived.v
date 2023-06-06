@@ -7,13 +7,6 @@ Import bi.bi base_logic.bi.uPred.
 (** Derived laws for Iris-specific primitive connectives (own, valid).
     This file does NOT unseal! *)
 
-
-(** Derived [≼] connective, corresponding to [≼{n}] in the model. *)
-Definition internal_included {M : ucmra} {A : cmra} (a b : A) : uPred M
-  := (∃ c, b ≡ a ⋅ c)%I.
-
-Infix "≼" := internal_included : bi_scope.
-
 Module uPred.
 Section derived.
   Context {M : ucmra}.
@@ -29,12 +22,6 @@ Section derived.
   Global Instance ownM_proper: Proper ((≡) ==> (⊣⊢)) (@uPred_ownM M) := ne_proper _.
   Global Instance cmra_valid_proper {A : cmra} :
     Proper ((≡) ==> (⊣⊢)) (@uPred_cmra_valid M A) := ne_proper _.
-  Global Instance internal_included_nonexpansive {A : cmra} :
-    NonExpansive2 (internal_included (M := M) (A := A)).
-  Proof. solve_proper. Qed.
-  Global Instance internal_included_proper {A : cmra} :
-    Proper ((≡) ==> (≡) ==> (⊣⊢)) (internal_included (M := M) (A := A)).
-  Proof. solve_proper. Qed.
 
   (** Own and valid derived *)
   Lemma persistently_cmra_valid_1 {A : cmra} (a : A) : ✓ a ⊢@{uPredI M} <pers> (✓ a).

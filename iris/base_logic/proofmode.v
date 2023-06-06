@@ -20,20 +20,6 @@ Section class_instances.
     rewrite -uPred.cmra_valid_intro //.
   Qed.
 
-  Global Instance into_pure_internal_included `{!CmraDiscrete A} (a b : A) :
-    @IntoPure (uPredI M) (a ≼ b) (a ≼ b).
-  Proof.
-    rewrite /IntoPure. apply bi.exist_elim => c. rewrite discrete_eq_1.
-    apply bi.pure_mono. move => ->. by eexists.
-  Qed.
-
-  Global Instance from_pure_internal_included `{!CmraDiscrete A} (a b : A) :
-    @FromPure (uPredI M) false (a ≼ b) (a ≼ b).
-  Proof.
-    rewrite /FromPure /=. eapply bi.pure_elim => // [[c ->]].
-    rewrite /internal_included -(bi.exist_intro c). apply internal_eq_refl.
-  Qed.
-
   Global Instance from_sep_ownM (a b1 b2 : M) :
     IsOp a b1 b2 →
     FromSep (uPred_ownM a) (uPred_ownM b1) (uPred_ownM b2).
