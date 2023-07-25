@@ -175,27 +175,33 @@ Module Import universes.
   Universe Quant.
 End universes.
 
+(*
+Implementation note: For performance, we only make [bi] projections canonical
+when Coq must understand how they reduce, that is, [bi_car] and
+projections used by [bi_ofeO]. Tactic unification requires that to solve
+[bi_ofeO ?bi ~= uPredO] by unifying all [ofe] fields, including mixins.
+ *)
 Structure bi := Bi {
   bi_car :> Type@{Logic};
   bi_dist : Dist bi_car;
   bi_equiv : Equiv bi_car;
   bi_entails : bi_car → bi_car → Prop;
-  bi_emp : bi_car;
-  bi_pure : Prop → bi_car;
-  bi_and : bi_car → bi_car → bi_car;
-  bi_or : bi_car → bi_car → bi_car;
-  bi_impl : bi_car → bi_car → bi_car;
-  bi_forall : ∀ A : Type@{Quant}, (A → bi_car) → bi_car;
-  bi_exist : ∀ A : Type@{Quant}, (A → bi_car) → bi_car;
-  bi_sep : bi_car → bi_car → bi_car;
-  bi_wand : bi_car → bi_car → bi_car;
-  bi_persistently : bi_car → bi_car;
-  bi_later : bi_car → bi_car;
+  #[canonical=no] bi_emp : bi_car;
+  #[canonical=no] bi_pure : Prop → bi_car;
+  #[canonical=no] bi_and : bi_car → bi_car → bi_car;
+  #[canonical=no] bi_or : bi_car → bi_car → bi_car;
+  #[canonical=no] bi_impl : bi_car → bi_car → bi_car;
+  #[canonical=no] bi_forall : ∀ A : Type@{Quant}, (A → bi_car) → bi_car;
+  #[canonical=no] bi_exist : ∀ A : Type@{Quant}, (A → bi_car) → bi_car;
+  #[canonical=no] bi_sep : bi_car → bi_car → bi_car;
+  #[canonical=no] bi_wand : bi_car → bi_car → bi_car;
+  #[canonical=no] bi_persistently : bi_car → bi_car;
+  #[canonical=no] bi_later : bi_car → bi_car;
   bi_ofe_mixin : OfeMixin bi_car;
   bi_cofe_aux : Cofe (Ofe bi_car bi_ofe_mixin);
-  bi_bi_mixin : BiMixin bi_entails bi_emp bi_pure bi_and bi_or bi_impl bi_forall
+  #[canonical=no] bi_bi_mixin : BiMixin bi_entails bi_emp bi_pure bi_and bi_or bi_impl bi_forall
                         bi_exist bi_sep bi_wand bi_persistently;
-  bi_bi_later_mixin : BiLaterMixin bi_entails bi_pure bi_or bi_impl
+  #[canonical=no] bi_bi_later_mixin : BiLaterMixin bi_entails bi_pure bi_or bi_impl
                                    bi_forall bi_exist bi_sep bi_persistently bi_later;
 }.
 Bind Scope bi_scope with bi_car.
@@ -209,6 +215,17 @@ thus should never be used. The instance [bi_cofe] has the proper result type
 [Cofe (bi_ofeO PROP)]. *)
 Global Instance bi_cofe (PROP : bi) : Cofe PROP := bi_cofe_aux PROP.
 
+(*
+We improve performance by making some [bi] projections non-canonical: we can do
+this whenever unification need not _reduce_ those fields.
+- To solve [bi_ofeO ?bi ~= uPredO], tactic unification requires all involved
+  fields to be canonical (while evarconv seems smarter), including mixins.
+  Non-ofe [bi] fields are not involved in any hierarchy, so Coq never unifies [bi]
+  by unifying their fields.
+- Mixins are proof-irrelevant so not involved in unification.
+- [bi] connectives like [bi_sep] are only used as-is in terms, so all
+  unification problems about them are [bi_sep ?BI ~= bi_sep bi].
+ *)
 Global Instance: Params (@bi_entails) 1 := {}.
 Global Instance: Params (@bi_emp) 1 := {}.
 Global Instance: Params (@bi_pure) 1 := {}.
