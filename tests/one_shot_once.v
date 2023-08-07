@@ -112,7 +112,7 @@ Proof.
     + iDestruct "Hinv" as "[[Hl >Hγ]|H]"; last iDestruct "H" as (m') "[Hl Hγ]".
       { by iCombine "Hγ Hγ'" gives %?. }
       wp_load. Show.
-      iCombine "Hγ Hγ'" gives %->%leibniz_equiv.
+      iCombine "Hγ Hγ'" gives %->.
       iModIntro. iSplitL "Hl Hγ"; first by eauto with iFrame.
       wp_pures. iApply wp_assert. wp_op.
       iSplitR; first by case_bool_decide.

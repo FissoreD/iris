@@ -138,7 +138,7 @@ Section proof.
     wp_lam. wp_proj. wp_bind (! _)%E.
     iInv N as (o' n) "(>Hlo & >Hln & >Hauth & Haown)".
     wp_load.
-    iCombine "Hauth Hγo" gives %[<-%leibniz_equiv _].
+    iCombine "Hauth Hγo" gives %[<- _].
     iModIntro. iSplitL "Hlo Hln Hauth Haown".
     { iNext. iExists o, n. by iFrame. }
     wp_pures.
