@@ -90,7 +90,7 @@ Section proper.
     IsIncluded M a1 a2 P2.
   Proof.
     rewrite /IsIncluded => HP1P2 HP1a.
-    iIntros "#H✓". iApply bi.wand_iff_trans.
+    iIntros "#H✓". iApply bi.wand_iff_trans. iSplitR.
     - by iApply HP1a.
     - by iApply HP1P2.
   Qed.
@@ -102,8 +102,8 @@ Section proper.
   Proof.
     move => HP1P3 HP2P4 [HP1 HP1P2]; split; first by eapply is_included_weaken.
     iIntros "#H✓". 
-    iApply bi.wand_iff_trans; last by iApply HP2P4.
-    iApply bi.wand_iff_trans; last by iApply HP1P2.
+    iApply bi.wand_iff_trans; iSplitR; last by iApply HP2P4.
+    iApply bi.wand_iff_trans; iSplitR; last by iApply HP1P2.
     iSplit; iIntros "[#HP|$]"; iLeft; by iApply HP1P3.
   Qed.
 
@@ -359,12 +359,12 @@ Section numbers.
       - DfracOwn, DfracOwn *)
   Global Instance dfrac_own_valid_gives (q1 q2 : Qp) Pq :
     IsValidGives M q1 q2 Pq → IsValidGives M (DfracOwn q1) (DfracOwn q2) Pq.
-  Proof. by rewrite /IsValidGives dfrac_validI /= frac_validI. Qed.
+  Proof. rewrite /IsValidGives !uPred.discrete_valid dfrac_valid //=. Qed.
 
   Global Instance dfrac_own_valid_op (q q1 q2 : Qp) :
     IsValidOp M q1 q2 q → IsValidOp M (DfracOwn q1) (DfracOwn q2) (DfracOwn q).
   Proof.
-    rewrite /IsValidOp /op /cmra_op /= dfrac_validI -frac_validI => ->.
+    rewrite /IsValidOp !uPred.discrete_valid dfrac_valid frac_valid /= => ->.
     iIntros "->" => //.
   Qed.
 
@@ -372,8 +372,8 @@ Section numbers.
     IsIncluded M q1 q2 Pq → 
     IsIncluded M (DfracOwn q1) (DfracOwn q2) Pq.
   Proof. 
-    rewrite /IsIncluded dfrac_validI -frac_validI => ->.
-    iApply bi.wand_iff_trans. iSplit.
+    rewrite /IsIncluded !uPred.discrete_valid dfrac_valid => ->.
+    iIntros "H". iApply bi.wand_iff_trans. iSplitR; last done. iSplit.
     - iDestruct 1 as %?%dfrac_own_included. iPureIntro. by apply frac_included.
     - iIntros (H%frac_included). iPureIntro. by apply dfrac_own_included.
   Qed.
@@ -383,8 +383,9 @@ Section numbers.
     IsIncludedOrEq M (DfracOwn q1) (DfracOwn q2) Pq Pq' | 20.
   Proof.
     case => Hpq Hpq'. split; first apply _.
-    rewrite dfrac_validI -frac_validI Hpq'.
-    iApply bi.wand_iff_trans. iSplit.
+    rewrite uPred.discrete_valid dfrac_valid.
+    rewrite uPred.discrete_valid in Hpq'. rewrite Hpq'.
+    iIntros "H". iApply bi.wand_iff_trans. iSplitR; last done. iSplit.
     - iIntros "[Hpq|%H]"; eauto. iRight. case: H => -> //.
     - iIntros "[Hpq|->]"; eauto.
   Qed.
@@ -590,7 +591,7 @@ Section optional.
   Proof.
     rewrite /IsIncluded option_validI => [[HP1 HP2]].
     iIntros "#Ha2". rewrite option_includedI.
-    iApply bi.wand_iff_trans; last by iApply HP2.
+    iApply bi.wand_iff_trans; iSplitL; last by iApply HP2.
     rewrite HP1. iSplit; iIntros "[Ha|$]"; iLeft; by iApply "Ha2".
   Qed.
 
@@ -685,8 +686,8 @@ Section csum.
     IsIncludedOrEq M (Cinl (B := B) a1) (Cinl (B := B) a2) P1 P2 | 105.
   Proof.
     case => HP_lt HP_le; split; first apply _.
-    rewrite csum_validI HP_le.
-    iApply bi.wand_iff_trans.
+    rewrite csum_validI HP_le. iIntros "H".
+    iApply bi.wand_iff_trans. iSplitR; last done.
     iSplit; iIntros "[$|H]"; iRight; rewrite csum_equivI //.
   Qed.
 
@@ -695,8 +696,8 @@ Section csum.
     IsIncludedOrEq M (Cinr (A := A) b1) (Cinr (A := A) b2) P1 P2 | 105.
   Proof.
     case => HP_lt HP_le; split; first apply _.
-    rewrite csum_validI HP_le.
-    iApply bi.wand_iff_trans.
+    rewrite csum_validI HP_le. iIntros "H".
+    iApply bi.wand_iff_trans. iSplitR; last done.
     iSplit; iIntros "[$|H]"; iRight; rewrite csum_equivI //.
   Qed.
 

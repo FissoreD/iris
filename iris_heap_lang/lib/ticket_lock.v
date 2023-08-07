@@ -144,7 +144,7 @@ Section proof.
     wp_pures.
     iInv N as (o' n') "(>Hlo & >Hln & >Hauth & Haown)".
     iApply wp_fupd. wp_store.
-    iCombine "Hauth Hγo" gives %[<-%leibniz_equiv _].
+    iCombine "Hauth Hγo" gives %[<- _].
     iDestruct "Haown" as "[[Hγo' _]|Haown]".
     { iCombine "Hγo Hγo'" gives %[]. }
     iMod (own_update_2 with "Hauth Hγo") as "[Hauth Hγo]".

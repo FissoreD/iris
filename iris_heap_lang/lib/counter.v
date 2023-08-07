@@ -161,7 +161,7 @@ Section contrib_spec.
   Proof.
     iIntros (Φ) "[#? Hγf] HΦ".
     rewrite /read /=. wp_lam. iInv N as (c) ">[Hγ Hl]". wp_load.
-    iCombine "Hγ Hγf" gives %(_ & _ & ->%leibniz_equiv).
+    iCombine "Hγ Hγf" gives %(_ & _ & ->).
     iModIntro. iSplitL "Hl Hγ"; [iNext; iExists c; by iFrame|].
     by iApply "HΦ".
   Qed.
