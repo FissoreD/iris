@@ -54,13 +54,54 @@ Proof.
 Qed.
 
 (** * Definition and operations on the authoritative camera *)
-(** The type [auth] is not defined as a [Definition], but as a [Notation].
-This way, one can use [auth A] with [A : Type] instead of [A : ucmra], and let
-canonical structure search determine the corresponding camera instance. *)
-Notation auth A := (view (A:=A) (B:=A) auth_view_rel_raw).
-Definition authO (A : ucmra) : ofe := viewO (A:=A) (B:=A) auth_view_rel.
-Definition authR (A : ucmra) : cmra := viewR (A:=A) (B:=A) auth_view_rel.
-Definition authUR (A : ucmra) : ucmra := viewUR (A:=A) (B:=A) auth_view_rel.
+(** As of Coq 8.16.1, we can use [Definition] instead of [Notation] for
+  [auth]. This is because Reversible Coercions are now available,
+  which can use Canonical Structure inference to determine the correct
+  [ucmra] from an argument [A : Type]. *)
+Definition auth (A : ucmra) := (view (A:=A) (B:=A) auth_view_rel_raw).
+From Ltac2 Require Import Ltac2.
+
+Ltac2 better_structure_for (cast : constr) (type : constr) : constr :=
+  match Constr.Unsafe.kind cast with
+  | Constr.Unsafe.Cast hd _ args =>
+    match Constr.Unsafe.kind hd with
+    | Constr.Unsafe.App hd2 args =>
+      match Constr.Unsafe.kind hd2 with
+      | Constr.Unsafe.Constant cst _ =>
+        let term' := Std.eval_unfold [(Std.ConstRef cst, Std.AllOccurrences)] hd in
+        match Constr.Unsafe.kind term' with
+        | Constr.Unsafe.App constructor args =>
+          Array.set args 0 type;
+          let term'' := Constr.Unsafe.make (Constr.Unsafe.App constructor args) in
+          term''
+        | _ => Control.throw Not_found
+        end
+      | _ => Control.throw Not_found
+      end
+    | _ => Control.throw Not_found
+    end
+  | _ => Control.throw Not_found
+  end.
+
+Set Default Proof Mode "Classic".
+
+Tactic Notation "gen_better_structure_for" constr(cast) constr(type) :=
+  let f := ltac2:(cast' type' |-
+    let term := better_structure_for (Option.get (Ltac1.to_constr cast')) (Option.get (Ltac1.to_constr type')) in
+    exact $term
+  ) in
+  f cast type.
+
+Notation better_structure_for type := ltac:(
+  lazymatch goal with
+  | |- ?cast =>
+    let inferred_term := constr:(type : cast) in
+    gen_better_structure_for inferred_term type
+  end) (only parsing).
+
+Canonical Structure authO (A : ucmra) : ofe := better_structure_for (auth A).
+Canonical Structure authR (A : ucmra) : cmra := better_structure_for (auth A).
+Canonical Structure authUR (A : ucmra) : ucmra := better_structure_for (auth A).
 
 Definition auth_auth {A: ucmra} : dfrac → A → auth A := view_auth.
 Definition auth_frag {A: ucmra} : A → auth A := view_frag.
