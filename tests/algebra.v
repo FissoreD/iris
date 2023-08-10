@@ -1,4 +1,4 @@
-From iris.algebra Require Import auth excl lib.gmap_view.
+From iris.algebra Require Import auth excl lib.gmap_view lib.frac_auth.
 From iris.base_logic.lib Require Import invariants.
 From iris.prelude Require Import options.
 
@@ -69,6 +69,39 @@ Definition auth_check {A : ucmra} :
   auth A = authO A := eq_refl.
 Definition gmap_view_check {K : Type} `{Countable K} {V : ofe} :
   gmap_view K V = gmap_viewO K V := eq_refl.
+
+(** Make sure one can freely use [ucmra] combinators where [cmra] combinators
+    were needed, i.e. [frac_authUR] where [frac_authR] would suffice. See also
+    https://gitlab.mpi-sws.org/iris/iris/-/issues/539
+*)
+Timeout 1 Lemma stack_frac_authsUR7
+  `{!inG Σ (frac_authUR $ frac_authUR $ frac_authUR $ frac_authUR $
+            frac_authUR $ frac_authUR $ frac_authUR $ agreeR $ natO)} γ :
+      own γ (●F (●F (●F (●F (●F (●F (●F (to_agree O)))))))) ⊢
+      own γ (●F (●F (●F (●F (●F (●F (●F (to_agree O)))))))).
+Proof. Timeout 1 reflexivity. Timeout 1 Qed.
+
+Definition frac_auth A := (auth (optionR $ prodR fracR A)).
+(** Make sure it is also okay to use the [_ : cmra → Type] combinators,
+    and letting Coq do the inference. See also
+    https://gitlab.mpi-sws.org/iris/iris/-/issues/539
+*)
+Timeout 1 Lemma stack_frac_auths7
+  `{!inG Σ (frac_auth $ frac_auth $ frac_auth $ frac_auth $
+            frac_auth $ frac_auth $ frac_auth $ agree $ nat)} γ :
+      own γ (●F (●F (●F (●F (●F (●F (●F (to_agree O)))))))) ⊢
+      own γ (●F (●F (●F (●F (●F (●F (●F (to_agree O)))))))).
+Proof. Timeout 1 reflexivity. Timeout 1 Qed.
+
+(** Make sure that stacking the authoritative cmra combinator does not blow up
+    type checking time. See also
+    https://gitlab.mpi-sws.org/iris/iris/-/issues/539
+*)
+Timeout 1 Lemma stack_auths_unit_okay :
+  (● (● (● (● (● (● (● (● (● (● (● (● (()))))))))))))) =
+  (● (● (● (● (● (● (● (● (● (● (● (● (()))))))))))))).
+Proof. Timeout 1 reflexivity. Timeout 1 Qed.
+
 
 Lemma uncurry_ne_test {A B C : ofe} (f : A → B → C) :
   NonExpansive2 f → NonExpansive (uncurry f).
