@@ -51,6 +51,17 @@ Proof.
   - reflexivity.
 Qed.
 
+(** Minimal example of an inference that worked when the [ofe]/[cmra]/[ucmra]
+   hierarchy was fully bundled. The tricky part here is the interaction between
+   the three structures: the [equiv] instance comes from [ofe], the [op] from
+   [cmra], but the proof comes from [ucmra]. The type of the goal infers the
+   least, and we need to convince the _old_ unification from [simple eapply]
+   to make typeclass search work. To debug this, the
+     Set Debug "all".
+   command is helpful. *)
+Lemma test_prodUR_inference : RightId equiv ((), ()) op.
+Proof. simple apply @ucmra_unit_right_id. Qed.
+
 (** Regression test for <https://gitlab.mpi-sws.org/iris/iris/issues/255>. *)
 Definition testR := authR (prodUR
         (prodUR
