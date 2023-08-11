@@ -28,11 +28,11 @@ Definition release : val :=
 
 (** The CMRAs we need. *)
 Class tlockG Σ :=
-  tlock_G : inG Σ (authR (prodUR (optionUR (exclR natO)) (gset_disjUR nat))).
+  tlock_G : inG Σ (auth (excl' nat * gset_disj nat)).
 Local Existing Instance tlock_G.
 
 Definition tlockΣ : gFunctors :=
-  #[ GFunctor (authR (prodUR (optionUR (exclR natO)) (gset_disjUR nat))) ].
+  #[ GFunctorConst (auth (excl' nat * gset_disj nat)) ].
 
 Global Instance subG_tlockΣ {Σ} : subG tlockΣ Σ → tlockG Σ.
 Proof. solve_inG. Qed.
@@ -45,14 +45,14 @@ Section proof.
     ∃ o n : nat,
       lo ↦ #o ∗ ln ↦ #n ∗
       own γ (● (Excl' o, GSet (set_seq 0 n))) ∗
-      ((own γ (◯ (Excl' o, GSet ∅)) ∗ R) ∨ own γ (◯ (ε, GSet {[ o ]}))).
+      ((own γ (◯ (Excl' o, GSet ∅)) ∗ R) ∨ own γ (◯ (ε : excl' _, GSet {[ o ]}))).
 
   Definition is_lock (γ : gname) (lk : val) (R : iProp Σ) : iProp Σ :=
     ∃ lo ln : loc,
       ⌜lk = (#lo, #ln)%V⌝ ∗ inv N (lock_inv γ lo ln R).
 
   Definition issued (γ : gname) (x : nat) : iProp Σ :=
-    own γ (◯ (ε, GSet {[ x ]})).
+    own γ (◯ (ε : excl' _, GSet {[ x ]})).
 
   Definition locked (γ : gname) : iProp Σ := ∃ o, own γ (◯ (Excl' o, GSet ∅)).
 
