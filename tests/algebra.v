@@ -1,4 +1,4 @@
-From iris.algebra Require Import auth excl lib.gmap_view lib.frac_auth.
+From iris.algebra Require Import auth excl lib.gmap_view lib.frac_auth csum mono_nat.
 From iris.base_logic.lib Require Import invariants.
 From iris.prelude Require Import options.
 
@@ -67,6 +67,9 @@ Proof. apply _. Qed.
 Lemma test_prodUR_inference2 {A : ucmra} : LeftId equiv ε (@op (prod A unit) _).
 Proof. apply _. Qed.
 
+Lemma test_prodUR_inference3 {A : ucmra} : LeftId equiv (ε, ε) (@op (prod A unit) _).
+Proof. apply _. Qed.
+
 (** Regression test for <https://gitlab.mpi-sws.org/iris/iris/issues/255>. *)
 Definition testR := authR (prodUR
         (prodUR
@@ -117,6 +120,67 @@ Timeout 1 Lemma stack_auths_unit_okay :
   (● (● (● (● (● (● (● (● (● (● (● (● (()))))))))))))) =
   (● (● (● (● (● (● (● (● (● (● (● (● (()))))))))))))).
 Proof. Timeout 1 reflexivity. Timeout 1 Qed.
+
+(** Testing conversion speed for some large [cmra]s *)
+Section hw_gpfsl_cmra.
+  (* This cmra is found in [proof_hw_graph] in [gpfsl]. *)
+  Definition large_cmra1_R := (
+      prodR
+        (prodR (prodR (optionR (agreeR (leibnizO gname))) (authR max_natUR))
+               (authR
+              (gmapUR nat
+                 (prodR
+                    (prodR
+                       (prodR (optionR (agreeR (leibnizO (Z * nat))))
+                          (optionR (csumR (exclR unitR) (agreeR (leibnizO (nat * nat))))))
+                       (optionR (agreeR (leibnizO nat)))) (optionR (agreeR (leibnizO gname)))))))
+        (authR (gmapUR nat (agreeR (leibnizO nat))))).
+
+  Definition large_cmra1_UR := (
+      prodUR
+        (prodUR (prodUR (optionUR (agreeR (leibnizO gname))) (authUR max_natUR))
+           (authUR
+              (gmapUR nat
+                 (prodUR
+                    (prodUR
+                       (prodUR (optionUR (agreeR (leibnizO (Z * nat))))
+                          (optionUR (csumR (exclR unitR) (agreeR (leibnizO (nat * nat))))))
+                       (optionUR (agreeR (leibnizO nat)))) (optionUR (agreeR (leibnizO gname)))))))
+        (authUR (gmapUR nat (agreeR (leibnizO nat))))).
+
+  Definition large_cmra1_el : large_cmra1_UR := ε.
+
+  Timeout 1 Lemma test_large_cmra1_conversion : large_cmra1_el = (large_cmra1_el : large_cmra1_R).
+  Proof. Timeout 1 reflexivity. Timeout 1 Qed.
+
+
+  Definition large_cmra2_R := (
+    gmapR nat $ gmapR nat $ gmapR nat $ gmapR nat $ gmapR nat $ gmapR nat $
+    agreeR nat).
+
+  Definition large_cmra2_UR := (
+    gmapUR nat $ gmapUR nat $ gmapUR nat $ gmapUR nat $ gmapUR nat $ gmapUR nat $
+    agreeR nat).
+
+  Definition large_cmra2_el : large_cmra2_UR := ε.
+
+  Timeout 1 Lemma test_large_cmra2_conversion : large_cmra2_el = (large_cmra2_el : large_cmra2_R).
+  Proof. Timeout 1 reflexivity. Timeout 1 Qed.
+
+
+  Definition large_cmra3_R := (
+    optionR $ optionR $ optionR $ optionR $ optionR $ optionR $ optionR $
+    agreeR nat).
+
+  Definition large_cmra3_UR := (
+    optionUR $ optionUR $ optionUR $ optionUR $ optionUR $ optionUR $ optionUR $
+    agreeR nat).
+
+  Definition large_cmra3_el : large_cmra3_UR := ε.
+
+  Timeout 1 Lemma test_large_cmra3_conversion : large_cmra3_el = (large_cmra3_el : large_cmra3_R).
+  Proof. Timeout 1 reflexivity. Timeout 1 Qed.
+End hw_gpfsl_cmra.
 
 
 Lemma uncurry_ne_test {A B C : ofe} (f : A → B → C) :

@@ -232,6 +232,7 @@ Proof.
     + revert Hz2i. case: (y2!!i)=>[?|] //.
 Qed.
 Canonical Structure gmapR := Cmra (gmap K A) gmap_cmra_mixin.
+Global Strategy 10 [gmapR].
 
 Global Instance gmap_cmra_discrete : CmraDiscrete A → CmraDiscrete gmapR.
 Proof. split; [apply _|]. intros m ? i. by apply: cmra_discrete_valid. Qed.

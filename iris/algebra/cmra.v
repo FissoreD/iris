@@ -246,11 +246,17 @@ Section ucmra_mixin.
   Implicit Types x y : A.
   Lemma ucmra_unit_valid : ✓ (ε : A).
   Proof. apply (mixin_ucmra_unit_valid _ (ucmra_mixin A)). Qed.
-  Global Instance ucmra_unit_left_id : LeftId (≡) ε (@op A _).
+  Lemma ucmra_unit_left_id : LeftId (≡) ε (@op A _).
   Proof. apply (mixin_ucmra_unit_left_id _ (ucmra_mixin A)). Qed.
   Lemma ucmra_pcore_unit : pcore (ε:A) ≡ Some ε.
   Proof. apply (mixin_ucmra_pcore_unit _ (ucmra_mixin A)). Qed.
 End ucmra_mixin.
+
+(* FIXME(Coq #6294). See also the tests on units of product types in tests/algebra.v *)
+Global Hint Extern 0 (@LeftId ?A ?r ?e ?op) =>
+  unify e (ε : A);
+  (* apparently [ucmra_unit_left_id] can fail when a and [ε] are not unifiable !? *)
+  refine ucmra_unit_left_id : typeclass_instances.
 
 (** * Discrete CMRAs *)
 #[projections(primitive=no)] (* FIXME: making this primitive means we cannot use
@@ -662,7 +668,7 @@ Section ucmra.
   Proof. by exists x; rewrite left_id. Qed.
   Lemma ucmra_unit_least x : ε ≼ x.
   Proof. by exists x; rewrite left_id. Qed.
-  Global Instance ucmra_unit_right_id : RightId (≡) ε (@op A _).
+  Lemma ucmra_unit_right_id : RightId (≡) ε (@op A _).
   Proof. by intros x; rewrite (comm op) left_id. Qed.
   Global Instance ucmra_unit_core_id : CoreId (ε:A).
   Proof. apply ucmra_pcore_unit. Qed.
@@ -682,6 +688,11 @@ End ucmra.
 
 Global Hint Immediate cmra_unit_cmra_total : core.
 Global Hint Extern 0 (ε ≼ _) => apply: ucmra_unit_least : core.
+
+(* FIXME(Coq #6294). See also the tests on units of product types in tests/algebra.v *)
+Global Hint Extern 0 (@RightId ?A _ ?e _) =>
+  unify e (ε : A);
+  refine ucmra_unit_right_id : typeclass_instances.
 
 (** * Properties about CMRAs with Leibniz equality *)
 Section cmra_leibniz.
@@ -1201,6 +1212,7 @@ Section prod.
       by exists (z11,z21), (z12,z22).
   Qed.
   Canonical Structure prodR := Cmra (prod A B) prod_cmra_mixin.
+  Global Strategy 10 [prodR].
 
   Lemma pair_op (a a' : A) (b b' : B) : (a ⋅ a', b ⋅ b') = (a, b) ⋅ (a', b').
   Proof. done. Qed.
@@ -1468,6 +1480,7 @@ Section option.
       + exists None, None; repeat constructor.
   Qed.
   Canonical Structure optionR := Cmra (option A) option_cmra_mixin.
+  Global Strategy 10 [optionR].
 
   Global Instance option_cmra_discrete : CmraDiscrete A → CmraDiscrete optionR.
   Proof. split; [apply _|]. by intros [a|]; [apply (cmra_discrete_valid a)|]. Qed.
