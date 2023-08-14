@@ -55,12 +55,17 @@ Qed.
    hierarchy was fully bundled. The tricky part here is the interaction between
    the three structures: the [equiv] instance comes from [ofe], the [op] from
    [cmra], but the proof comes from [ucmra]. The type of the goal infers the
-   least, and we need to convince the _old_ unification from [simple eapply]
-   to make typeclass search work. To debug this, the
+   largest superclass (i.e., [ofe]),  while we need the smallest. Apparently,
+   the _old_ unification from [simple eapply] might choke in this, while we
+   need to make typeclass search work. To debug this, the
      Set Debug "all".
    command is helpful. *)
-Lemma test_prodUR_inference : RightId equiv ((), ()) op.
-Proof. simple apply @ucmra_unit_right_id. Qed.
+
+Lemma test_prodUR_inference1 {A : ucmra} : LeftId equiv ε (@op (prod A A) _).
+Proof. apply _. Qed.
+
+Lemma test_prodUR_inference2 {A : ucmra} : LeftId equiv ε (@op (prod A unit) _).
+Proof. apply _. Qed.
 
 (** Regression test for <https://gitlab.mpi-sws.org/iris/iris/issues/255>. *)
 Definition testR := authR (prodUR
