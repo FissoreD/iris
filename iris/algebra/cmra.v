@@ -201,11 +201,9 @@ Structure ucmra := Ucmra' {
   ucmra_unit : Unit (cmra_car ucmra_cmraR);
   ucmra_mixin : UcmraMixin (cmra_car ucmra_cmraR);
 }.
-(* This _reversible_ coercion allows us to infer [ucmra]s from [Type]s by using
-   Canonical instances. *)
-#[reversible] Coercion ucmra_car (u : ucmra) : Type := cmra_car (ucmra_cmraR u).
 
 (* Old projections for backwards compatibility *)
+Definition ucmra_car (u : ucmra) : Type := cmra_car (ucmra_cmraR u).
 Definition ucmra_equiv (u : ucmra) : Equiv (ucmra_car u) := cmra_equiv (ucmra_cmraR u).
 Definition ucmra_dist (u : ucmra) : Dist (ucmra_car u) := cmra_dist (ucmra_cmraR u).
 Definition ucmra_pcore (u : ucmra) : PCore (ucmra_car u) := cmra_pcore (ucmra_cmraR u).
