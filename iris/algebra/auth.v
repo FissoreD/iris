@@ -3,8 +3,14 @@ From iris.algebra Require Import proofmode_classes big_op.
 From iris.prelude Require Import options.
 
 (* We will use some Ltac2 to manipulate Canonical Structures. TODO: move somewhere more appropriate?*)
-From Ltac2 Require Import Ltac2 Printf.
+From Ltac2 Require Import Ltac2.
+(* Currently, importing Ltac2 switches the proofmode to only use Ltac2.
+  The following setting changes that back to regular Ltac. *)
 Set Default Proof Mode "Classic".
+(* See also
+  https://coq.inria.fr/distrib/current/refman/proofs/writing-proofs/proof-mode.html#coq:opt.Default-Proof-Mode
+*)
+
 
 (** The authoritative camera with fractional authoritative elements *)
 (** The authoritative camera has 2 types of elements: the authoritative element
@@ -108,19 +114,6 @@ Qed.
      will be [view A A] - which is unifiable with [auth A]. We thus take want to
      take the inferred instance, and replace the carrier type with [auth A]. *)
 
-(* [unfold_head_fun (f a ... c)] unfolds [f].
-  Used to unfold e.g. [viewR A A] to [Cmra' ...] *)
-Ltac2 unfold_head_fun (term : constr) :=
-  match Constr.Unsafe.kind term with
-  | Constr.Unsafe.App head_fun_term args =>
-    match Constr.Unsafe.kind head_fun_term with
-    | Constr.Unsafe.Constant head_fun_const _ =>
-      Std.eval_unfold [(Std.ConstRef head_fun_const, Std.AllOccurrences)] term
-    | _ => Control.throw Not_found
-    end
-  | _ => Control.throw Not_found
-  end.
-
 (* [replace_first_arg (f a ... c) a'] returns [f a' .. c].
   Used to replace [Cmra' (view A A) ..] with [Cmra' (auth A) ..] *)
 Ltac2 replace_first_arg (application_term : constr) (new_arg : constr) : constr :=
@@ -131,17 +124,16 @@ Ltac2 replace_first_arg (application_term : constr) (new_arg : constr) : constr 
   | _ => Control.throw Not_found
   end.
 
-(* [replace_first_constructor_arg (g b .. c) a] unfolds [g], and replace the first argument
-   of the remaining term with [a].
+(* [replace_first_constructor_arg term a] computes the head-normal-form of [term],
+   and replace the first argument of the remaining term with [a].
    Used to replace [viewR A A] with [Cmra' (auth A) ..], which is a suitable
    canonical structure instance for [auth A]. *)
 Ltac2 replace_first_constructor_arg (folded_constructor : constr) (new_arg : constr) : constr :=
-  let unfolded_constructor := unfold_head_fun folded_constructor in
+  let unfolded_constructor := eval hnf in $folded_constructor in
   replace_first_arg unfolded_constructor new_arg.
 
 (* [gen_better_structure_for old_struct new_first_arg] unfolds [old_struct],
-    replaces its first argument with [new_first_arg], then [exact]s that as a result.
-
+   replaces its first argument with [new_first_arg], then [exact]s that as a result.
    If the goal is of type [cmra], [gen_better_structure_for (viewR A A) (auth A)] will
    produce a better canonical instance for [auth A] *)
 Tactic Notation "gen_better_structure_for" constr(old_structure) constr(new_first_arg) :=
@@ -182,18 +174,15 @@ Notation better_structure_for type := (better_structure_for_packed type Type) (o
   [ucmra] from an argument [A : Type]. *)
 Definition auth (A : ucmra) := (view (A:=A) (B:=A) auth_view_rel_raw).
 
-(* The exponential behavior described above can be observed here with the
-   following commands:
+(* The exponential behavior described above can be observed with the following
+  commands, independent of whether we use [Definition] or [Notation].
 
-Check (auth (auth unit)).
-Check (auth (auth (auth unit))).
-Check (auth (auth (auth (auth unit)))).
+Time Check (auth $ auth $ auth $ auth $ auth $ auth unit).
+Time Check (auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth unit).
+Time Check (auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth unit).
+Time Check (auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth unit).
 
-*)
-
-(* The following will break if we have
-Set Warnings "+redundant-canonical-projection".
-   since this introduces redundant canonical projections _on purpose_. *)
+To fix this, we give better canonical structures for [auth]. *)
 Canonical Structure authO (A : ucmra) : ofe := better_structure_for (auth A).
 Canonical Structure authR (A : ucmra) : cmra := better_structure_for (auth A).
 Canonical Structure authUR (A : ucmra) : ucmra := better_structure_for_packed (auth A) cmra.
