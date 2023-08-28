@@ -33,10 +33,10 @@ Local Definition acquire_writer : val :=
 Local Definition release_writer : val :=
   λ: "l", "l" <- #0.
 
-Class rwlockG Σ := RwLockG { rwlock_tokG : inG Σ (authR (gmultisetUR Qp)) }.
+Class rwlockG Σ := RwLockG { rwlock_tokG : inG Σ (auth (gmultiset Qp)) }.
 Local Existing Instance rwlock_tokG.
 
-Local Definition rwlockΣ : gFunctors := #[GFunctor (authR (gmultisetUR Qp)) ].
+Local Definition rwlockΣ : gFunctors := #[GFunctorConst (auth (gmultiset Qp)) ].
 Global Instance subG_rwlockΣ {Σ} : subG rwlockΣ Σ → rwlockG Σ.
 Proof. solve_inG. Qed.
 

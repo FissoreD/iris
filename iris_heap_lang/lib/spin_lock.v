@@ -14,10 +14,10 @@ Definition release : val := λ: "l", "l" <- #false.
 
 (** The CMRA we need. *)
 (* Not bundling heapGS, as it may be shared with other users. *)
-Class lockG Σ := LockG { lock_tokG : inG Σ (exclR unitO) }.
+Class lockG Σ := LockG { lock_tokG : inG Σ (excl ()) }.
 Local Existing Instance lock_tokG.
 
-Definition lockΣ : gFunctors := #[GFunctor (exclR unitO)].
+Definition lockΣ : gFunctors := #[GFunctorConst (excl ())].
 
 Global Instance subG_lockΣ {Σ} : subG lockΣ Σ → lockG Σ.
 Proof. solve_inG. Qed.
