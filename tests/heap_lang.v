@@ -514,52 +514,73 @@ Proof.
   wp_alloc l. wp_load. wp_store. wp_load. auto.
 Qed.
 
-(** Just making sure the lock typeclass actually works. *)
-Section lock.
+(** Make sure the lock type class works to write generic clients and
+specifications. *)
+Section lock_gen.
   Context `{!lock}.
 
-  Definition lock_client : val :=
-    λ: "loc" "lock",
-      acquire "lock";;
-      "loc" <- #42;;
-      release "lock".
+  Definition lock_client_gen : expr :=
+    let: "l" := ref #10 in
+    let: "lock" := newlock #() in
+    acquire "lock";;
+    "l" <- #42;;
+    release "lock".
 
-  Context `{!heapGS Σ, !lockG Σ}.
-
-  Lemma wp_lock_client loc lock γ :
-    is_lock γ lock (∃ v, loc ↦ v) -∗
-    WP lock_client #loc lock {{ _, True }}.
+  Lemma wp_lock_client_gen `{!heapGS Σ, !lockG Σ} :
+    ⊢ WP lock_client_gen {{ _, True }}.
   Proof.
-    iIntros "#Hislock".
-    wp_lam. wp_smart_apply (acquire_spec with "Hislock") as "[Hlocked [%v Hloc]]".
+    unfold lock_client_gen. wp_alloc l as "Hl".
+    wp_smart_apply (newlock_spec (∃ n : Z, l ↦ #n) with "[Hl]")
+      as (lk γ) "#Hlock"; first by eauto.
+    wp_smart_apply (acquire_spec with "Hlock") as "(Hlocked & %v & Hloc)".
     wp_store.
-    wp_smart_apply (release_spec with "[$Hlocked Hloc]").
-    { iFrame "Hislock". eauto. }
-    eauto.
+    wp_smart_apply (release_spec with "[$Hlock $Hlocked Hloc]"); by eauto.
   Qed.
-End lock.
-Section spin_lock.
+End lock_gen.
+
+(** Make sure the lock type class works to write clients and
+specifications for specific locks (here: spin lock). *)
+Section lock_gen.
   Local Existing Instance spin_lock.
 
-  Definition spin_lock_client : val :=
-    λ: "loc" "lock",
-      acquire "lock";;
-      "loc" <- #42;;
-      release "lock".
+  Definition lock_client_spin : expr :=
+    let: "l" := ref #10 in
+    let: "lock" := newlock #() in
+    acquire "lock";;
+    "l" <- #42;;
+    release "lock".
 
-  (* Making sure that using [spin_lockG] here works, not just [lockG]. *)
-  Context `{!heapGS Σ, !spin_lockG Σ}.
-
-  Check "wp_spin_lock_client".
-  Lemma wp_spin_lock_client loc lock γ :
-    is_lock γ lock (∃ v, loc ↦ v) -∗
-    WP spin_lock_client #loc lock {{ _, True }}.
+  Lemma wp_lock_client_spin `{!heapGS Σ, !lockG Σ} :
+    ⊢ WP lock_client_spin {{ _, True }}.
   Proof.
-    iIntros "#Hislock". wp_lam. simpl. Show.
-    wp_smart_apply (acquire_spec with "Hislock") as "[Hlocked [%v Hloc]]".
+    unfold lock_client_spin. wp_alloc l as "Hl".
+    wp_smart_apply (newlock_spec (∃ n : Z, l ↦ #n) with "[Hl]")
+      as (lk γ) "#Hlock"; first by eauto.
+    wp_smart_apply (acquire_spec with "Hlock") as "(Hlocked & %v & Hloc)".
     wp_store.
-    wp_smart_apply (release_spec with "[$Hlocked Hloc]").
-    { iFrame "Hislock". eauto. }
-    eauto.
+    wp_smart_apply (release_spec with "[$Hlock $Hlocked Hloc]"); by eauto.
   Qed.
-End spin_lock.
+End lock_gen.
+
+(** Making sure we the [lockG] conditions are resolved when using adequacy. For
+the generic client, we need to instantiate it with a specific lock for that to
+make sense. *)
+Section lock_adequacy.
+  Local Existing Instance spin_lock.
+
+  Lemma lock_client_gen_adequate σ :
+    adequate NotStuck lock_client_gen σ (λ _ _, True).
+  Proof.
+    set (Σ := #[heapΣ; spin_lockΣ]).
+    apply (heap_adequacy Σ); iIntros (?) "_".
+    iApply wp_lock_client_gen.
+  Qed.
+
+  Lemma lock_client_spin_adequate σ :
+    adequate NotStuck lock_client_spin σ (λ _ _, True).
+  Proof.
+    set (Σ := #[heapΣ; spin_lockΣ]).
+    apply (heap_adequacy Σ); iIntros (?) "_".
+    iApply wp_lock_client_gen.
+  Qed.
+End lock_adequacy.

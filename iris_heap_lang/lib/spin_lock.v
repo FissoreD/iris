@@ -12,15 +12,11 @@ Local Definition acquire : val :=
   rec: "acquire" "l" := if: try_acquire "l" then #() else "acquire" "l".
 Local Definition release : val := λ: "l", "l" <- #false.
 
-(** The CMRA we need. *)
+(** The CMRA we need, the [spin_lockG] class should be considered local. Use the
+projection [lockG] of the [lock] class. *)
 (* Not bundling heapGS, as it may be shared with other users. *)
 Class spin_lockG Σ := LockG { lock_tokG : inG Σ (exclR unitO) }.
 Local Existing Instance lock_tokG.
-
-Definition spin_lockΣ : gFunctors := #[GFunctor (exclR unitO)].
-
-Global Instance subG_spin_lockΣ {Σ} : subG spin_lockΣ Σ → spin_lockG Σ.
-Proof. solve_inG. Qed.
 
 Section proof.
   Context `{!heapGS_gen hlc Σ, !spin_lockG Σ}.
@@ -101,3 +97,8 @@ Definition spin_lock : lock :=
      lock.newlock_spec _ _ _ _ := newlock_spec;
      lock.acquire_spec _ _ _ _ := acquire_spec;
      lock.release_spec _ _ _ _ := release_spec |}.
+
+Definition spin_lockΣ : gFunctors := #[GFunctor (exclR unitO)].
+
+Global Instance subG_spin_lockΣ {Σ} : subG spin_lockΣ Σ → @lockG spin_lock Σ.
+Proof. solve_inG. Qed.
