@@ -57,7 +57,6 @@ Global Arguments locked : simpl never.
 
 Existing Class lockG.
 Global Hint Mode lockG + + : typeclass_instances.
-Global Hint Extern 0 (lockG _) => progress simpl : typeclass_instances.
 
 Global Instance is_lock_contractive `{!heapGS_gen hlc Σ, !lock, !lockG Σ} γ lk :
   Contractive (is_lock γ lk).
