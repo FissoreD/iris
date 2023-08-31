@@ -173,6 +173,8 @@ Tactic failure: Missing intro pattern for accessor variable.
   "H" : own γ 1%Qp
   --------------------------------------∗
   own γ 1%Qp
+"test_gset_split_combine"
+     : string
 "test_iDestruct_mod_not_fresh"
      : string
 The command has indeed failed with message:

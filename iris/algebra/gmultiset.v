@@ -1,6 +1,6 @@
 From stdpp Require Export sets gmultiset countable.
 From iris.algebra Require Export cmra.
-From iris.algebra Require Import updates local_updates big_op.
+From iris.algebra Require Import updates local_updates big_op proofmode_classes.
 From iris.prelude Require Import options.
 
 (* The multiset union CMRA *)
@@ -92,6 +92,24 @@ Section gmultiset.
     - rewrite big_opMS_empty. done.
     - unfold_leibniz. rewrite big_opMS_disj_union // big_opMS_singleton IH //.
   Qed.
+
+  (* The following instance splits [X ⊎ Y] into [X] and [Y] *)
+  Global Instance gmultiset_is_op_default_split X Y :
+    IsOp'LR (X ⊎ Y) X Y | 1.
+  Proof. done. Qed.
+  (* The following instances simplify [X ⋅ ∅] and [∅ ⋅ X] into [X]. As a
+    side-effect, terms [X] which do not have a toplevel [⋅] or [⊎] produce an
+    [∅] when split. *)
+  Global Instance gmultiset_is_op_unit_l X :
+    IsOp' X ∅ X | 10.
+  Proof. rewrite /IsOp' /IsOp. multiset_solver. Qed.
+  Global Instance gmultiset_is_op_unit_r X :
+    IsOp' X X ∅ | 10.
+  Proof. rewrite /IsOp' /IsOp. multiset_solver. Qed.
+  (* If none of the above applies, [X ⋅ Y] simplifies to [X ⊎ Y] *)
+  Global Instance gmultiset_is_op_default_combine X Y :
+    IsOp' (X ⊎ Y) X Y | 99.
+  Proof. done. Qed.
 
 End gmultiset.
 
