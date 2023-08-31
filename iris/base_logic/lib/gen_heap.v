@@ -237,7 +237,7 @@ Section gen_heap.
     rewrite meta_unseal /meta_def.
     iIntros "(%γm1 & Hγm1 & Hm1) (%γm2 & Hγm2 & Hm2)".
     iCombine "Hγm1 Hγm2" gives %[_ ->].
-    iCombine "Hm1 Hm2" gives %Hγ. iPureIntro.
+    iCombine "Hm1 Hm2" gives %Hγ; iPureIntro.
     move: Hγ. rewrite -reservation_map_data_op reservation_map_data_valid.
     move=> /to_agree_op_inv_L. naive_solver.
   Qed.

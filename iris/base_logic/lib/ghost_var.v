@@ -63,7 +63,7 @@ Section lemmas.
     ghost_var γ q1 a1 -∗ ghost_var γ q2 a2 -∗ ⌜a1 = a2⌝.
   Proof.
     iIntros "Hvar1 Hvar2".
-    iDestruct (ghost_var_valid_2 with "Hvar1 Hvar2") as %[_ ->]. done.
+    iDestruct (ghost_var_valid_2 with "Hvar1 Hvar2") as %[_ ?]. done.
   Qed.
 
   Global Instance ghost_var_combine_gives γ a1 q1 a2 q2 :
