@@ -189,10 +189,7 @@ Section lemmas.
   Qed.
   Lemma ghost_map_auth_valid_2 γ q1 q2 m1 m2 :
     ghost_map_auth γ q1 m1 -∗ ghost_map_auth γ q2 m2 -∗ ⌜(q1 + q2 ≤ 1)%Qp ∧ m1 = m2⌝.
-  Proof.
-    unseal. iIntros "H1 H2".
-    iCombine "H1 H2" gives %[H1 H2]. by fold_leibniz.
-  Qed.
+  Proof. unseal. iIntros "H1 H2". by iCombine "H1 H2" gives %?. Qed.
   Lemma ghost_map_auth_agree γ q1 q2 m1 m2 :
     ghost_map_auth γ q1 m1 -∗ ghost_map_auth γ q2 m2 -∗ ⌜m1 = m2⌝.
   Proof.
@@ -204,10 +201,7 @@ Section lemmas.
   (** * Lemmas about the interaction of [ghost_map_auth] with the elements *)
   Lemma ghost_map_lookup {γ q m k dq v} :
     ghost_map_auth γ q m -∗ k ↪[γ]{dq} v -∗ ⌜m !! k = Some v⌝.
-  Proof.
-    unseal. iIntros "Hauth Hel".
-    by iCombine "Hauth Hel" gives %?.
-  Qed.
+  Proof. unseal. iIntros "Hauth Hel". by iCombine "Hauth Hel" gives %?.  Qed.
 
   Global Instance ghost_map_lookup_combine_gives_1 {γ q m k dq v} :
     CombineSepGives (ghost_map_auth γ q m) (k ↪[γ]{dq} v) ⌜m !! k = Some v⌝.
