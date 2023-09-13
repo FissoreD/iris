@@ -2,6 +2,16 @@ From iris.algebra Require Export view frac.
 From iris.algebra Require Import proofmode_classes big_op.
 From iris.prelude Require Import options.
 
+(* We will use some Ltac2 to manipulate Canonical Structures. TODO: move somewhere more appropriate?*)
+From Ltac2 Require Import Ltac2.
+(* Currently, importing Ltac2 switches the proofmode to only use Ltac2.
+  The following setting changes that back to regular Ltac. *)
+Set Default Proof Mode "Classic".
+(* See also
+  https://coq.inria.fr/distrib/current/refman/proofs/writing-proofs/proof-mode.html#coq:opt.Default-Proof-Mode
+*)
+
+
 (** The authoritative camera with fractional authoritative elements *)
 (** The authoritative camera has 2 types of elements: the authoritative element
 [●{dq} a] and the fragment [◯ b] (of which there can be several). To enable
@@ -53,14 +63,129 @@ Proof.
   - by apply cmra_discrete_valid_iff_0.
 Qed.
 
+
+(** The type [auth A] will be defined directly in terms of the [view] type.
+   This means that by default, we will use the associated canonical structures
+   of [view]. This is usually okay - except that in this case, we will have
+   something like [auth A := view A A]. The duplication of the [A] argument
+   is problematic - it causes the inferred structures to be large, and may
+   seriously slow down type-checking.
+
+   Consider, for example, the term [auth (auth unitUR)], where we define
+   [auth : ucmra → Type]. Note that [auth unitUR : Type], while Coq expects
+   something of type [ucmra]. Since Coq 8.16, Coq has a feature called
+   'reversible coercions' (see also
+      https://coq.inria.fr/refman/addendum/implicit-coercions.html#reversible-coercions
+    ). Instead of failing to type check, Coq will try to find a [?u : ucmra] whose
+   carrier type is [auth unitUR], and use [auth ?u] instead of [auth (auth unitUR)].
+   To find this [?u : ucmra], Coq use Canonical Structures to solve the problem
+       [ucmra_car ?u = auth unitUR]
+   There is no direct instance for this, so it unfolds [auth]. The problem becomes
+       [ucmra_car ?u = view unitUR unitUR]
+   This is where the canonical instance for [view] kicks in: it finds
+       [?u = viewUR unitR unitR]
+   and so the resulting term becomes [auth (viewUR unitUR unitUR)].
+
+   This might not seem so bad, but now consider [auth (auth (auth unitUR))].
+   After the above resolution has been performed on [auth (auth unitUR)],
+   we now have [auth (viewUR unitUR unitUR) : Type] while Coq expects a
+   [ucmra]. The problem is now
+       [ucmra_car ?u = auth (viewUR unitUR unitUR)]
+   which unfolds [auth] to become
+       [ucmra_car ?u = view (viewUR unitUR unitUR) (viewUR unitUR unitUR)]
+   and then finds the solution
+       [?u = viewUR (viewUR unitUR unitUR) (viewUR unitUR unitUR)]
+   This means the size of the resulting term scales exponentially in the
+   number of stacked [auth]s.
+
+   To avoid this, we will make sure that when Coq tries to solve
+       [ucmra_car ?u = auth A]
+   it will find the solution
+       [?u = authUR A]
+   Note that this is ofcourse unifiable with the old solution, but as a term
+   it is much smaller.
+
+
+   We will now build some helper functions that will allow us to easily construct
+   better canonical structures for [auth]. The idea is as follows:
+   - We first define the [auth A] type directly in terms of the [view] type.
+   - Next, we need to define new Canonical instances, showing that [auth] is an
+     [ofe]/[cmra]/[ucmra]. Coq can infer such instances, but their carrier type
+     will be [view A A] - which is unifiable with [auth A]. We thus take want to
+     take the inferred instance, and replace the carrier type with [auth A]. *)
+
+(* [replace_first_arg (f a ... c) a'] returns [f a' .. c].
+  Used to replace [Cmra' (view A A) ..] with [Cmra' (auth A) ..] *)
+Ltac2 replace_first_arg (application_term : constr) (new_arg : constr) : constr :=
+  match Constr.Unsafe.kind application_term with
+  | Constr.Unsafe.App head_fun_term args =>
+    Array.set args 0 new_arg;
+    Constr.Unsafe.make (Constr.Unsafe.App head_fun_term args)
+  | _ => Control.throw Not_found
+  end.
+
+(* [replace_first_constructor_arg term a] computes the head-normal-form of [term],
+   and replace the first argument of the remaining term with [a].
+   Used to replace [viewR A A] with [Cmra' (auth A) ..], which is a suitable
+   canonical structure instance for [auth A]. *)
+Ltac2 replace_first_constructor_arg (folded_constructor : constr) (new_arg : constr) : constr :=
+  let unfolded_constructor := eval hnf in $folded_constructor in
+  replace_first_arg unfolded_constructor new_arg.
+
+(* [gen_better_structure_for old_struct new_first_arg] unfolds [old_struct],
+   replaces its first argument with [new_first_arg], then [exact]s that as a result.
+   If the goal is of type [cmra], [gen_better_structure_for (viewR A A) (auth A)] will
+   produce a better canonical instance for [auth A] *)
+Tactic Notation "gen_better_structure_for" constr(old_structure) constr(new_first_arg) :=
+  let f := ltac2:(old_struct new_arg |-
+    let term := replace_first_constructor_arg (Option.get (Ltac1.to_constr old_struct)) (Option.get (Ltac1.to_constr new_arg)) in
+    exact $term
+  ) in
+  f old_structure new_first_arg.
+
+(* Helper function that casts [term] to [cast], then removes the cast from the term. *)
+Ltac cast_term term cast :=
+  let casted_term := constr:(term : cast) in
+  lazymatch casted_term with
+  (* this match removes the trailing [: cast] from the term *)
+  | ?uncasted_term => uncasted_term
+  end.
+
+(* If our goal has type [struct], this tactic will build a better
+   canonical instance with the provided [carrier_type], using an existing
+   canonical instance. It does this by changing the first argument of
+   the old inferred instance with the term obtained by the cast
+   [carrier_type : first_arg_type]. *)
+Notation better_structure_for_packed carrier_type first_arg_type := ltac:(
+  lazymatch goal with
+  | |- ?cast =>
+    let inferred_term := cast_term carrier_type cast in
+    let inferred_first_arg := cast_term carrier_type first_arg_type in
+    gen_better_structure_for inferred_term inferred_first_arg
+  end) (only parsing).
+
+(* Often, this first argument is of type [Type], so we provide shorthand for that. *)
+Notation better_structure_for type := (better_structure_for_packed type Type) (only parsing).
+
 (** * Definition and operations on the authoritative camera *)
-(** The type [auth] is not defined as a [Definition], but as a [Notation].
-This way, one can use [auth A] with [A : Type] instead of [A : ucmra], and let
-canonical structure search determine the corresponding camera instance. *)
-Notation auth A := (view (A:=A) (B:=A) auth_view_rel_raw).
-Definition authO (A : ucmra) : ofe := viewO (A:=A) (B:=A) auth_view_rel.
-Definition authR (A : ucmra) : cmra := viewR (A:=A) (B:=A) auth_view_rel.
-Definition authUR (A : ucmra) : ucmra := viewUR (A:=A) (B:=A) auth_view_rel.
+(** As of Coq 8.16.1, we can use [Definition] instead of [Notation] for
+  [auth]. This is because Reversible Coercions are now available,
+  which can use Canonical Structure inference to determine the correct
+  [ucmra] from an argument [A : Type]. *)
+Definition auth (A : ucmra) := (view (A:=A) (B:=A) auth_view_rel_raw).
+
+(* The exponential behavior described above can be observed with the following
+  commands, independent of whether we use [Definition] or [Notation].
+
+Time Check (auth $ auth $ auth $ auth $ auth $ auth unit).
+Time Check (auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth unit).
+Time Check (auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth unit).
+Time Check (auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth $ auth unit).
+
+To fix this, we give better canonical structures for [auth]. *)
+Canonical Structure authO (A : ucmra) : ofe := better_structure_for (auth A).
+Canonical Structure authR (A : ucmra) : cmra := better_structure_for (auth A).
+Canonical Structure authUR (A : ucmra) : ucmra := better_structure_for_packed (auth A) cmra.
 
 Definition auth_auth {A: ucmra} : dfrac → A → auth A := view_auth.
 Definition auth_frag {A: ucmra} : A → auth A := view_frag.
@@ -73,6 +198,14 @@ Global Instance: Params (@auth_frag) 1 := {}.
 Notation "● dq a" := (auth_auth dq a)
   (at level 20, dq custom dfrac at level 1, format "● dq  a").
 Notation "◯ a" := (auth_frag a) (at level 20).
+
+(** If we unfold [authR] or [authO], we expose that the argument [A]
+   is used _twice_ as argument to the underlying [view]. This can cause
+   Coq's typechecking to blow up. We use the [Strategy] command to make
+   Coq give priority to unfolding terms other than [authR] and [authO].
+   See also https://gitlab.mpi-sws.org/iris/iris/-/issues/539
+*)
+Global Strategy 10 [authR authO].
 
 (** * Laws of the authoritative camera *)
 (** We omit the usual [equivI] lemma because it is hard to state a suitably

@@ -106,19 +106,6 @@ Global Hint Extern 0 (ValidN _) => refine (cmra_validN _); shelve : typeclass_in
 Coercion cmra_ofeO (A : cmra) : ofe := Ofe A (cmra_ofe_mixin A).
 Canonical Structure cmra_ofeO.
 
-(** As explained more thoroughly in iris#539, Coq can run into trouble when
-  [cmra] combinators (such as [optionUR]) are stacked and combined with
-  coercions like [cmra_ofeO]. To partially address this, we give Coq's
-  type-checker some directions for unfolding, with the Strategy command.
-
-  For these structures, we instruct Coq to eagerly _expand_ all projections,
-  except for the coercion to type (in this case, [cmra_car]), since that causes
-  problem with canonical structure inference. Additionally, we make Coq 
-  eagerly expand the coercions that go from one structure to another, like
-  [cmra_ofeO] in this case. *)
-Global Strategy expand [cmra_ofeO cmra_equiv cmra_dist cmra_pcore cmra_op
-                        cmra_valid cmra_validN cmra_ofe_mixin cmra_mixin].
-
 Definition cmra_mixin_of' A {Ac : cmra} (f : Ac → A) : CmraMixin Ac := cmra_mixin Ac.
 Notation cmra_mixin_of A :=
   ltac:(let H := eval hnf in (cmra_mixin_of' A id) in exact H) (only parsing).
@@ -208,24 +195,27 @@ Record UcmraMixin A `{!Dist A, !Equiv A, !PCore A, !Op A, !Valid A, !Unit A} := 
   mixin_ucmra_pcore_unit : pcore ε ≡@{option A} Some ε
 }.
 
-#[projections(primitive=no)] (* FIXME: making this primitive leads to strange
-TC resolution failures in view.v *)
+#[projections(primitive=yes)]
 Structure ucmra := Ucmra' {
-  ucmra_car :> Type;
-  ucmra_equiv : Equiv ucmra_car;
-  ucmra_dist : Dist ucmra_car;
-  ucmra_pcore : PCore ucmra_car;
-  ucmra_op : Op ucmra_car;
-  ucmra_valid : Valid ucmra_car;
-  ucmra_validN : ValidN ucmra_car;
-  ucmra_unit : Unit ucmra_car;
-  ucmra_ofe_mixin : OfeMixin ucmra_car;
-  ucmra_cmra_mixin : CmraMixin ucmra_car;
-  ucmra_mixin : UcmraMixin ucmra_car;
+  ucmra_cmraR :> cmra;
+  ucmra_unit : Unit (cmra_car ucmra_cmraR);
+  ucmra_mixin : UcmraMixin (cmra_car ucmra_cmraR);
 }.
-Global Arguments Ucmra' _ {_ _ _ _ _ _ _} _ _ _.
+
+(* Old projections for backwards compatibility *)
+Definition ucmra_car (u : ucmra) : Type := cmra_car (ucmra_cmraR u).
+Definition ucmra_equiv (u : ucmra) : Equiv (ucmra_car u) := cmra_equiv (ucmra_cmraR u).
+Definition ucmra_dist (u : ucmra) : Dist (ucmra_car u) := cmra_dist (ucmra_cmraR u).
+Definition ucmra_pcore (u : ucmra) : PCore (ucmra_car u) := cmra_pcore (ucmra_cmraR u).
+Definition ucmra_op (u : ucmra) : Op (ucmra_car u) := cmra_op (ucmra_cmraR u).
+Definition ucmra_valid (u : ucmra) : Valid (ucmra_car u) := cmra_valid (ucmra_cmraR u).
+Definition ucmra_validN (u : ucmra) : ValidN (ucmra_car u) := cmra_validN (ucmra_cmraR u).
+Definition ucmra_ofe_mixin (u : ucmra) : OfeMixin (ucmra_car u) := cmra_ofe_mixin (ucmra_cmraR u).
+Definition ucmra_cmra_mixin (u : ucmra) : CmraMixin (ucmra_car u) := cmra_mixin (ucmra_cmraR u).
+
+Global Arguments Ucmra' _ {_} _.
 Notation Ucmra A m :=
-  (Ucmra' A (ofe_mixin_of A%type) (cmra_mixin_of A%type) m) (only parsing).
+  (Ucmra' (A : cmra) m) (only parsing).
 Global Arguments ucmra_car : simpl never.
 Global Arguments ucmra_equiv : simpl never.
 Global Arguments ucmra_dist : simpl never.
@@ -239,20 +229,14 @@ Global Arguments ucmra_mixin : simpl never.
 Add Printing Constructor ucmra.
 (* FIXME(Coq #6294) : we need the new unification algorithm here. *)
 Global Hint Extern 0 (Unit _) => refine (ucmra_unit _); shelve : typeclass_instances.
-Coercion ucmra_ofeO (A : ucmra) : ofe := Ofe A (ucmra_ofe_mixin A).
-Canonical Structure ucmra_ofeO.
-Coercion ucmra_cmraR (A : ucmra) : cmra :=
-  Cmra' A (ucmra_ofe_mixin A) (ucmra_cmra_mixin A).
-Canonical Structure ucmra_cmraR.
 
-(** As for CMRAs above, we instruct Coq to eagerly _expand_ all projections,
-  except for the coercion to type (in this case, [ucmra_car]), since that causes
-  problem with canonical structure inference.  Additionally, we make Coq 
-  eagerly expand the coercions that go from one structure to another, like
-  [ucmra_cmraR] and [ucmra_ofeO] in this case. *)
-Global Strategy expand [ucmra_cmraR ucmra_ofeO ucmra_equiv ucmra_dist ucmra_pcore
-                        ucmra_op ucmra_valid ucmra_validN ucmra_unit
-                        ucmra_ofe_mixin ucmra_cmra_mixin].
+(* TODO: I do not think this is needed anywhere, since it is the compisition of two existing coercions?
+Coercion ucmra_ofeO (A : ucmra) : ofe := Ofe A (ucmra_ofe_mixin A).
+
+  TODO: I also don't know what these are supposed to do
+Canonical Structure ucmra_ofeO.
+Canonical Structure ucmra_cmraR.
+*)
 
 (** Lifting properties from the mixin *)
 Section ucmra_mixin.
@@ -260,11 +244,17 @@ Section ucmra_mixin.
   Implicit Types x y : A.
   Lemma ucmra_unit_valid : ✓ (ε : A).
   Proof. apply (mixin_ucmra_unit_valid _ (ucmra_mixin A)). Qed.
-  Global Instance ucmra_unit_left_id : LeftId (≡) ε (@op A _).
+  Lemma ucmra_unit_left_id : LeftId (≡) ε (@op A _).
   Proof. apply (mixin_ucmra_unit_left_id _ (ucmra_mixin A)). Qed.
   Lemma ucmra_pcore_unit : pcore (ε:A) ≡ Some ε.
   Proof. apply (mixin_ucmra_pcore_unit _ (ucmra_mixin A)). Qed.
 End ucmra_mixin.
+
+(* FIXME(Coq #6294). See also the tests on units of product types in tests/algebra.v *)
+Global Hint Extern 0 (@LeftId ?A ?r ?e ?op) =>
+  unify e (ε : A);
+  (* apparently [ucmra_unit_left_id] can fail when a and [ε] are not unifiable !? *)
+  refine ucmra_unit_left_id : typeclass_instances.
 
 (** * Discrete CMRAs *)
 #[projections(primitive=no)] (* FIXME: making this primitive means we cannot use
@@ -676,7 +666,7 @@ Section ucmra.
   Proof. by exists x; rewrite left_id. Qed.
   Lemma ucmra_unit_least x : ε ≼ x.
   Proof. by exists x; rewrite left_id. Qed.
-  Global Instance ucmra_unit_right_id : RightId (≡) ε (@op A _).
+  Lemma ucmra_unit_right_id : RightId (≡) ε (@op A _).
   Proof. by intros x; rewrite (comm op) left_id. Qed.
   Global Instance ucmra_unit_core_id : CoreId (ε:A).
   Proof. apply ucmra_pcore_unit. Qed.
@@ -696,6 +686,11 @@ End ucmra.
 
 Global Hint Immediate cmra_unit_cmra_total : core.
 Global Hint Extern 0 (ε ≼ _) => apply: ucmra_unit_least : core.
+
+(* FIXME(Coq #6294). See also the tests on units of product types in tests/algebra.v *)
+Global Hint Extern 0 (@RightId ?A _ ?e _) =>
+  unify e (ε : A);
+  refine ucmra_unit_right_id : typeclass_instances.
 
 (** * Properties about CMRAs with Leibniz equality *)
 Section cmra_leibniz.
@@ -1215,6 +1210,7 @@ Section prod.
       by exists (z11,z21), (z12,z22).
   Qed.
   Canonical Structure prodR := Cmra (prod A B) prod_cmra_mixin.
+  Global Strategy 10 [prodR].
 
   Lemma pair_op (a a' : A) (b b' : B) : (a ⋅ a', b ⋅ b') = (a, b) ⋅ (a', b').
   Proof. done. Qed.
@@ -1482,6 +1478,7 @@ Section option.
       + exists None, None; repeat constructor.
   Qed.
   Canonical Structure optionR := Cmra (option A) option_cmra_mixin.
+  Global Strategy 10 [optionR].
 
   Global Instance option_cmra_discrete : CmraDiscrete A → CmraDiscrete optionR.
   Proof. split; [apply _|]. by intros [a|]; [apply (cmra_discrete_valid a)|]. Qed.

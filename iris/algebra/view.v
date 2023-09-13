@@ -140,6 +140,8 @@ Section ofe.
   Proof. intros ?? [??]; apply _. Qed.
 End ofe.
 
+Global Typeclasses Opaque view_equiv view_dist.
+
 (** * The camera structure *)
 Section cmra.
   Context {A B} (rel : view_rel A B).
@@ -558,6 +560,8 @@ Section cmra.
   Qed.
 
 End cmra.
+
+Global Typeclasses Opaque view_valid_instance view_validN_instance view_pcore_instance view_op_instance.
 
 (** * Utilities to construct functors *)
 (** Due to the dependent type [rel] in [view] we cannot actually define

@@ -58,7 +58,7 @@ build-coq.8.17.0-mr:
     DENY_WARNINGS: "1"
     MANGLE_NAMES: "1"
 
-build-coq.8.16.1:
+build-coq.8.16.1-publish:
   <<: *template
   variables:
     OPAM_PINS: "coq version 8.16.1"
@@ -71,11 +71,11 @@ build-coq.8.16.1:
   - fp-timing
   interruptible: false
 
-build-coq.8.15.2:
+build-coq.8.16.1:
   <<: *template
   <<: *branches_and_mr
   variables:
-    OPAM_PINS: "coq version 8.15.2"
+    OPAM_PINS: "coq version 8.16.1"
     DENY_WARNINGS: "1"
 
 trigger-stdpp.dev:
