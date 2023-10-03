@@ -447,7 +447,7 @@ Tactic Notation "iFrame" "select" open_constr(pat) :=
   iSelect pat ltac:(fun H => iFrameHyp H).
 
 (** * Basic introduction tactics *)
-Local Tactic Notation "iIntro" "(" simple_intropattern(x) ")" :=
+Ltac _iIntro _name_guard x :=
   (* In the case the goal starts with an [let x := _ in _], we do not
      want to unfold x and start the proof mode. Instead, we want to
      use intros. So [iStartProof] has to be called only if [intros]
@@ -474,6 +474,9 @@ Local Tactic Notation "iIntro" "(" simple_intropattern(x) ")" :=
          intros y; revert y; intros x
          (* subgoal *)]
     end).
+
+Local Tactic Notation "iIntro" "(" simple_intropattern(x) ")" :=
+  _iIntro x x.
 
 Local Tactic Notation "iIntro" constr(H) :=
   iStartProof;
@@ -1269,8 +1272,7 @@ Ltac _iExists x :=
 Tactic Notation "iExists" ne_uconstr_list_sep(xs,",") :=
   ltac1_list_iter _iExists xs.
 
-Local Tactic Notation "iExistDestruct" constr(H)
-    "as" simple_intropattern(x) constr(Hx) :=
+Ltac _iExistDestruct H _name_guard x Hx :=
   eapply tac_exist_destruct with H _ Hx _ _ _; (* (i:=H) (j:=Hx) *)
     [pm_reflexivity ||
      let H := pretty_ident H in
@@ -1290,6 +1292,10 @@ Local Tactic Notation "iExistDestruct" constr(H)
       fail "iExistDestruct:" Hx "not fresh"
     | _ => revert y; intros x (* subgoal *)
     end.
+
+Local Tactic Notation "iExistDestruct" constr(H)
+    "as" simple_intropattern(x) constr(Hx) :=
+  _iExistDestruct H x x Hx.
 
 (** * Modality introduction *)
 Tactic Notation "iModIntro" uconstr(sel) :=
@@ -1458,12 +1464,34 @@ Local Ltac iDestructHypFindPat Hgo pat found pats :=
      end
   end.
 
+Tactic Notation "simple_intropattern_on" simple_intropattern(pat) tactic(cont) :=
+  cont pat.
+
+Ltac2 rec joined_intro_pats_on (pats : Ltac1.t Init.list) (cont : Ltac1.t) : Init.unit :=
+  match pats with
+  | [] => ltac1:(cont |- simple_intropattern_on () cont) cont
+  | pat :: pats =>
+    let cont' := ltac1val:(pat1 cont |- fun pat2 =>
+      simple_intropattern_on [pat1 pat2] cont
+    ) pat cont in
+    joined_intro_pats_on pats cont'
+  end.
+
+Ltac joined_intro_pats_on pats cont :=
+  let f := ltac2:(pats cont |-
+    let pats := Option.get (Ltac1.to_list pats) in
+    joined_intro_pats_on pats cont
+  ) in
+  f pats cont.
+
 Ltac _iDestructHyp0 H pat :=
   let pats := intro_pat.parse pat in
   iDestructHypFindPat H pat false pats.
+
 Ltac _iDestructHyp H xs pat :=
-  ltac1_list_iter ltac:(fun x => iExistDestruct H as x H) xs;
-  _iDestructHyp0 H pat.
+  joined_intro_pats_on xs ltac:(fun _name =>
+    ltac1_list_iter ltac:(fun x => _iExistDestruct H _name x H) xs;
+    _iDestructHyp0 H pat).
 
 Tactic Notation "iDestructHyp" constr(H) "as" constr(pat) :=
   _iDestructHyp0 H pat.
@@ -1601,9 +1629,11 @@ Ltac _iIntros0 pat :=
   | [] => idtac
   | _ => _iIntros_go pats true
   end.
+
 Ltac _iIntros xs pat :=
-  ltac1_list_iter ltac:(fun x => iIntro (x)) xs;
-  _iIntros0 pat.
+  joined_intro_pats_on xs ltac:(fun _name =>
+    ltac1_list_iter ltac:(fun x => _iIntro _name x) xs;
+    _iIntros0 pat).
 
 Tactic Notation "iIntros" := _iIntros0 [IAll].
 Tactic Notation "iIntros" constr(pat) := _iIntros0 pat.

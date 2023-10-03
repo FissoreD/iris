@@ -663,6 +663,10 @@ No applicable tactic.
      : string
 The command has indeed failed with message:
 x is already used.
+"test_iDestruct_auto_name_used_later"
+     : string
+The command has indeed failed with message:
+y is already used.
 "elim_mod_accessor"
      : string
 1 goal
