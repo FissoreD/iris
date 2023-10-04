@@ -177,6 +177,14 @@ Fixpoint intro_pat_intuitionistic (p : intro_pat) :=
   | _ => false
   end.
 
+Fixpoint intro_pat_gallina_idents (p : intro_pat) : list string :=
+  match p with
+  | IList ps => ps ≫= mbind intro_pat_gallina_idents
+  | IPure (IGallinaNamed i) => [i]
+  | IIntuitionistic p | ISpatial p | IModalElim p => intro_pat_gallina_idents p
+  | _ => []
+  end.
+
 Ltac intro_pat_intuitionistic p :=
   lazymatch type of p with
   | intro_pat => eval cbv in (intro_pat_intuitionistic p)

@@ -1522,8 +1522,9 @@ Lemma test_iIntros_auto_name_used_later (Φ : nat → PROP) :
 Proof.
   iIntros (? x).
 Restart.
-  (* Sadly, this still fails *)
-  Fail iIntros "% %x".
+  iIntros (?) "%x".
+Restart.
+  iIntros "% %x".
 Abort.
 
 Check "test_iDestruct_auto_name_used_later".
@@ -1532,10 +1533,32 @@ Lemma test_iDestruct_auto_name_used_later (Φ : nat → PROP) :
 Proof.
   iDestruct 1 as (? y) "H".
 Restart.
-  (* Sadly, this still fails *)
-  Fail iIntros "(% & %y & ?)".
+  iDestruct 1 as (?) "[%y H]".
+Restart.
+  iIntros "(% & %y & ?)".
 Abort.
 
+Check "test_iMod_auto_name_used_later".
+Lemma test_iMod_auto_name_used_later (Φ : nat → PROP) :
+  ◇ (∃ y z : nat, Φ y) -∗ ◇ ∃ x, Φ x.
+Proof.
+  iMod 1 as (? y) "H".
+Restart.
+  iMod 1 as (?) "[%y H]".
+Restart.
+  iIntros ">(% & %y & ?)".
+Abort.
+
+Check "test_iIntros_iDestruct_auto_name_used_later".
+Lemma test_iIntros_iDestruct_auto_name_used_later (Φ : nat → PROP) :
+  ⊢ ∀ x, (∃ y, Φ (x + y)) -∗ ∃ y, Φ (x + y).
+Proof.
+  iIntros (?) "[%x ?]".
+Restart.
+  (** Sadly this still fails *)
+  Fail iDestruct 1 as (x) "?".
+  Fail iDestruct 1 as "[%x ?]".
+Abort.
 End tests.
 
 Section parsing_tests.
