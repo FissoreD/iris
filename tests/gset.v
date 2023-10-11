@@ -22,7 +22,7 @@ Expected behavior for simplifying [op]s is:
   - X ⋅ Y ~~> X ∪ Y
 Expected behavior when requested to 'introduce' [op]s is:
   - X ∪ Y ~~> X ⋅ Y
-  - X ~~> X ⋅ ∅ *)
+  - X ~~> X ⋅ X *)
 Lemma test_isop (X Y Z : gset nat) (H : Z ∪ Y = X) : X ⋅ ∅ ≡ Y ∪ Z.
 Proof.
   rewrite -(proofmode_classes.is_op _ X ∅). (* X ⋅ ∅ ~~> X *)
