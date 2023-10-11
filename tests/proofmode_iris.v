@@ -280,12 +280,15 @@ Section iris_tests.
 
   Check "test_gset_split_combine".
   Lemma test_gset_split_combine `{!inG Σ (gset nat)} γ :
-    own γ (∅ : gset nat) -∗ own γ {[ O ]} -∗ own γ {[ 1 ]} -∗ own γ {[ O ]} ∗ own γ {[ O ]}.
+    own γ (∅ : gset nat) -∗ own γ {[ 0 ]} -∗ own γ {[ 1 ]} -∗
+      own γ {[ 0 ]} ∗ own γ {[ 0 ]}.
   Proof.
-    iIntros "He [H0 H0'] H1".
-    iCombine "H0 He" as "H0".
-    iCombine "H1 H0 H0'" as "H".
-    iDestruct "H" as "[H1 #$]".
+(* This tests that sets are simplified appropriately when combined or split *)
+    iIntros "He [H0 H0'] H1". Show.
+    iCombine "H0 He" as "H0". Show. (* Gets rid of [⋅ ∅] *)
+    iCombine "H0 H0'" as "H0". Show. (* Use idempotency of [⋅] for [gset] *)
+    iCombine "H1 H0" as "H". Show. (* Prints as a pretty {[1;0]} *)
+    iDestruct "H" as "[H1 #$]". (* Still destructs as {[1]} ⋅ {[0]} *)
   Qed.
 
   Check "test_iDestruct_mod_not_fresh".
