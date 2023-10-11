@@ -175,6 +175,64 @@ Tactic failure: Missing intro pattern for accessor variable.
   own γ 1%Qp
 "test_gset_split_combine"
      : string
+1 goal
+  
+  hlc : has_lc
+  Σ : gFunctors
+  invGS_gen0 : invGS_gen hlc Σ
+  cinvG0 : cinvG Σ
+  na_invG0 : na_invG Σ
+  inG0 : inG Σ (gsetR nat)
+  γ : gname
+  ============================
+  "He" : own γ ∅
+  "H0" : own γ {[0]}
+  "H0'" : own γ {[0]}
+  "H1" : own γ {[1]}
+  --------------------------------------∗
+  own γ {[0]} ∗ own γ {[0]}
+1 goal
+  
+  hlc : has_lc
+  Σ : gFunctors
+  invGS_gen0 : invGS_gen hlc Σ
+  cinvG0 : cinvG Σ
+  na_invG0 : na_invG Σ
+  inG0 : inG Σ (gsetR nat)
+  γ : gname
+  ============================
+  "H0'" : own γ {[0]}
+  "H1" : own γ {[1]}
+  "H0" : own γ {[0]}
+  --------------------------------------∗
+  own γ {[0]} ∗ own γ {[0]}
+1 goal
+  
+  hlc : has_lc
+  Σ : gFunctors
+  invGS_gen0 : invGS_gen hlc Σ
+  cinvG0 : cinvG Σ
+  na_invG0 : na_invG Σ
+  inG0 : inG Σ (gsetR nat)
+  γ : gname
+  ============================
+  "H1" : own γ {[1]}
+  "H0" : own γ {[0]}
+  --------------------------------------∗
+  own γ {[0]} ∗ own γ {[0]}
+1 goal
+  
+  hlc : has_lc
+  Σ : gFunctors
+  invGS_gen0 : invGS_gen hlc Σ
+  cinvG0 : cinvG Σ
+  na_invG0 : na_invG Σ
+  inG0 : inG Σ (gsetR nat)
+  γ : gname
+  ============================
+  "H" : own γ {[1; 0]}
+  --------------------------------------∗
+  own γ {[0]} ∗ own γ {[0]}
 "test_iDestruct_mod_not_fresh"
      : string
 The command has indeed failed with message:
