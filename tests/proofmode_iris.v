@@ -279,7 +279,7 @@ Section iris_tests.
   Qed.
 
   Check "test_gset_split_combine".
-  Lemma test_gset_split_combine `{!inG Σ (gset nat)} γ :
+  Lemma test_gset_split_combine `{!inG Σ (gsetR nat)} γ :
     own γ (∅ : gset nat) -∗ own γ {[ 0 ]} -∗ own γ {[ 1 ]} -∗
       own γ {[ 0 ]} ∗ own γ {[ 0 ]}.
   Proof.
