@@ -9,23 +9,6 @@ Set Default Proof Using "Type".
 (** We start with some general lemmas and [Proper] instances for constructing
   instances of the [IsValidGives], [IsValidOp], [IsIncluded] and 
   [IsIncludedOrEq] classes. *)
-
-Section included_upred.
-  Context {M : ucmra}.
-  Implicit Type A : cmra.
-  Notation "P ⊢ Q" := (P ⊢@{uPredI M} Q).
-  Notation "P ⊣⊢ Q" := (P ⊣⊢@{uPredI M} Q).
-
-  (** TODO: Move to !944. I dont think this can be proven inside the model. *)
-  Lemma internal_included_id_free {A} (a : A) `{!IdFree a} : a ≼ a ∗ ✓ a ⊢ False.
-  Proof.
-    iIntros "[[%c Hc] Hv]". iStopProof. rewrite bi.sep_and.
-    split => n x Hx. uPred.unseal. repeat rewrite /uPred_holds /=.
-    move => [He Hv]. by eapply id_freeN_r.
-  Qed.
-End included_upred.
-
-
 Section proper.
   Context {M : ucmra} {A : cmra}.
   Implicit Types a : A.
@@ -182,8 +165,9 @@ Section cmra_instances.
   Proof.
     split; last eauto 10.
     rewrite /IsIncluded; iIntros "#H✓". iSplit; last eauto.
-    iIntros "H≼".
-    iDestruct (internal_included_id_free with "[$]") as "[]".
+    iIntros "[%z Hz]".
+    iDestruct (id_freeI_r with "H✓ [Hz]") as %[].
+    by iApply internal_eq_sym.
   Qed.
 
   (* If no better [IsIncludedOrEq] instance is found, build it the stupid way *)

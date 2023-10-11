@@ -12,7 +12,7 @@ Section upred.
   (* Force implicit argument M *)
   Notation "P ⊢ Q" := (bi_entails (PROP:=uPredI M) P Q).
   Notation "P ⊣⊢ Q" := (equiv (A:=uPredI M) P%I Q%I).
-  Notation "⊢ Q" := (bi_entails (PROP:=uPredI M) True Q).
+  Notation "⊢ Q" := (bi_emp_valid (PROP:=uPredI M) Q).
 
   Lemma prod_validI {A B : cmra} (x : A * B) : ✓ x ⊣⊢ ✓ x.1 ∧ ✓ x.2.
   Proof. by uPred.unseal. Qed.
@@ -22,6 +22,23 @@ Section upred.
   Lemma discrete_fun_validI {A} {B : A → ucmra} (g : discrete_fun B) :
     ✓ g ⊣⊢ ∀ i, ✓ g i.
   Proof. by uPred.unseal. Qed.
+
+  (* Analogues of [id_freeN_l] and [id_freeN_r] in the logic, stated in a way
+    that allows us to do [iDestruct (id_freeI_r with "H✓ H≡") as %[]]*)
+  Lemma id_freeI_r {A : cmra} (x y : A) :
+    IdFree x → ⊢ ✓ x -∗ (x ⋅ y) ≡ x -∗ False.
+  Proof.
+    intros HIdFree. apply bi.wand_intro_l. rewrite bi.sep_and right_id.
+    apply bi.wand_intro_r. rewrite bi.sep_and.
+    uPred.unseal. split => n m Hm. case. by apply id_freeN_r.
+  Qed.
+  Lemma id_freeI_l {A : cmra} (x y : A) :
+    IdFree x → ⊢ ✓ x -∗ (y ⋅ x) ≡ x -∗ False.
+  Proof.
+    intros HIdFree. apply bi.wand_intro_l. rewrite bi.sep_and right_id.
+    apply bi.wand_intro_r. rewrite bi.sep_and.
+    uPred.unseal. split => n m Hm. case. by apply id_freeN_l.
+  Qed.
 
   Section gmap_ofe.
     Context `{Countable K} {A : ofe}.
