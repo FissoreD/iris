@@ -1,5 +1,5 @@
 From stdpp Require Export sets coPset.
-From iris.algebra Require Export cmra.
+From iris.algebra Require Export cmra proofmode_classes.
 From iris.algebra Require Import updates local_updates.
 From iris.prelude Require Import options.
 (** This is pretty much the same as algebra/gset, but I was not able to
@@ -58,6 +58,16 @@ Section coPset.
     rewrite local_update_unital_discrete=> Z' _ /leibniz_equiv_iff->.
     split; first done. rewrite coPset_op. set_solver.
   Qed.
+
+  Global Instance coPset_is_op_unit_l X :
+    IsOp X ∅ X | 10.
+  Proof. rewrite /IsOp. set_solver. Qed.
+  Global Instance coPset_is_op_unit_r X :
+    IsOp X X ∅ | 10.
+  Proof. rewrite /IsOp. set_solver. Qed.
+  Global Instance coPset_is_op X Y :
+    IsOp (X ∪ Y) X Y | 20.
+  Proof. done. Qed.
 End coPset.
 
 (* The disjoint union CMRA *)

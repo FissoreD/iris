@@ -1,5 +1,5 @@
 From stdpp Require Export sets gmultiset countable.
-From iris.algebra Require Export cmra.
+From iris.algebra Require Export cmra proofmode_classes.
 From iris.algebra Require Import updates local_updates big_op.
 From iris.prelude Require Import options.
 
@@ -92,6 +92,16 @@ Section gmultiset.
     - rewrite big_opMS_empty. done.
     - unfold_leibniz. rewrite big_opMS_disj_union // big_opMS_singleton IH //.
   Qed.
+
+  Global Instance gmultiset_is_op_unit_l X :
+    IsOp X ∅ X | 10.
+  Proof. rewrite /IsOp. multiset_solver. Qed.
+  Global Instance gmultiset_is_op_unit_r X :
+    IsOp X X ∅ | 10.
+  Proof. rewrite /IsOp. multiset_solver. Qed.
+  Global Instance gmultiset_is_op X Y :
+    IsOp (X ⊎ Y) X Y | 20.
+  Proof. done. Qed.
 
 End gmultiset.
 

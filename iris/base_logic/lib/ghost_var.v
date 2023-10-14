@@ -4,6 +4,7 @@ From iris.algebra Require Import dfrac_agree proofmode_classes frac.
 From iris.bi.lib Require Import fractional.
 From iris.proofmode Require Import proofmode.
 From iris.base_logic.lib Require Export own.
+From iris.base_logic.lib Require Import combine_own_instances.
 From iris.prelude Require Import options.
 
 (** The CMRA we need. *)
@@ -55,8 +56,7 @@ Section lemmas.
     ghost_var γ q1 a1 -∗ ghost_var γ q2 a2 -∗ ⌜(q1 + q2 ≤ 1)%Qp ∧ a1 = a2⌝.
   Proof.
     unseal. iIntros "Hvar1 Hvar2".
-    iCombine "Hvar1 Hvar2" gives %[Hq Ha]%frac_agree_op_valid.
-    done.
+    by iCombine "Hvar1 Hvar2" gives %H.
   Qed.
   (** Almost all the time, this is all you really need. *)
   Lemma ghost_var_agree γ a1 q1 a2 q2 :

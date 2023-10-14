@@ -77,21 +77,12 @@ Section proof.
 
   Local Lemma writer_locked_exclusive γ :
     writer_locked γ -∗ writer_locked γ -∗ False.
-  Proof.
-    iIntros "H1 H2". iCombine "H1 H2" gives %Hvalid. exfalso.
-    rewrite
-      auth_auth_dfrac_op_valid
-      dfrac_op_own
-      dfrac_valid_own in Hvalid.
-    by destruct Hvalid as [? _].
-  Qed.
+  Proof. iIntros "H1 H2". by iCombine "H1 H2" gives %[Hq _]. Qed.
   Local Lemma writer_locked_not_reader_locked γ q :
     writer_locked γ -∗ reader_locked γ q -∗ False.
   Proof.
-    iIntros "H1 H2". iCombine "H1 H2" gives %Hvalid. exfalso.
-    apply auth_both_dfrac_valid in Hvalid as (_ & Hvalid & _).
-    generalize (Hvalid 0)=> /cmra_discrete_included_r /gmultiset_included /(_ q).
-    rewrite multiplicity_empty multiplicity_singleton. by lia.
+    iIntros "H1 H2". iCombine "H1 H2" gives %H%gmultiset_singleton_subseteq_l.
+    set_solver.
   Qed.
 
   Lemma is_rw_lock_iff γ lk Φ Ψ :
@@ -121,25 +112,6 @@ Section proof.
         iExists _, _.
         iFrame.
         by iApply "Hiff".
-  Qed.
-
-  (* Some helper lemmas for "auth of a multiset" *)
-  Local Lemma auth_valid_gmultiset_singleton `{Countable A} dq (v : A) (g : gmultiset A) :
-    ✓ (● { dq } g ⋅ ◯ ({[+ v +]})) → v ∈ g.
-  Proof.
-    rewrite
-      auth_both_dfrac_valid_discrete
-      gmultiset_included
-      gmultiset_singleton_subseteq_l.
-    intros (_ & ? & _); assumption.
-  Qed.
-  Local Lemma own_auth_gmultiset_singleton_2 γ dq v g :
-    own γ (● { dq } g) ∗ own γ (◯ ({[+ v +]})) ⊢ ⌜v ∈ g⌝.
-  Proof.
-    iIntros "[Hauth Hfrag]".
-    iCombine "Hauth Hfrag" gives %Hvalid.
-    iPureIntro.
-    apply (auth_valid_gmultiset_singleton _ _ _ Hvalid).
   Qed.
 
   Local Lemma newlock_spec (Φ : Qp → iProp Σ) `{!AsFractional P Φ 1} :
@@ -256,11 +228,9 @@ Section proof.
     wp_faa.
     unfold reader_locked.
     iDestruct "Hz" as "[[_ Hempty]|(%Hz_ge_0 & %q' & %g & Hg & %Hsize & %Hsum & HΦq')]".
-    { iExFalso.
-      iDestruct (own_auth_gmultiset_singleton_2 with "[$]") as %?.
-      multiset_solver. }
+    { iCombine "Hlocked Hempty" gives %?%gmultiset_singleton_subseteq_l. set_solver. }
     iAssert (⌜(0 < z)%Z ∧ q ∈ g⌝)%I as %?.
-    { iDestruct (own_auth_gmultiset_singleton_2 with "[$]") as %?.
+    { iCombine "Hlocked Hg" gives %?%gmultiset_singleton_subseteq_l.
       iPureIntro.
       split; last assumption.
       apply Z2Nat.neq_0_pos.
@@ -360,13 +330,7 @@ Section proof.
     iInv ("Hlockinv") as (z) "[> Hl Hz]".
     wp_store.
     iDestruct "Hz" as "[[? Hg]|(_ & % & % & Hg_owned & _)]"; last first.
-    { iExFalso.
-      iCombine "Hg_owned Hlocked" gives %Hvalid.
-      rewrite
-        auth_auth_dfrac_op_valid
-        dfrac_op_own
-        dfrac_valid_own in Hvalid.
-      by destruct Hvalid as [? _]. }
+    { by iCombine "Hg_owned Hlocked" gives %[? _]. }
     iCombine "Hg Hlocked" as "Hown".
     rewrite Qp.quarter_three_quarter.
     iSplitR "Hφ"; first by eauto 15 with iFrame.

@@ -2,6 +2,7 @@ From stdpp Require Export coPset.
 From iris.algebra Require Import gmap_view gset coPset.
 From iris.proofmode Require Import proofmode.
 From iris.base_logic.lib Require Export own.
+From iris.base_logic.lib Require Import combine_own_instances.
 From iris.prelude Require Import options.
 
 (** All definitions in this file are internal to [fancy_updates] with the
@@ -75,7 +76,7 @@ Qed.
 Lemma ownE_op E1 E2 : E1 ## E2 → ownE (E1 ∪ E2) ⊣⊢ ownE E1 ∗ ownE E2.
 Proof. intros. by rewrite /ownE -own_op coPset_disj_union. Qed.
 Lemma ownE_disjoint E1 E2 : ownE E1 ∗ ownE E2 ⊢ ⌜E1 ## E2⌝.
-Proof. rewrite /ownE -own_op own_valid. by iIntros (?%coPset_disj_valid_op). Qed.
+Proof. iIntros "[H1 H2]". unfold ownE. by iCombine "H1 H2" gives %HE. Qed.
 Lemma ownE_op' E1 E2 : ⌜E1 ## E2⌝ ∧ ownE (E1 ∪ E2) ⊣⊢ ownE E1 ∗ ownE E2.
 Proof.
   iSplit; [iIntros "[% ?]"; by iApply ownE_op|].
@@ -93,7 +94,7 @@ Qed.
 Lemma ownD_op E1 E2 : E1 ## E2 → ownD (E1 ∪ E2) ⊣⊢ ownD E1 ∗ ownD E2.
 Proof. intros. by rewrite /ownD -own_op gset_disj_union. Qed.
 Lemma ownD_disjoint E1 E2 : ownD E1 ∗ ownD E2 ⊢ ⌜E1 ## E2⌝.
-Proof. rewrite /ownD -own_op own_valid. by iIntros (?%gset_disj_valid_op). Qed.
+Proof. iIntros "[H1 H2]". unfold ownD. by iCombine "H1 H2" gives %HE. Qed.
 Lemma ownD_op' E1 E2 : ⌜E1 ## E2⌝ ∧ ownD (E1 ∪ E2) ⊣⊢ ownD E1 ∗ ownD E2.
 Proof.
   iSplit; [iIntros "[% ?]"; by iApply ownD_op|].

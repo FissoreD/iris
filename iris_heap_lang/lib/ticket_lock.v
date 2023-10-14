@@ -56,11 +56,8 @@ Section proof.
 
   Local Definition locked (γ : gname) : iProp Σ := ∃ o, own γ (◯ (Excl' o, GSet ∅)).
 
-  Local Lemma locked_exclusive (γ : gname) : locked γ -∗ locked γ -∗ False.
-  Proof.
-    iIntros "[%σ1 H1] [%σ2 H2]".
-    iCombine "H1 H2" gives %[[] _]%auth_frag_op_valid_1.
-  Qed.
+  Lemma locked_exclusive (γ : gname) : locked γ -∗ locked γ -∗ False.
+  Proof.  iIntros "[%σ1 H1] [%σ2 H2]". by iCombine "H1 H2" gives %?. Qed.
 
   Local Lemma is_lock_iff γ lk R1 R2 :
     is_lock γ lk R1 -∗ ▷ □ (R1 ∗-∗ R2) -∗ is_lock γ lk R2.
@@ -97,9 +94,7 @@ Section proof.
         { iNext. iExists o, n. iFrame. }
         wp_pures. case_bool_decide; [|done]. wp_if.
         iApply ("HΦ" with "[-]"). rewrite /locked. iFrame. eauto.
-      + iCombine "Ht Haown"
-          gives %[_ ?%gset_disj_valid_op]%auth_frag_op_valid_1.
-        set_solver.
+      + iCombine "Ht Haown" gives %?. set_solver.
     - iModIntro. iSplitL "Hlo Hln Ha".
       { iNext. iExists o, n. by iFrame. }
       wp_pures. case_bool_decide; [simplify_eq |].
@@ -143,17 +138,15 @@ Section proof.
     wp_lam. wp_proj. wp_bind (! _)%E.
     iInv N as (o' n) "(>Hlo & >Hln & >Hauth & Haown)".
     wp_load.
-    iCombine "Hauth Hγo" gives
-      %[[<-%Excl_included%leibniz_equiv _]%prod_included _]%auth_both_valid_discrete.
+    iCombine "Hauth Hγo" gives %[<- _].
     iModIntro. iSplitL "Hlo Hln Hauth Haown".
     { iNext. iExists o, n. by iFrame. }
     wp_pures.
     iInv N as (o' n') "(>Hlo & >Hln & >Hauth & Haown)".
     iApply wp_fupd. wp_store.
-    iCombine "Hauth Hγo" gives
-      %[[<-%Excl_included%leibniz_equiv _]%prod_included _]%auth_both_valid_discrete.
+    iCombine "Hauth Hγo" gives %[<- _].
     iDestruct "Haown" as "[[Hγo' _]|Haown]".
-    { iCombine "Hγo Hγo'" gives %[[] ?]%auth_frag_op_valid_1. }
+    { iCombine "Hγo Hγo'" gives %[]. }
     iMod (own_update_2 with "Hauth Hγo") as "[Hauth Hγo]".
     { apply auth_update, prod_local_update_1.
       by apply option_local_update, (exclusive_local_update _ (Excl (S o))). }

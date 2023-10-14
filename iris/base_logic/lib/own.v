@@ -374,16 +374,16 @@ Section proofmode_instances.
   Global Instance from_sep_own γ a b1 b2 :
     IsOp a b1 b2 → FromSep (own γ a) (own γ b1) (own γ b2).
   Proof. intros. by rewrite /FromSep -own_op -is_op. Qed.
-  (* TODO: Improve this instance with generic own simplification machinery
-  once https://gitlab.mpi-sws.org/iris/iris/-/issues/460 is fixed *)
-  (* Cost > 50 to give priority to [combine_sep_as_fractional]. *)
+  (** This is the fallback instance, [combine_own_instances.v] should provide
+     better combinations via [IsValidOp].
+     It has cost > 50 to give priority to [combine_sep_as_fractional]. *)
   Global Instance combine_sep_as_own γ a b1 b2 :
     IsOp a b1 b2 → CombineSepAs (own γ b1) (own γ b2) (own γ a) | 60.
   Proof. intros. by rewrite /CombineSepAs -own_op -is_op. Qed.
-  (* TODO: Improve this instance with generic own validity simplification
-  machinery once https://gitlab.mpi-sws.org/iris/iris/-/issues/460 is fixed *)
+  (** This is the fallback instance, [combine_own_instances.v] should provide
+     better validity information via [IsValidGives]. *)
   Global Instance combine_sep_gives_own γ b1 b2 :
-    CombineSepGives (own γ b1) (own γ b2) (✓ (b1 ⋅ b2)).
+    CombineSepGives (own γ b1) (own γ b2) (✓ (b1 ⋅ b2)) | 100.
   Proof.
     intros. rewrite /CombineSepGives -own_op own_valid.
     by apply: bi.persistently_intro.
