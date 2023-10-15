@@ -14,6 +14,7 @@ Set Default Proof Using "Type*".
 Class Embed (A B : Type) := embed : A → B.
 Global Arguments embed {_ _ _} _%I : simpl never.
 Notation "⎡ P ⎤" := (embed P) : bi_scope.
+Notation "⎡⎡ P ⎤⎤" := (bi_affinely ⎡ P ⎤) : bi_scope.
 Global Instance: Params (@embed) 3 := {}.
 Global Typeclasses Opaque embed.
 

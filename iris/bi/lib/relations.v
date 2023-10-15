@@ -14,7 +14,7 @@ Section definitions.
 
   Local Definition bi_rtc_pre (R : A → A → PROP)
       (x2 : A) (rec : A → PROP) (x1 : A) : PROP :=
-    <affine> (x1 ≡ x2) ∨ ∃ x', R x1 x' ∗ rec x'.
+    x1 ≡≡ x2 ∨ ∃ x', R x1 x' ∗ rec x'.
 
   (** The reflexive transitive closure. *)
   Definition bi_rtc (R : A → A → PROP) (x1 x2 : A) : PROP :=
@@ -35,7 +35,7 @@ Section definitions.
   (** Reductions of exactly [n] steps. *)
   Fixpoint bi_nsteps (R : A → A → PROP) (n : nat) (x1 x2 : A) : PROP :=
     match n with
-    | 0    => <affine> (x1 ≡ x2)
+    | 0    => x1 ≡≡ x2
     | S n' => ∃ x', R x1 x' ∗ bi_nsteps R n' x' x2
     end.
 
@@ -113,7 +113,7 @@ Section general.
 
   Lemma bi_rtc_strong_ind_l x2 Φ :
     NonExpansive Φ →
-    □ (∀ x1, <affine> (x1 ≡ x2) ∨ (∃ x', R x1 x' ∗ (Φ x' ∧ bi_rtc R x' x2)) -∗ Φ x1) -∗
+    □ (∀ x1, x1 ≡≡ x2 ∨ (∃ x', R x1 x' ∗ (Φ x' ∧ bi_rtc R x' x2)) -∗ Φ x1) -∗
     ∀ x1, bi_rtc R x1 x2 -∗ Φ x1.
  Proof.
     iIntros (?) "#IH". rewrite /bi_rtc.
@@ -122,7 +122,7 @@ Section general.
 
   Lemma bi_rtc_ind_l x2 Φ :
     NonExpansive Φ →
-    □ (∀ x1, <affine> (x1 ≡ x2) ∨ (∃ x', R x1 x' ∗ Φ x') -∗ Φ x1) -∗
+    □ (∀ x1, x1 ≡≡ x2 ∨ (∃ x', R x1 x' ∗ Φ x') -∗ Φ x1) -∗
     ∀ x1, bi_rtc R x1 x2 -∗ Φ x1.
   Proof.
     iIntros (?) "#IH". rewrite /bi_rtc.
@@ -162,7 +162,7 @@ Section general.
   Qed.
 
   Lemma bi_rtc_inv x z :
-    bi_rtc R x z -∗ <affine> (x ≡ z) ∨ ∃ y, R x y ∗ bi_rtc R y z.
+    bi_rtc R x z -∗ x ≡≡ z ∨ ∃ y, R x y ∗ bi_rtc R y z.
   Proof. rewrite bi_rtc_unfold. iIntros "[H | H]"; eauto. Qed.
 
   Global Instance bi_rtc_affine :
@@ -340,7 +340,7 @@ Section general.
   Qed.
 
   (** ** Equivalences between closure operators *)
-  Lemma bi_rtc_tc x y : bi_rtc R x y ⊣⊢ <affine> (x ≡ y) ∨ bi_tc R x y.
+  Lemma bi_rtc_tc x y : bi_rtc R x y ⊣⊢ x ≡≡ y ∨ bi_tc R x y.
   Proof.
     iSplit.
     - iRevert (x). iApply bi_rtc_ind_l. { solve_proper. }
@@ -356,7 +356,7 @@ Section general.
   Qed.
 
   Lemma bi_tc_nsteps x y :
-    bi_tc R x y ⊣⊢ ∃ n, <affine> ⌜0 < n⌝ ∗ bi_nsteps R n x y.
+    bi_tc R x y ⊣⊢ ∃ n, ⌜⌜0 < n⌝⌝ ∗ bi_nsteps R n x y.
   Proof.
     iSplit.
     - iRevert (x). iApply bi_tc_ind_l. { solve_proper. }

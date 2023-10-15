@@ -105,7 +105,7 @@ Context {PROP : bi} `{!BiFUpd PROP}.
 
 (* Working with concrete telescopes: Testing the reduction into normal quantifiers. *)
 Lemma acc_elim_test_1 E1 E2 :
-  ACC @ E1, E2 {{ ∃ a b : nat, <affine> ⌜a = b⌝ | True | <affine> ⌜a ≠ b⌝ }}
+  ACC @ E1, E2 {{ ∃ a b : nat, ⌜⌜a = b⌝⌝ | True | ⌜⌜a ≠ b⌝⌝ }}
     ⊢@{PROP} |={E1}=> False.
 Proof.
   iIntros ">H". Show.
@@ -147,7 +147,7 @@ Notation "'TEST3' {{ ∃ x1 .. xn , α } }" :=
 
 Check "test1_test".
 Lemma test1_test {PROP : bi}  :
-  TEST1 {{ ∃ a b : nat, <affine> ⌜a = b⌝ }} ⊢@{PROP} ▷ False.
+  TEST1 {{ ∃ a b : nat, ⌜⌜a = b⌝⌝ }} ⊢@{PROP} ▷ False.
 Proof.
   iIntros "H". iDestruct "H" as (x) "H". Show.
 Restart.
@@ -156,7 +156,7 @@ Abort.
 
 Check "test2_test".
 Lemma test2_test {PROP : bi}  :
-  TEST2 {{ ∃ a b : nat, <affine> ⌜a = b⌝ }} ⊢@{PROP} ▷ False.
+  TEST2 {{ ∃ a b : nat, ⌜⌜a = b⌝⌝ }} ⊢@{PROP} ▷ False.
 Proof.
   iIntros "H". iModIntro. Show.
   iDestruct "H" as (x) "H". Show.
@@ -166,7 +166,7 @@ Abort.
 
 Check "test3_test".
 Lemma test3_test {PROP : bi}  :
-  TEST3 {{ ∃ a b : nat, <affine> ⌜a = b⌝ }} ⊢@{PROP} ▷ False.
+  TEST3 {{ ∃ a b : nat, ⌜⌜a = b⌝⌝ }} ⊢@{PROP} ▷ False.
 Proof.
   iIntros "H". iMod "H".
   iDestruct "H" as (x) "H".

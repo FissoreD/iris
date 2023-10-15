@@ -187,7 +187,7 @@ Tactic failure: iSpecialize: Q not persistent.
   H : φ
   ============================
   --------------------------------------∗
-  <affine> ⌜φ⌝
+  ⌜⌜φ⌝⌝
 1 goal
   
   PROP : bi
@@ -197,7 +197,7 @@ Tactic failure: iSpecialize: Q not persistent.
   ============================
   "H1" : P
   --------------------------------------□
-  <affine> ⌜φ⌝
+  ⌜⌜φ⌝⌝
 "test_iSpecialize_impl_pure_affine"
      : string
 1 goal
@@ -231,7 +231,7 @@ Tactic failure: iSpecialize: Q not persistent.
   H : φ
   ============================
   --------------------------------------∗
-  <affine> ⌜φ⌝
+  ⌜⌜φ⌝⌝
 1 goal
   
   PROP : bi
@@ -241,7 +241,7 @@ Tactic failure: iSpecialize: Q not persistent.
   ============================
   "H1" : P
   --------------------------------------□
-  <affine> ⌜φ⌝
+  ⌜⌜φ⌝⌝
 "test_iSpecialize_impl_pure_affine"
      : string
 1 goal
@@ -489,8 +489,8 @@ No applicable tactic.
   P : PROP
   ============================
   "HP" : P
-  _ : [∗ list] y ∈ l, <affine> ⌜y = y⌝
-  _ : [∗ list] y ∈ (x :: l), <affine> ⌜y = y⌝
+  _ : [∗ list] y ∈ l, ⌜⌜y = y⌝⌝
+  _ : [∗ list] y ∈ (x :: l), ⌜⌜y = y⌝⌝
   --------------------------------------∗
   P
 1 goal
@@ -501,8 +501,8 @@ No applicable tactic.
   P : PROP
   ============================
   "HP" : P
-  _ : [∗ list] y ∈ l, <affine> ⌜y = y⌝
-  _ : <affine> ⌜x = x⌝ ∗ ([∗ list] y ∈ l, <affine> ⌜y = y⌝)
+  _ : [∗ list] y ∈ l, ⌜⌜y = y⌝⌝
+  _ : ⌜⌜x = x⌝⌝ ∗ ([∗ list] y ∈ l, ⌜⌜y = y⌝⌝)
   --------------------------------------∗
   P
 "test_big_sepL2_simpl"
@@ -515,8 +515,8 @@ No applicable tactic.
   P : PROP
   ============================
   "HP" : P
-  _ : [∗ list] y1;y2 ∈ [];l2, <affine> ⌜y1 = y2⌝
-  _ : [∗ list] y1;y2 ∈ (x1 :: l1);((x2 :: l2) ++ l2), <affine> ⌜y1 = y2⌝
+  _ : [∗ list] y1;y2 ∈ [];l2, ⌜⌜y1 = y2⌝⌝
+  _ : [∗ list] y1;y2 ∈ (x1 :: l1);((x2 :: l2) ++ l2), ⌜⌜y1 = y2⌝⌝
   --------------------------------------∗
   P ∨ ([∗ list] _;_ ∈ (x1 :: l1);(x2 :: l2), True)
 1 goal
@@ -527,9 +527,8 @@ No applicable tactic.
   P : PROP
   ============================
   "HP" : P
-  _ : [∗ list] y1;y2 ∈ [];l2, <affine> ⌜y1 = y2⌝
-  _ : <affine> ⌜x1 = x2⌝ ∗
-      ([∗ list] y1;y2 ∈ l1;(l2 ++ l2), <affine> ⌜y1 = y2⌝)
+  _ : [∗ list] y1;y2 ∈ [];l2, ⌜⌜y1 = y2⌝⌝
+  _ : ⌜⌜x1 = x2⌝⌝ ∗ ([∗ list] y1;y2 ∈ l1;(l2 ++ l2), ⌜⌜y1 = y2⌝⌝)
   --------------------------------------∗
   P ∨ True ∗ ([∗ list] _;_ ∈ l1;l2, True)
 "test_big_sepL2_iDestruct"
@@ -625,9 +624,9 @@ No applicable tactic.
   φ : Prop
   P : PROP
   ============================
-  "H" : <affine> ⌜φ⌝ -∗ P
+  "H" : ⌜⌜φ⌝⌝ -∗ P
   --------------------------------------∗
-  <affine> ⌜φ⌝ -∗ P
+  ⌜⌜φ⌝⌝ -∗ P
 "test_iRevert_order_and_names"
      : string
 1 goal

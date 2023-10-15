@@ -25,6 +25,7 @@ Global Arguments bi_affinely {_} _%I : simpl never.
 Global Instance: Params (@bi_affinely) 1 := {}.
 Global Typeclasses Opaque bi_affinely.
 Notation "'<affine>' P" := (bi_affinely P) : bi_scope.
+Notation "⌜⌜ φ ⌝⌝" := (bi_affinely ⌜ φ ⌝) : bi_scope.
 
 Class Affine {PROP : bi} (Q : PROP) := affine : Q ⊢ emp.
 Global Arguments Affine {_} _%I : simpl never.
