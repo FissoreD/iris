@@ -993,7 +993,7 @@ Global Instance into_exist_persistently {A} P (Φ : A → PROP) name :
 Proof. rewrite /IntoExist=> HP. by rewrite HP persistently_exist. Qed.
 
 (** IntoForall *)
-Global Instance into_forall_forall {A} (Φ : A → PROP) : IntoForall (∀ a, Φ a) Φ.
+Global Instance into_forall_forall {A} (Φ : A → PROP) : IntoForall (bi_forall Φ) Φ.
 Proof. by rewrite /IntoForall. Qed.
 Global Instance into_forall_tforall {TT : tele} (Φ : TT → PROP) :
   IntoForall (∀.. a, Φ a) Φ | 10.
