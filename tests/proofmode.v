@@ -56,7 +56,7 @@ Proof.
 Qed.
 
 Lemma test_pure_space_separated P1 :
-  <affine> ⌜True⌝ ∗ P1 -∗ P1.
+  ⌜⌜True⌝⌝ ∗ P1 -∗ P1.
 Proof.
   (* [% H] should be parsed as two separate patterns and not the pure name
   [H] *)
@@ -74,7 +74,7 @@ Lemma test_iStopProof Q : emp -∗ Q -∗ Q.
 Proof. iIntros "#H1 H2". Show. iStopProof. Show. by rewrite bi.sep_elim_r. Qed.
 
 Lemma test_iRewrite `{!BiInternalEq PROP} {A : ofe} (x y : A) P :
-  □ (∀ z, P -∗ <affine> (z ≡ y)) -∗ (P -∗ P ∧ (x,x) ≡ (y,x)).
+  □ (∀ z, P -∗ z ≡≡ y) -∗ (P -∗ P ∧ (x,x) ≡ (y,x)).
 Proof.
   iIntros "#H1 H2".
   iRewrite (internal_eq_sym x x with "[# //]").
@@ -563,10 +563,10 @@ Lemma test_iEmp_intro P Q R `{!Affine P, !Persistent Q, !Affine R} :
 Proof. iIntros "HP #HQ HR". iEmpIntro. Qed.
 
 Lemma test_iPure_intro (φ : nat → Prop) P Q R `{!Affine P, !Persistent Q, !Affine R} :
-  φ 0 → P -∗ Q → R -∗ ∃ x : nat, <affine> ⌜ φ x ⌝ ∧ ⌜ φ x ⌝.
+  φ 0 → P -∗ Q → R -∗ ∃ x : nat, ⌜⌜ φ x ⌝⌝ ∧ ⌜ φ x ⌝.
 Proof. iIntros (?) "HP #HQ HR". iPureIntro; eauto. Qed.
 Lemma test_iPure_intro_2 (φ : nat → Prop) P Q R `{!Persistent Q} :
-  φ 0 → P -∗ Q → R -∗ ∃ x : nat, <affine> ⌜ φ x ⌝ ∗ ⌜ φ x ⌝.
+  φ 0 → P -∗ Q → R -∗ ∃ x : nat, ⌜⌜ φ x ⌝⌝ ∗ ⌜ φ x ⌝.
 Proof. iIntros (?) "HP #HQ HR". iPureIntro; eauto. Qed.
 
 (* Ensure that [% ...] works as a pattern when the left-hand side of and/sep is
@@ -577,7 +577,7 @@ Proof.
   iIntros "[% [% $]]".
 Qed.
 Lemma test_pure_and_sep_destruct_1 (φ : Prop) P :
-  ⌜φ⌝ ∧ (<affine> ⌜φ⌝ ∗ P) -∗ P.
+  ⌜φ⌝ ∧ (⌜⌜φ⌝⌝ ∗ P) -∗ P.
 Proof.
   iIntros "[% [% $]]".
 Qed.
@@ -642,7 +642,7 @@ Proof.
 Qed.
 
 Lemma test_iFrame_pure `{!BiInternalEq PROP} {A : ofe} (φ : Prop) (y z : A) :
-  φ → <affine> ⌜y ≡ z⌝ -∗ (⌜ φ ⌝ ∧ ⌜ φ ⌝ ∧ y ≡ z : PROP).
+  φ → ⌜⌜y ≡ z⌝⌝ -∗ (⌜ φ ⌝ ∧ ⌜ φ ⌝ ∧ y ≡ z : PROP).
 Proof. iIntros (Hv) "#Hxy". iFrame (Hv) "Hxy". Qed.
 
 Lemma test_iFrame_disjunction_1 P1 P2 Q1 Q2 :
@@ -737,13 +737,13 @@ Qed.
 
 Check "test_iFrame_or_1".
 Lemma test_iFrame_or_1 P1 P2 P3 :
-  P1 ∗ P2 ∗ P3 -∗ P1 ∗ ▷ (P2 ∗ ∃ x, (P3 ∗ <affine> ⌜x = 0⌝) ∨ P3).
+  P1 ∗ P2 ∗ P3 -∗ P1 ∗ ▷ (P2 ∗ ∃ x, (P3 ∗ ⌜⌜x = 0⌝⌝) ∨ P3).
 Proof.
   iIntros "($ & $ & $)".
-  Show. (* By framing [P3], the disjunction becomes [<affine> ⌜x = 0⌝ ∨ emp].
+  Show. (* By framing [P3], the disjunction becomes [⌜⌜x = 0⌝⌝ ∨ emp].
   The [iFrame] tactic simplifies disjunctions if one side is trivial. In a
   general BI, it can only turn [Q ∨ emp] into [emp]---without information
-  loss---if [Q] is affine. Here, we have [Q := <affine> ⌜x = 0⌝], which is
+  loss---if [Q] is affine. Here, we have [Q := ⌜⌜x = 0⌝⌝], which is
   trivially affine (i.e., [QuickAffine]), and the disjunction is thus
   simplified to [emp]. *)
   by iExists 0.
@@ -1167,14 +1167,14 @@ Lemma test_iNext_fail P Q a b c d e f g h i j:
 Proof. iIntros "H". iNext. done. Qed.
 
 Lemma test_specialize_affine_pure (φ : Prop) P :
-  φ → (<affine> ⌜φ⌝ -∗ P) ⊢ P.
+  φ → (⌜⌜φ⌝⌝ -∗ P) ⊢ P.
 Proof.
   iIntros (Hφ) "H". by iSpecialize ("H" with "[% //]").
 Qed.
 
 Lemma test_assert_affine_pure (φ : Prop) P :
-  φ → P ⊢ P ∗ <affine> ⌜φ⌝.
-Proof. iIntros (Hφ). iAssert (<affine> ⌜φ⌝)%I with "[%]" as "$"; auto. Qed.
+  φ → P ⊢ P ∗ ⌜⌜φ⌝⌝.
+Proof. iIntros (Hφ). iAssert ⌜⌜φ⌝⌝%I with "[%]" as "$"; auto. Qed.
 Lemma test_assert_pure (φ : Prop) P :
   φ → P ⊢ P ∗ ⌜φ⌝.
 Proof. iIntros (Hφ). iAssert ⌜φ⌝%I with "[%]" as "$"; auto with iFrame. Qed.
@@ -1182,7 +1182,7 @@ Proof. iIntros (Hφ). iAssert ⌜φ⌝%I with "[%]" as "$"; auto with iFrame. Qe
 Lemma test_specialize_very_nested (φ : Prop) P P2 Q R1 R2 :
   φ →
   P -∗ P2 -∗
-  (<affine> ⌜ φ ⌝ -∗ P2 -∗ Q) -∗
+  (⌜⌜ φ ⌝⌝ -∗ P2 -∗ Q) -∗
   (P -∗ Q -∗ R1) -∗
   (R1 -∗ True -∗ R2) -∗
   R2.
@@ -1378,16 +1378,16 @@ Qed.
 Check "test_big_sepL_simpl".
 Lemma test_big_sepL_simpl x (l : list nat) P :
    P -∗
-  ([∗ list] k↦y ∈ l, <affine> ⌜ y = y ⌝) -∗
-  ([∗ list] y ∈ x :: l, <affine> ⌜ y = y ⌝) -∗
+  ([∗ list] k↦y ∈ l, ⌜⌜ y = y ⌝⌝) -∗
+  ([∗ list] y ∈ x :: l, ⌜⌜ y = y ⌝⌝) -∗
   P.
 Proof. iIntros "HP ??". Show. simpl. Show. done. Qed.
 
 Check "test_big_sepL2_simpl".
 Lemma test_big_sepL2_simpl x1 x2 (l1 l2 : list nat) P :
   P -∗
-  ([∗ list] k↦y1;y2 ∈ []; l2, <affine> ⌜ y1 = y2 ⌝) -∗
-  ([∗ list] y1;y2 ∈ x1 :: l1; (x2 :: l2) ++ l2, <affine> ⌜ y1 = y2 ⌝) -∗
+  ([∗ list] k↦y1;y2 ∈ []; l2, ⌜⌜ y1 = y2 ⌝⌝) -∗
+  ([∗ list] y1;y2 ∈ x1 :: l1; (x2 :: l2) ++ l2, ⌜⌜ y1 = y2 ⌝⌝) -∗
   P ∨ ([∗ list] y1;y2 ∈ x1 :: l1; x2 :: l2, True).
 Proof. iIntros "HP ??". Show. simpl. Show. by iLeft. Qed.
 
@@ -1517,7 +1517,7 @@ Qed.
 
 Check "test_iRevert_pure".
 Lemma test_iRevert_pure (φ : Prop) P :
-  φ → (<affine> ⌜ φ ⌝ -∗ P) -∗ P.
+  φ → (⌜⌜ φ ⌝⌝ -∗ P) -∗ P.
 Proof.
   (* Check that iRevert creates a wand instead of an implication *)
   iIntros (Hφ) "H". iRevert (Hφ). Show. done.

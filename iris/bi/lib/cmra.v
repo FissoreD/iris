@@ -13,6 +13,7 @@ Global Instance: Params (@internal_included) 3 := {}.
 Global Typeclasses Opaque internal_included.
 
 Infix "≼" := internal_included : bi_scope.
+Notation "a ≼≼ b" := (bi_affinely (a ≼ b)) (at level 70) : bi_scope.
 
 Section internal_included_laws.
   Context `{!BiInternalEq PROP}.

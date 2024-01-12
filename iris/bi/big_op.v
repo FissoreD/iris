@@ -257,7 +257,7 @@ Section sep_list.
       replace k with (length l) by lia. done.
   Qed.
   Lemma big_sepL_affinely_pure_2 (φ : nat → A → Prop) l :
-    <affine> ⌜∀ k x, l !! k = Some x → φ k x⌝ ⊢@{PROP} ([∗ list] k↦x ∈ l, <affine> ⌜φ k x⌝).
+    ⌜⌜∀ k x, l !! k = Some x → φ k x⌝⌝ ⊢@{PROP} [∗ list] k↦x ∈ l, ⌜⌜φ k x⌝⌝.
   Proof.
     induction l as [|x l IH] using rev_ind.
     { rewrite big_sepL_nil. apply affinely_elim_emp. }
@@ -762,8 +762,8 @@ Section sep_list2.
   Qed.
   Lemma big_sepL2_affinely_pure_2 (φ : nat → A → B → Prop) l1 l2 :
     length l1 = length l2 →
-    <affine> ⌜∀ k y1 y2, l1 !! k = Some y1 → l2 !! k = Some y2 → φ k y1 y2⌝ ⊢@{PROP}
-    ([∗ list] k↦y1;y2 ∈ l1;l2, <affine> ⌜φ k y1 y2⌝).
+    ⌜⌜∀ k y1 y2, l1 !! k = Some y1 → l2 !! k = Some y2 → φ k y1 y2⌝⌝ ⊢@{PROP}
+    [∗ list] k↦y1;y2 ∈ l1;l2, ⌜⌜φ k y1 y2⌝⌝.
   Proof.
     intros Hdom. rewrite big_sepL2_alt.
     rewrite -big_sepL_affinely_pure_2.
@@ -1552,7 +1552,7 @@ Section sep_map.
     by rewrite -map_Forall_insert.
   Qed.
   Lemma big_sepM_affinely_pure_2 (φ : K → A → Prop) m :
-    <affine> ⌜map_Forall φ m⌝ ⊢@{PROP} ([∗ map] k↦x ∈ m, <affine> ⌜φ k x⌝).
+    ⌜⌜map_Forall φ m⌝⌝ ⊢@{PROP} [∗ map] k↦x ∈ m, ⌜⌜φ k x⌝⌝.
   Proof.
     induction m as [|k x m ? IH] using map_ind.
     { rewrite big_sepM_empty. apply affinely_elim_emp. }
@@ -2346,8 +2346,8 @@ Section map2.
   Qed.
   Lemma big_sepM2_affinely_pure_2 (φ : K → A → B → Prop) m1 m2 :
     (∀ k : K, is_Some (m1 !! k) ↔ is_Some (m2 !! k)) →
-    <affine> ⌜∀ k y1 y2, m1 !! k = Some y1 → m2 !! k = Some y2 → φ k y1 y2⌝ ⊢@{PROP}
-      ([∗ map] k↦y1;y2 ∈ m1;m2, <affine> ⌜φ k y1 y2⌝).
+    ⌜⌜∀ k y1 y2, m1 !! k = Some y1 → m2 !! k = Some y2 → φ k y1 y2⌝⌝ ⊢@{PROP}
+      [∗ map] k↦y1;y2 ∈ m1;m2, ⌜⌜φ k y1 y2⌝⌝.
   Proof.
     intros Hdom.
     rewrite big_sepM2_alt_lookup.
@@ -2784,7 +2784,7 @@ Section gset.
     - done.
   Qed.
   Lemma big_sepS_affinely_pure_2 (φ : A → Prop) X :
-    <affine> ⌜set_Forall φ X⌝ ⊢@{PROP} ([∗ set] y ∈ X, <affine> ⌜φ y⌝).
+    ⌜⌜set_Forall φ X⌝⌝ ⊢@{PROP} [∗ set] y ∈ X, ⌜⌜φ y⌝⌝.
   Proof.
     induction X as [|x X ? IH] using set_ind_L.
     { rewrite big_sepS_empty. apply affinely_elim_emp. }
@@ -3044,7 +3044,7 @@ Section gmultiset.
     - eauto.
   Qed.
   Lemma big_sepMS_affinely_pure_2 (φ : A → Prop) X :
-    <affine> ⌜∀ y : A, y ∈ X → φ y⌝ ⊢@{PROP} ([∗ mset] y ∈ X, <affine> ⌜φ y⌝).
+    ⌜⌜∀ y : A, y ∈ X → φ y⌝⌝ ⊢@{PROP} [∗ mset] y ∈ X, ⌜⌜φ y⌝⌝.
   Proof.
     induction X as [|x X IH] using gmultiset_ind.
     { rewrite big_sepMS_empty. apply affinely_elim_emp. }

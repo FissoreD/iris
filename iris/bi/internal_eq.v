@@ -22,6 +22,9 @@ Global Typeclasses Opaque internal_eq.
 Infix "≡" := internal_eq : bi_scope.
 Infix "≡@{ A }" := (internal_eq (A := A)) (only parsing) : bi_scope.
 
+Notation "x ≡≡ y" := (bi_affinely (x ≡ y)) : bi_scope.
+Notation "x ≡≡@{ A } y" := (bi_affinely (x ≡@{A} y)) (only parsing) : bi_scope.
+
 Notation "( X ≡.)" := (internal_eq X) (only parsing) : bi_scope.
 Notation "(.≡ X )" := (λ Y, Y ≡ X)%I (only parsing) : bi_scope.
 Notation "(≡@{ A } )" := (internal_eq (A:=A)) (only parsing) : bi_scope.
