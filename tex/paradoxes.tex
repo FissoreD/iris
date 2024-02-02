@@ -9,7 +9,7 @@ In this section we provide proofs of some logical inconsistencies that arise whe
 
 As a preparation for the proof about invariants in \Sref{app:section:invariants-without-a-later}, we show that omitting the later modality from a variant of \emph{saved propositions} leads to a contradiction.
 Saved propositions have been introduced in prior work~\cite{dodds:higher-order-sync,iris2} to prove correctness of synchronization primitives; we will explain all that is necessary here.
-The counterexample assumes a higher-order logic with separating conjunction, magic wand and the modalities $\always$ and $\upd$ satisfying the rules in \Sref{sec:base-logic}.
+The counterexample assumes a higher-order logic with separating conjunction, magic wand and the modalities $\persistently$ and $\upd$ satisfying the rules in \Sref{sec:base-logic}.
 
 \begin{thm}
 \label{thm:counterexample-1}
@@ -17,7 +17,7 @@ If there exists a type $\GName$ and a proposition $\_ \Mapsto \_ : \GName \to \P
 \begin{align}
     \proves{}& \upd \Exists \gname : \GName. \gname \Mapsto P(\gname)
                \tagH{sprop-alloc} \\
-    \gname \Mapsto P \proves{}& \always (\gname \Mapsto P)
+    \gname \Mapsto P \proves{}& \persistently (\gname \Mapsto P)
                \tagH{sprop-persist} \\
     \gname \Mapsto \prop * \gname \Mapsto \propB \proves{}
              &
@@ -38,7 +38,7 @@ The point of this theorem is to show that said later is \emph{essential}, as rem
 %
 The key to proving \thmref{thm:counterexample-1} is the following proposition:
 \begin{defn}
-$A(\gname) \eqdef \Exists \prop : \Prop. \always\lnot \prop \land \gname \Mapsto \prop$.
+$A(\gname) \eqdef \Exists \prop : \Prop. \persistently\lnot \prop \land \gname \Mapsto \prop$.
 \end{defn}
 Intuitively, $A(\gname)$ says that the saved proposition named $\gname$ does \emph{not} hold, \ie we can disprove it.
 Using \ruleref{sprop-persist}, it is immediate that $A(\gname)$ is persistent.
@@ -46,22 +46,22 @@ Using \ruleref{sprop-persist}, it is immediate that $A(\gname)$ is persistent.
 Now, by applying \ruleref{sprop-alloc} with $A$, we obtain a proof of $\prop \eqdef \gname \Mapsto A(\gname)$: this says that the proposition named $\gname$ is the proposition saying that it, itself, does not hold.
 In other words, $\prop$ says that the proposition named $\gname$ expresses its own negation.
 Unsurprisingly, that leads to a contradiction, as is shown in the following lemma:
-\begin{lem}   \label{lem:saved-prop-counterexample-not-agname}   We have $\gname \Mapsto A(\gname) \proves \always\lnot A(\gname)$ and $\gname \Mapsto A(\gname) \proves A(\gname)$. \end{lem}
+\begin{lem}   \label{lem:saved-prop-counterexample-not-agname}   We have $\gname \Mapsto A(\gname) \proves \persistently\lnot A(\gname)$ and $\gname \Mapsto A(\gname) \proves A(\gname)$. \end{lem}
 \begin{proof}%[\lemref{lem:saved-prop-counterexample-not-agname}]
 \leavevmode
   \begin{itemize}
-  \item First we show $\gname \Mapsto A(\gname) \proves \always\lnot A(\gname)$.
+  \item First we show $\gname \Mapsto A(\gname) \proves \persistently\lnot A(\gname)$.
     Since $\gname \Mapsto A(\gname)$ is persistent it suffices to show $\gname \Mapsto A(\gname) \proves \lnot A(\gname)$.
     Suppose $\gname \Mapsto A(\gname)$ and $A(\gname)$.
-    Then by definition of \(A\) there is a $\prop$ such that $\always \lnot \prop$ and $\gname \Mapsto \prop$.
+    Then by definition of \(A\) there is a $\prop$ such that $\persistently \lnot \prop$ and $\gname \Mapsto \prop$.
     By \ruleref{sprop-agree} we have $\prop \Lra A(\gname)$ and so from $\lnot \prop$ we get $\lnot A(\gname)$, which leads to a contradiction with $A(\gname)$.
     
   \item Using the first item we can now prove $\gname \Mapsto A(\gname) \proves A(\gname)$.
     We need to prove
     \begin{align*}
-      \Exists \prop : \Prop. \always \lnot \prop \land \gname \Mapsto \prop.
+      \Exists \prop : \Prop. \persistently \lnot \prop \land \gname \Mapsto \prop.
     \end{align*}
-    We do so by picking $\prop$ to be $A(\gname)$, which leaves us to prove \(\always \lnot A(\gname) \land \gname \Mapsto A(\gname)\).
+    We do so by picking $\prop$ to be $A(\gname)$, which leaves us to prove \(\persistently \lnot A(\gname) \land \gname \Mapsto A(\gname)\).
     The last conjunct holds by assumption, and the first conjunct follows from the previous item of this lemma.
   \end{itemize}
 \end{proof}
@@ -83,7 +83,7 @@ The theorem is stated as general as possible so that it also applies to previous
 
 \begin{thm}
   \label{thm:counterexample-2}
-  Assume a higher-order separation logic with $\always$ and an update modality with a binary mask ${\pvs}_{\set{0,1}}$ (think: empty mask and full mask) satisfying strong monad rules with respect to separating conjunction and such that:
+  Assume a higher-order separation logic with $\persistently$ and an update modality with a binary mask ${\pvs}_{\set{0,1}}$ (think: empty mask and full mask) satisfying strong monad rules with respect to separating conjunction and such that:
   \begin{mathpar}
     \inferhref{weaken-mask}{eq:update-weaken-mask}
     {}{{\pvs}_0 \prop \proves {\pvs}_1 \prop}
@@ -99,7 +99,7 @@ The theorem is stated as general as possible so that it also applies to previous
     \and
     \inferhref{inv-persist}{eq:inv-persistent}
     {}
-    {\knowInv \iname \prop \proves \always \knowInv \iname \prop}
+    {\knowInv \iname \prop \proves \persistently \knowInv \iname \prop}
     \and
     \inferhref{inv-open-nolater}{eq:inv-open}
     {\prop * \propB \proves {\pvs}_0 (\prop * \propC) }
@@ -152,7 +152,7 @@ We start by defining $\Mapsto$ satisfying (almost) the assumptions of \lemref{le
 We define $\_ \Mapsto \_ : \GName \to \Prop \to \Prop$ as:
 %
 \begin{align*}
-  \gname \Mapsto \prop \eqdef \Exists \iname. \knowInv \iname {\ownGhost \gname \starttoken \lor \ownGhost \gname \finishtoken * \always \prop}.
+  \gname \Mapsto \prop \eqdef \Exists \iname. \knowInv \iname {\ownGhost \gname \starttoken \lor \ownGhost \gname \finishtoken * \persistently \prop}.
 \end{align*}
 \end{defn}
 Note that using \ruleref{eq:inv-persistent}, it is immediate that $\gname \Mapsto \prop$ is persistent.
@@ -174,7 +174,7 @@ We have
     From \ruleref{eq:start-alloc} we have a $\gname$ such that ${\pvs}_0 \ownGhost \gname \starttoken$ holds and hence from \ruleref{eq:update-weaken-mask} we have ${\pvs}_1\ownGhost\gname \starttoken$.
     Since we are proving a goal of the form ${\pvs}_1 R$ we may assume $\ownGhost \gname \starttoken$.
     Thus for any $\prop$ we have ${\pvs}_1\left(\ownGhost{\gname}{\starttoken} \lor \ownGhost \gname \finishtoken * \prop\right)$.
-    Again since our goal is still of the form ${\pvs}_1$ we may assume $\ownGhost{\gname}{\starttoken} \lor \ownGhost \gname \finishtoken * \always \prop$.
+    Again since our goal is still of the form ${\pvs}_1$ we may assume $\ownGhost{\gname}{\starttoken} \lor \ownGhost \gname \finishtoken * \persistently \prop$.
     The rule \ruleref{eq:inv-alloc} then gives us precisely what we need.
  \end{proof}
 
@@ -183,11 +183,11 @@ We have
 \label{lem:counterexample-invariants-saved-prop-agree}
 We have
   \(
-  \gname \Mapsto \prop * \gname \Mapsto \propB * \always \prop \proves {\pvs}_1 \always \propB
+  \gname \Mapsto \prop * \gname \Mapsto \propB * \persistently \prop \proves {\pvs}_1 \persistently \propB
   \)
 and thus
   \(
-  \gname \Mapsto \prop * \gname \Mapsto \propB \proves ({\pvs}_1 \always \prop) \Lra ({\pvs}_1 \always \propB).
+  \gname \Mapsto \prop * \gname \Mapsto \propB \proves ({\pvs}_1 \persistently \prop) \Lra ({\pvs}_1 \persistently \propB).
   \)
 \end{lem}
 
@@ -195,29 +195,29 @@ and thus
 
 \begin{itemize}
   \item We first show
-    \[\gname \Mapsto \prop * \gname \Mapsto \propB * \always \prop \proves {\pvs}_1 \always \propB.\]
+    \[\gname \Mapsto \prop * \gname \Mapsto \propB * \persistently \prop \proves {\pvs}_1 \persistently \propB.\]
     We use \ruleref{eq:inv-open} to open the invariant in $\gname \Mapsto \prop$ and consider two cases:
     % 
     \begin{enumerate}
     \item $\ownGhost \gname \starttoken$(the invariant is ``uninitialized'') : In this case, we use \ruleref{eq:start-finish} to ``initialize'' the invariant and obtain $\ownGhost{\gname}{\finishtoken}$.
-      Then we duplicate $\ownGhost \gname \finishtoken$, and use it together with $\always \prop$ to close the invariant.
-    \item $\ownGhost \gname \finishtoken * \always \prop$ (the invariant is ``initialized''): In this case we duplicate $\ownGhost \gname \finishtoken$, and use a copy to close the invariant.
+      Then we duplicate $\ownGhost \gname \finishtoken$, and use it together with $\persistently \prop$ to close the invariant.
+    \item $\ownGhost \gname \finishtoken * \persistently \prop$ (the invariant is ``initialized''): In this case we duplicate $\ownGhost \gname \finishtoken$, and use a copy to close the invariant.
     \end{enumerate}
     % 
     After closing the invariant, we have obtained $\ownGhost \gname \finishtoken$.
     Hence, it is sufficient to prove
     \[
-      \ownGhost{\gname}{\finishtoken} * \gname \Mapsto \prop * \gname \Mapsto \propB * \always \prop \proves {\pvs}_1 \always \propB.\]
+      \ownGhost{\gname}{\finishtoken} * \gname \Mapsto \prop * \gname \Mapsto \propB * \persistently \prop \proves {\pvs}_1 \persistently \propB.\]
     We proceed by using \ruleref{eq:inv-open} to open the other invariant in $\gname \Mapsto \propB$, and we again consider two cases:
     \begin{enumerate}
     \item $\ownGhost{\gname}{\starttoken}$ (the invariant is ``uninitialized''): As witnessed by \ruleref{eq:start-not-finished}, this cannot happen, so we derive a contradiction.
       Notice that this is a key point of the proof: because the two invariants ($\gname \Mapsto \prop$ and $\gname \Mapsto \propB$) \emph{share} the ghost name $\gname$, initializing one of them is enough to show that the other one has been initialized.
       Essentially, this is an indirect way of saying that really, we have been opening the same invariant two times.
-    \item $\ownGhost{\gname}{\finishtoken} * \always \propB$ (the invariant is ``initialized''):
-      Since $\always \propB$ is duplicable we use one copy to close the invariant, and retain another to prove ${\pvs}_1 \always \propB$.
+    \item $\ownGhost{\gname}{\finishtoken} * \persistently \propB$ (the invariant is ``initialized''):
+      Since $\persistently \propB$ is duplicable we use one copy to close the invariant, and retain another to prove ${\pvs}_1 \persistently \propB$.
     \end{enumerate}
 \item By applying the above twice, we easily obtain
-\[ \gname \Mapsto \prop * \gname \Mapsto \propB \proves ({\pvs}_1 \always \prop) \Lra ({\pvs}_1 \always \propB) \]
+\[ \gname \Mapsto \prop * \gname \Mapsto \propB \proves ({\pvs}_1 \persistently \prop) \Lra ({\pvs}_1 \persistently \propB) \]
 \end{itemize}
 \end{proof}
 % When allocating $\gname \Mapsto \prop(\gname)$ in \lemref{lem:counterexample-invariants-saved-prop-alloc}, we will start off in ``state'' $\ownGhost \gname \starttoken$, and once we have $P$ in \lemref{lem:counterexample-invariants-saved-prop-agree} we use \ruleref{eq:start-finish} to transition to $\ownGhost\gname \finishtoken$, obtaining ourselves a copy of said token.
@@ -227,7 +227,7 @@ Intuitively, \lemref{lem:counterexample-invariants-saved-prop-agree} shows that 
 We are now in a position to replay the counterexample from \Sref{sec:saved-prop-no-later}.
 The only difference is that because \lemref{lem:counterexample-invariants-saved-prop-agree} is slightly weaker than the rule \ruleref{sprop-agree} of \thmref{thm:counterexample-1}, we need to use ${\pvs}_1 \FALSE$ in place of $\FALSE$ in the definition of the predicate $A$:
 we let \(
-  A(\gname) \eqdef \Exists \prop : \Prop. \always (\prop \Ra {\pvs}_1 \FALSE) \land \gname \Mapsto \prop\)
+  A(\gname) \eqdef \Exists \prop : \Prop. \persistently (\prop \Ra {\pvs}_1 \FALSE) \land \gname \Mapsto \prop\)
 and replay the proof that we have presented above.
 
 %TODO: What about executing a view shift under a later?

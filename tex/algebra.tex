@@ -6,31 +6,31 @@ The model of Iris lives in the category of \emph{Ordered Families of Equivalence
 This definition varies slightly from the original one in~\cite{catlogic}.
 
 \begin{defn}
-  An \emph{ordered family of equivalences} (OFE) is a tuple $(\ofe, ({\nequiv{n}} \subseteq \ofe \times \ofe)_{n \in \nat})$ satisfying
+  An \emph{ordered family of equivalences} (OFE) is a tuple $(\ofe, ({\dist{n}} \subseteq \ofe \times \ofe)_{n \in \nat})$ satisfying
   \begin{align*}
-    \All n. (\nequiv{n}) ~& \text{is an equivalence relation} \tagH{ofe-equiv} \\
-    \All n, m.& n \geq m \Ra (\nequiv{n}) \subseteq (\nequiv{m}) \tagH{ofe-mono} \\
-    \All x, y.& x = y \Lra (\All n. x \nequiv{n} y) \tagH{ofe-limit}
+    \All n. (\dist{n}) ~& \text{is an equivalence relation} \tagH{ofe-equiv} \\
+    \All n, m.& n \geq m \Ra (\dist{n}) \subseteq (\dist{m}) \tagH{ofe-mono} \\
+    \All x, y.& x = y \Lra (\All n. x \dist{n} y) \tagH{ofe-limit}
   \end{align*}
 \end{defn}
 
-The key intuition behind OFEs is that elements $x$ and $y$ are $n$-equivalent, notation $x \nequiv{n} y$, if they are \emph{equivalent for $n$ steps of computation}, \ie if they cannot be distinguished by a program running for no more than $n$ steps.
-In other words, as $n$ increases, $\nequiv{n}$ becomes more and more refined (\ruleref{ofe-mono})---and in the limit, it agrees with plain equality (\ruleref{ofe-limit}).
+The key intuition behind OFEs is that elements $x$ and $y$ are $n$-equivalent, notation $x \dist{n} y$, if they are \emph{equivalent for $n$ steps of computation}, \ie if they cannot be distinguished by a program running for no more than $n$ steps.
+In other words, as $n$ increases, $\dist{n}$ becomes more and more refined (\ruleref{ofe-mono})---and in the limit, it agrees with plain equality (\ruleref{ofe-limit}).
 
 Notice that OFEs are just a different presentation of bisected 1-bounded ultrametric spaces, where the family of equivalence relations gives rise to the distance function (two elements that are equal for $n$ steps are no more than $2^{-n}$ apart).
 
 \begin{defn}
   An element $x \in \ofe$ of an OFE is called \emph{discrete} if
-  \[ \All y \in \ofe. x \nequiv{0} y \Ra x = y\]
+  \[ \All y \in \ofe. x \dist{0} y \Ra x = y\]
   An OFE $A$ is called \emph{discrete} if all its elements are discrete.
-  For a set $X$, we write $\Delta X$ for the discrete OFE with $x \nequiv{n} x' \eqdef x = x'$
+  For a set $X$, we write $\Delta X$ for the discrete OFE with $x \dist{n} x' \eqdef x = x'$
 \end{defn}
 
 \begin{defn}
   A function $f : \ofe \to \ofeB$ between two OFEs is \emph{non-expansive} (written $f : \ofe \nfn \ofeB$) if
-  \[\All n, x \in \ofe, y \in \ofe. x \nequiv{n} y \Ra f(x) \nequiv{n} f(y) \]
+  \[\All n, x \in \ofe, y \in \ofe. x \dist{n} y \Ra f(x) \dist{n} f(y) \]
   It is \emph{contractive} if
-  \[ \All n, x \in \ofe, y \in \ofe. (\All m < n. x \nequiv{m} y) \Ra f(x) \nequiv{n} f(y) \]
+  \[ \All n, x \in \ofe, y \in \ofe. (\All m < n. x \dist{m} y) \Ra f(x) \dist{n} f(y) \]
 \end{defn}
 Intuitively, applying a non-expansive function to some data will not suddenly introduce differences between seemingly equal data.
 Elements that cannot be distinguished by programs within $n$ steps remain indistinguishable after applying $f$.
@@ -44,7 +44,7 @@ In particular:
 \begin{defn}
   Given two OFEs $\ofe$ and $\ofeB$, the set of non-expansive functions $\set{f : \ofe \nfn \ofeB}$ is itself an OFE with
   \begin{align*}
-    f \nequiv{n} g \eqdef{}& \All x \in \ofe. f(x) \nequiv{n} g(x)
+    f \dist{n} g \eqdef{}& \All x \in \ofe. f(x) \dist{n} g(x)
   \end{align*}
 \end{defn}
 
@@ -61,8 +61,8 @@ Moreover, if a propositions holds for some $n$, it also has to hold for all smal
 \begin{align*}
   \SProp \eqdef{}& \psetdown{\nat} \\
     \eqdef{}& \setComp{X \in \pset{\nat}}{ \All n, m. n \geq m \Ra n \in X \Ra m \in X } \\
-  X \nequiv{n} Y \eqdef{}& \All m \leq n. m \in X \Lra m \in Y \\
-  X \nincl{n} Y \eqdef{}& \All m \leq n. m \in X \Ra m \in Y
+  X \dist{n} Y \eqdef{}& \All m \leq n. m \in X \Lra m \in Y \\
+  X \subseteqN{n} Y \eqdef{}& \All m \leq n. m \in X \Ra m \in Y
 \end{align*}
 
 \subsection{COFE}
@@ -70,13 +70,13 @@ Moreover, if a propositions holds for some $n$, it also has to hold for all smal
 COFEs are \emph{complete OFEs}, which means that we can take limits of arbitrary chains.
 
 \begin{defn}[Chain]
-  Given some set $\cofe$ and an indexed family $({\nequiv{n}} \subseteq \cofe \times \cofe)_{n \in \nat}$ of equivalence relations, a \emph{chain} $c \in \Chains(\cofe)$ is a function $c : \nat \to \cofe$ such that $\All n, m. n \leq m \Ra c (m) \nequiv{n} c (n)$.
+  Given some set $\cofe$ and an indexed family $({\dist{n}} \subseteq \cofe \times \cofe)_{n \in \nat}$ of equivalence relations, a \emph{chain} $c \in \Chains(\cofe)$ is a function $c : \nat \to \cofe$ such that $\All n, m. n \leq m \Ra c (m) \dist{n} c (n)$.
 \end{defn}
 
 \begin{defn}
   A \emph{complete ordered family of equivalences} (COFE) is a tuple $(\cofe : \OFEs,  \lim : \Chains(\cofe) \to \cofe)$ satisfying
   \begin{align*}
-    \All n, c.& \lim(c) \nequiv{n} c(n) \tagH{cofe-compl}
+    \All n, c.& \lim(c) \dist{n} c(n) \tagH{cofe-compl}
   \end{align*}
 \end{defn}
 
@@ -107,7 +107,7 @@ then there exists a unique\footnote{Uniqueness is not proven in Coq.} COFE $\ofe
 \begin{defn}
   A \emph{resource algebra} (RA) is a tuple \\
   $(\monoid, \mvalFull :  \monoid \to \mProp, \mcore{{-}}:
-  \monoid \to \maybe\monoid, (\mtimes) : \monoid \times \monoid \to \monoid)$ satisfying:
+  \monoid \to \optionm\monoid, (\mtimes) : \monoid \times \monoid \to \monoid)$ satisfying:
   \begin{align*}
     \All \melt, \meltB, \meltC.& (\melt \mtimes \meltB) \mtimes \meltC = \melt \mtimes (\meltB \mtimes \meltC) \tagH{ra-assoc} \\
     \All \melt, \meltB.& \melt \mtimes \meltB = \meltB \mtimes \melt \tagH{ra-comm} \\
@@ -116,7 +116,7 @@ then there exists a unique\footnote{Uniqueness is not proven in Coq.} COFE $\ofe
     \All \melt, \meltB.& \mcore\melt \in \monoid \land \melt \mincl \meltB \Ra \mcore\meltB \in \monoid \land \mcore\melt \mincl \mcore\meltB \tagH{ra-core-mono} \\
     \All \melt, \meltB.& \mvalFull(\melt \mtimes \meltB)  \Ra \mvalFull(\melt)  \tagH{ra-valid-op} \\
     \text{where}\qquad %\qquad\\
-    \maybe\monoid \eqdef{}& \monoid \uplus \set{\mnocore} \qquad\qquad\qquad \melt^? \mtimes \mnocore \eqdef \mnocore \mtimes \melt^? \eqdef \melt^? \\
+    \optionm\monoid \eqdef{}& \monoid \uplus \set{\mnocore} \qquad\qquad\qquad \melt^? \mtimes \mnocore \eqdef \mnocore \mtimes \melt^? \eqdef \melt^? \\
     \melt \mincl \meltB \eqdef{}& \Exists \meltC \in \monoid. \meltB = \melt \mtimes \meltC \tagH{ra-incl}
   \end{align*}
 \end{defn}
@@ -134,11 +134,11 @@ This take on partiality is necessary when defining the structure of \emph{higher
 for an arbitrary number of units, via a function $\mcore{{-}}$ assigning to an element $\melt$ its \emph{(duplicable) core} $\mcore\melt$, as demanded by \ruleref{ra-core-id}.
   We further demand that $\mcore{{-}}$ is idempotent (\ruleref{ra-core-idem}) and monotone (\ruleref{ra-core-mono}) with respect to the \emph{extension order}, defined similarly to that for PCMs (\ruleref{ra-incl}).
 
-  Notice that the domain of the core is $\maybe\monoid$, a set that adds a dummy element $\mnocore$ to $\monoid$.
+  Notice that the domain of the core is $\optionm\monoid$, a set that adds a dummy element $\mnocore$ to $\monoid$.
 %  (This corresponds to the option type.)
   Thus, the core can be \emph{partial}: not all elements need to have a unit.
-  We use the metavariable $\maybe\melt$ to indicate elements of  $\maybe\monoid$.
-  We also lift the composition $(\mtimes)$ to $\maybe\monoid$.
+  We use the metavariable $\optionm\melt$ to indicate elements of  $\optionm\monoid$.
+  We also lift the composition $(\mtimes)$ to $\optionm\monoid$.
   Partial cores help us to build interesting composite RAs from smaller primitives.
 
 Notice also that the core of an RA is a strict generalization of the unit that any PCM must provide, since $\mcore{{-}}$ can always be picked as a constant function.
@@ -147,19 +147,19 @@ Notice also that the core of an RA is a strict generalization of the unit that a
 
 \begin{defn}
   It is possible to do a \emph{frame-preserving update} from $\melt \in \monoid$ to $\meltsB \subseteq \monoid$, written $\melt \mupd \meltsB$, if
-  \[ \All \maybe{\melt_\f} \in \maybe\monoid. \mvalFull(\melt \mtimes \maybe{\melt_\f}) \Ra \Exists \meltB \in \meltsB. \mvalFull(\meltB \mtimes \maybe{\melt_\f}) \]
+  \[ \All \optionm{\melt_\f} \in \optionm\monoid. \mvalFull(\melt \mtimes \optionm{\melt_\f}) \Ra \Exists \meltB \in \meltsB. \mvalFull(\meltB \mtimes \optionm{\melt_\f}) \]
 
   We further define $\melt \mupd \meltB \eqdef \melt \mupd \set\meltB$.
 \end{defn}
-The proposition $\melt \mupd \meltsB$ says that every element $\maybe{\melt_\f}$ compatible with $\melt$ (we also call such elements \emph{frames}), must also be compatible with some $\meltB \in \meltsB$.
-Notice that $\maybe{\melt_\f}$ could be $\mnocore$, so the frame-preserving update can also be applied to elements that have \emph{no} frame.
+The proposition $\melt \mupd \meltsB$ says that every element $\optionm{\melt_\f}$ compatible with $\melt$ (we also call such elements \emph{frames}), must also be compatible with some $\meltB \in \meltsB$.
+Notice that $\optionm{\melt_\f}$ could be $\mnocore$, so the frame-preserving update can also be applied to elements that have \emph{no} frame.
 Intuitively, this means that whatever assumptions the rest of the program is making about the state of $\gname$, if these assumptions are compatible with $\melt$, then updating to $\meltB$ will not invalidate any of these assumptions.
 Since Iris ensures that the global ghost state is valid, this means that we can soundly update the ghost state from $\melt$ to a non-deterministically picked $\meltB \in \meltsB$.
 
 \subsection{Cameras}
 
 \begin{defn}
-  A \emph{camera} is a tuple $(\monoid : \OFEs, \mval : \monoid \nfn \SProp, \mcore{{-}}: \monoid \nfn \maybe\monoid,\\ (\mtimes) : \monoid \times \monoid \nfn \monoid)$ satisfying:
+  A \emph{camera} is a tuple $(\monoid : \OFEs, \mval : \monoid \nfn \SProp, \mcore{{-}}: \monoid \nfn \optionm\monoid,\\ (\mtimes) : \monoid \times \monoid \nfn \monoid)$ satisfying:
   \begin{align*}
     \All \melt, \meltB, \meltC.& (\melt \mtimes \meltB) \mtimes \meltC = \melt \mtimes (\meltB \mtimes \meltC) \tagH{camera-assoc} \\
     \All \melt, \meltB.& \melt \mtimes \meltB = \meltB \mtimes \melt \tagH{camera-comm} \\
@@ -167,11 +167,11 @@ Since Iris ensures that the global ghost state is valid, this means that we can 
     \All \melt.& \mcore\melt \in \monoid \Ra \mcore{\mcore\melt} = \mcore\melt \tagH{camera-core-idem} \\
     \All \melt, \meltB.& \mcore\melt \in \monoid \land \melt \mincl \meltB \Ra \mcore\meltB \in \monoid \land \mcore\melt \mincl \mcore\meltB \tagH{camera-core-mono} \\
     \All \melt, \meltB.& \mval(\melt \mtimes \meltB) \subseteq \mval(\melt)  \tagH{camera-valid-op} \\
-    \All n, \melt, \meltB_1, \meltB_2.& \omit\rlap{$n \in \mval(\melt) \land \melt \nequiv{n} \meltB_1 \mtimes \meltB_2 \Ra {}$} \\
-    &\Exists \meltC_1, \meltC_2. \melt = \meltC_1 \mtimes \meltC_2 \land \meltC_1 \nequiv{n} \meltB_1 \land \meltC_2 \nequiv{n} \meltB_2 \tagH{camera-extend} \\
+    \All n, \melt, \meltB_1, \meltB_2.& \omit\rlap{$n \in \mval(\melt) \land \melt \dist{n} \meltB_1 \mtimes \meltB_2 \Ra {}$} \\
+    &\Exists \meltC_1, \meltC_2. \melt = \meltC_1 \mtimes \meltC_2 \land \meltC_1 \dist{n} \meltB_1 \land \meltC_2 \dist{n} \meltB_2 \tagH{camera-extend} \\
     \text{where}\qquad\qquad\\
     \melt \mincl \meltB \eqdef{}& \Exists \meltC. \meltB = \melt \mtimes \meltC \tagH{camera-incl} \\
-    \melt \mincl[n] \meltB \eqdef{}& \Exists \meltC. \meltB \nequiv{n} \melt \mtimes \meltC \tagH{camera-inclN}
+    \melt \mincl[n] \meltB \eqdef{}& \Exists \meltC. \meltB \dist{n} \melt \mtimes \meltC \tagH{camera-inclN}
   \end{align*}
 \end{defn}
 
@@ -188,7 +188,7 @@ We define the plain $\mvalFull$ as the ``limit'' of the step-indexed approximati
 Notice that the existential quantification in this axiom is \emph{constructive}, \ie it is a sigma type in Coq.
 The purpose of this axiom is to compute $\melt_1$, $\melt_2$ completing the following square:
 
-% RJ FIXME: Needs some magic to fix the baseline of the $\nequiv{n}$, or so
+% RJ FIXME: Needs some magic to fix the baseline of the $\dist{n}$, or so
 \begin{center}
 \begin{tikzpicture}[every edge/.style={draw=none}]
   \node (a) at (0, 0) {$\melt$};
@@ -196,12 +196,12 @@ The purpose of this axiom is to compute $\melt_1$, $\melt_2$ completing the foll
   \node (b12) at (1.7, -1) {$\meltB_1 \mtimes \meltB_2$};
   \node (a12) at (0, -1) {$\melt_1 \mtimes \melt_2$};
 
-  \path (a) edge node {$\nequiv{n}$} (b);
-  \path (a12) edge node {$\nequiv{n}$} (b12);
+  \path (a) edge node {$\dist{n}$} (b);
+  \path (a12) edge node {$\dist{n}$} (b12);
   \path (a) edge node [rotate=90] {$=$} (a12);
   \path (b) edge node [rotate=90] {$=$} (b12);
 \end{tikzpicture}\end{center}
-where the $n$-equivalence at the bottom is meant to apply to the pairs of elements, \ie we demand $\melt_1 \nequiv{n} \meltB_1$ and $\melt_2 \nequiv{n} \meltB_2$.
+where the $n$-equivalence at the bottom is meant to apply to the pairs of elements, \ie we demand $\melt_1 \dist{n} \meltB_1$ and $\melt_2 \dist{n} \meltB_2$.
 In other words, extension carries the decomposition of $\meltB$ into $\meltB_1$ and $\meltB_2$ over the $n$-equivalence of $\melt$ and $\meltB$, and yields a corresponding decomposition of $\melt$ into $\melt_1$ and $\melt_2$.
 This operation is needed to prove that $\later$ commutes with separating conjunction:
 \begin{mathpar}
@@ -224,7 +224,7 @@ This operation is needed to prove that $\later$ commutes with separating conjunc
 
 \begin{defn}
   It is possible to do a \emph{frame-preserving update} from $\melt \in \monoid$ to $\meltsB \subseteq \monoid$, written $\melt \mupd \meltsB$, if
-  \[ \All n, \maybe{\melt_\f}. n \in \mval(\melt \mtimes \maybe{\melt_\f}) \Ra \Exists \meltB \in \meltsB. n \in\mval(\meltB \mtimes \maybe{\melt_\f}) \]
+  \[ \All n, \optionm{\melt_\f}. n \in \mval(\melt \mtimes \optionm{\melt_\f}) \Ra \Exists \meltB \in \meltsB. n \in\mval(\meltB \mtimes \optionm{\melt_\f}) \]
 
   We further define $\melt \mupd \meltB \eqdef \melt \mupd \set\meltB$.
 \end{defn}

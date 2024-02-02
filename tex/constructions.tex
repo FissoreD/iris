@@ -3,14 +3,14 @@
 \subsection{Trivial Pointwise Lifting}
 
 The (C)OFE structure on many types can be easily obtained by pointwise lifting of the structure of the components.
-This is what we do for option $\maybe\cofe$, product $(M_i)_{i \in I}$ (with $I$ some finite index set), sum $\cofe + \cofe'$ and finite partial functions $K \fpfn \monoid$ (with $K$ infinite countable).
+This is what we do for option $\optionm\cofe$, product $(M_i)_{i \in I}$ (with $I$ some finite index set), sum $\cofe + \cofe'$ and finite partial functions $K \fpfn \monoid$ (with $K$ infinite countable).
 
 \subsection{Next (Type-Level Later)}
 
 Given an OFE $\cofe$, we define $\latert\cofe$ as follows (using a datatype-like notation to define the type):
 \begin{align*}
   \latert\cofe \eqdef{}& \latertinj(x:\cofe) \\
-  \latertinj(x) \nequiv{n} \latertinj(y) \eqdef{}& n = 0 \lor x \nequiv{n-1} y
+  \latertinj(x) \dist{n} \latertinj(y) \eqdef{}& n = 0 \lor x \dist{n-1} y
 \end{align*}
 Note that in the definition of the carrier $\latert\cofe$, $\latertinj$ is a constructor (like the constructors in Coq), \ie this is short for $\setComp{\latertinj(x)}{x \in \cofe}$.
 
@@ -22,10 +22,10 @@ $\latert(-)$ is a locally \emph{contractive} functor from $\OFEs$ to $\OFEs$.
 Given a camera $\monoid$, we define the COFE $\UPred(\monoid)$ of \emph{uniform predicates} over $\monoid$ as follows:
 \begin{align*}
 \monoid \monnra \SProp \eqdef{}& \setComp{\pred: \monoid \nfn \SProp}
-{\All n, \melt, \meltB. \melt \mincl[n] \meltB \Ra \pred(\melt) \nincl{n} \pred(\meltB)} \\
+{\All n, \melt, \meltB. \melt \mincl[n] \meltB \Ra \pred(\melt) \subseteqN{n} \pred(\meltB)} \\
   \UPred(\monoid) \eqdef{}&  \faktor{\monoid \monnra \SProp}{\equiv} \\
   \pred \equiv \predB \eqdef{}& \All m, \melt. m \in \mval(\melt) \Ra (m \in \pred(\melt) \iff  m \in \predB(\melt)) \\
-  \pred \nequiv{n} \predB \eqdef{}& \All m \le n, \melt. m \in \mval(\melt) \Ra (m \in \pred(\melt) \iff  m \in \predB(\melt))
+  \pred \dist{n} \predB \eqdef{}& \All m \le n, \melt. m \in \mval(\melt) \Ra (m \in \pred(\melt) \iff  m \in \predB(\melt))
 \end{align*}
 You can think of uniform predicates as monotone, step-indexed predicates over a camera that ``ignore'' invalid elements (as defined by the quotient).
 
@@ -35,7 +35,7 @@ It is worth noting that the above quotient admits canonical
 representatives. More precisely, one can show that every
 equivalence class contains exactly one element $P_0$ such that:
 \begin{align*}
-  \All n, \melt.  (\mval(\melt) \nincl{n} P_0(\melt)) \Ra n \in P_0(\melt)  \tagH{UPred-canonical}
+  \All n, \melt.  (\mval(\melt) \subseteqN{n} P_0(\melt)) \Ra n \in P_0(\melt)  \tagH{UPred-canonical}
 \end{align*}
 Intuitively, this says that $P_0$ trivially holds whenever the resource is invalid.
 Starting from any element $P$, one can find this canonical
@@ -86,11 +86,11 @@ Notice that we added the artificial ``invalid'' (or ``undefined'') element $\mun
 
 The step-indexed equivalence is inductively defined as follows:
 \begin{mathpar}
-  \infer{x \nequiv{n} y}{\cinl(x) \nequiv{n} \cinl(y)}
+  \infer{x \dist{n} y}{\cinl(x) \dist{n} \cinl(y)}
 
-  \infer{x \nequiv{n} y}{\cinr(x) \nequiv{n} \cinr(y)}
+  \infer{x \dist{n} y}{\cinr(x) \dist{n} \cinr(y)}
 
-  \axiom{\mundef \nequiv{n} \mundef}
+  \axiom{\mundef \dist{n} \mundef}
 \end{mathpar}
 
 
@@ -108,13 +108,13 @@ Crucially, the second rule allows us to \emph{swap} the ``side'' of the sum that
 
 \subsection{Option}
 
-The definition of the camera/RA axioms already lifted the composition operation on $\monoid$ to one on $\maybe\monoid$.
+The definition of the camera/RA axioms already lifted the composition operation on $\monoid$ to one on $\optionm\monoid$.
 We can easily extend this to a full camera by defining a suitable core, namely
 \begin{align*}
-  \mcore{\mnocore} \eqdef{}& \mnocore & \\
-  \mcore{\maybe\melt} \eqdef{}& \mcore\melt & \text{If $\maybe\melt \neq \mnocore$}
+  \mcore{\optionbot} \eqdef{}& \mnocore & \\
+  \mcore{\optionm\melt} \eqdef{}& \mcore\melt & \text{If $\optionm\melt \neq \optionbot$}
 \end{align*}
-Notice that this core is total, as the result always lies in $\maybe\monoid$ (rather than in $\maybe{\mathord{\maybe\monoid}}$).
+Notice that this core is total, as the result always lies in $\optionm\monoid$ (rather than in $\optionm{\mathord{\optionm\monoid}}$).
 
 \subsection{Finite Partial Functions}
 \label{sec:fpfnm}
@@ -144,11 +144,11 @@ $K \fpfn (-)$ is a locally non-expansive functor from $\CMRAs$ to $\CMRAs$.
 Given some OFE $\cofe$, we define the camera $\agm(\cofe)$ as follows:
 \begin{align*}
   \agm(\cofe) \eqdef{}& \setComp{\melt \in \finpset\cofe}{\melt \neq \emptyset} /\ {\sim} \\[-0.2em]
-  \melt \nequiv{n} \meltB \eqdef{}& (\All x \in \melt. \Exists y \in \meltB. x \nequiv{n} y) \land (\All y \in \meltB. \Exists x \in \melt. x \nequiv{n} y) \\
-  \textnormal{where }& \melt \sim \meltB \eqdef{} \All n. \melt \nequiv{n} \meltB  \\
+  \melt \dist{n} \meltB \eqdef{}& (\All x \in \melt. \Exists y \in \meltB. x \dist{n} y) \land (\All y \in \meltB. \Exists x \in \melt. x \dist{n} y) \\
+  \textnormal{where }& \melt \sim \meltB \eqdef{} \All n. \melt \dist{n} \meltB  \\
 ~\\
-%    \All n \in {\melt.V}.\, \melt.x \nequiv{n} \meltB.x \\
-  \mval(\melt) \eqdef{}& \setComp{n}{ \All x, y \in \melt. x \nequiv{n} y } \\
+%    \All n \in {\melt.V}.\, \melt.x \dist{n} \meltB.x \\
+  \mval(\melt) \eqdef{}& \setComp{n}{ \All x, y \in \melt. x \dist{n} y } \\
   \mcore\melt \eqdef{}& \melt \\
   \melt \mtimes \meltB \eqdef{}& \melt \cup \meltB
 \end{align*}
@@ -164,7 +164,7 @@ There are no interesting frame-preserving updates for $\agm(\cofe)$, but we can 
 
   \axiomH{ag-dup}{\aginj(x) = \aginj(x)\mtimes\aginj(x)}
   
-  \axiomH{ag-agree}{n \in \mval(\aginj(x) \mtimes \aginj(y)) \Ra x \nequiv{n} y}
+  \axiomH{ag-agree}{n \in \mval(\aginj(x) \mtimes \aginj(y)) \Ra x \dist{n} y}
 \end{mathpar}
 
 
@@ -173,20 +173,20 @@ There are no interesting frame-preserving updates for $\agm(\cofe)$, but we can 
 Given an OFE $\cofe$, we define a camera $\exm(\cofe)$ such that at most one $x \in \cofe$ can be owned:
 \begin{align*}
   \exm(\cofe) \eqdef{}& \exinj(\cofe) \mid \mundef \\
-  \mval(\melt) \eqdef{}& \setComp{n}{\melt \notnequiv{n} \mundef}
+  \mval(\melt) \eqdef{}& \setComp{n}{\melt \ndist{n} \mundef}
 \end{align*}
 All cases of composition go to $\mundef$.
 \begin{align*}
   \mcore{\exinj(x)} \eqdef{}& \mnocore &
   \mcore{\mundef} \eqdef{}& \mundef
 \end{align*}
-Remember that $\mnocore$ is the ``dummy'' element in $\maybe\monoid$ indicating (in this case) that $\exinj(x)$ has no core.
+Remember that $\mnocore$ is the ``dummy'' element in $\optionm\monoid$ indicating (in this case) that $\exinj(x)$ has no core.
 
 The step-indexed equivalence is inductively defined as follows:
 \begin{mathpar}
-  \infer{x \nequiv{n} y}{\exinj(x) \nequiv{n} \exinj(y)}
+  \infer{x \dist{n} y}{\exinj(x) \dist{n} \exinj(y)}
 
-  \axiom{\mundef \nequiv{n} \mundef}
+  \axiom{\mundef \dist{n} \mundef}
 \end{mathpar}
 $\exm(-)$ is a locally non-expansive functor from $\OFEs$ to $\CMRAs$.
 
@@ -253,11 +253,11 @@ Given a camera $M$, we construct $\authm(M)$ modeling someone owning an \emph{au
 We assume that $M$ has a unit $\munit$, and hence its core is total.
 (If $M$ is an exclusive monoid, the construction is very similar to a half-ownership monoid with two asymmetric halves.)
 \begin{align*}
-\authm(M) \eqdef{}& \maybe{\exm(M)} \times M \\
+\authm(M) \eqdef{}& \optionm{\exm(M)} \times M \\
 \mval( (x, \meltB ) ) \eqdef{}& \setComp{ n }{ (x = \mnocore \land n \in \mval(\meltB)) \lor (\Exists \melt. x = \exinj(\melt) \land \meltB \mincl_n \melt \land n \in \mval(\melt)) } \\
   (x_1, \meltB_1) \mtimes (x_2, \meltB_2) \eqdef{}& (x_1 \mtimes x_2, \meltB_2 \mtimes \meltB_2) \\
   \mcore{(x, \meltB)} \eqdef{}& (\mnocore, \mcore\meltB) \\
-  (x_1, \meltB_1) \nequiv{n} (x_2, \meltB_2) \eqdef{}& x_1 \nequiv{n} x_2 \land \meltB_1 \nequiv{n} \meltB_2
+  (x_1, \meltB_1) \dist{n} (x_2, \meltB_2) \eqdef{}& x_1 \dist{n} x_2 \land \meltB_1 \dist{n} \meltB_2
 \end{align*}
 Note that $(\mnocore, \munit)$ is the unit and asserts no ownership whatsoever, but $(\exinj(\munit), \munit)$ asserts that the authoritative element is $\munit$.
 
@@ -267,9 +267,9 @@ We write $\authfull \melt$ for full ownership $(\exinj(\melt), \munit)$ and $\au
 The frame-preserving update involves the notion of a \emph{local update}:
 \begin{defn}
   It is possible to do a \emph{local update} from $\melt_1$ and $\meltB_1$ to $\melt_2$ and $\meltB_2$, written $(\melt_1, \meltB_1) \lupd (\melt_2, \meltB_2)$, if
-  \[ \All n, \maybe{\melt_\f}. n \in \mval(\melt_1) \land \melt_1 \nequiv{n} \meltB_1 \mtimes \maybe{\melt_\f} \Ra n \in \mval(\melt_2) \land \melt_2 \nequiv{n} \meltB_2 \mtimes \maybe{\melt_\f} \]
+  \[ \All n, \optionm{\melt_\f}. n \in \mval(\melt_1) \land \melt_1 \dist{n} \meltB_1 \mtimes \optionm{\melt_\f} \Ra n \in \mval(\melt_2) \land \melt_2 \dist{n} \meltB_2 \mtimes \optionm{\melt_\f} \]
 \end{defn}
-In other words, the idea is that for every possible frame $\maybe{\melt_\f}$ completing $\meltB_1$ to $\melt_1$, the same frame also completes $\meltB_2$ to $\melt_2$.
+In other words, the idea is that for every possible frame $\optionm{\melt_\f}$ completing $\meltB_1$ to $\melt_1$, the same frame also completes $\meltB_2$ to $\melt_2$.
 
 We then obtain
 \begin{mathpar}

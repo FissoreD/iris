@@ -70,8 +70,6 @@
 \newcommand{\eqdef}{\triangleq}
 \newcommand{\bnfdef}{\vcentcolon\vcentcolon=}
 
-\newcommand{\maybe}[1]{#1^?}
-
 \newcommand*\setComp[2]{\left\{#1\spac\middle|\spac#2\right\}}
 \newcommand*\set[1]{\left\{#1\right\}}
 \newcommand*\record[1]{\left\{\spac#1\spac\right\}}
@@ -135,11 +133,10 @@
 
 \newcommand{\wtt}[2]{#1 : #2} % well-typed term
 
-\newcommand{\nequiv}[1]{\ensuremath{\mathrel{\stackrel{#1}{=}}}}
-\newcommand{\nincl}[1]{\ensuremath{\mathrel{\stackrel{#1}{\subseteq}}}}
-\newcommand{\notnequiv}[1]{\ensuremath{\mathrel{\stackrel{#1}{\neq}}}}
-\newcommand{\nequivset}[2]{\ensuremath{\mathrel{\stackrel{#1}{=}_{#2}}}}
-\newcommand{\nequivB}[1]{\ensuremath{\mathrel{\stackrel{#1}{\equiv}}}}
+\newcommand{\dist}[1]{\ensuremath{\mathrel{\stackrel{#1}{=}}}}
+\newcommand{\subseteqN}[1]{\ensuremath{\mathrel{\stackrel{#1}{\subseteq}}}}
+\newcommand{\ndist}[1]{\ensuremath{\mathrel{\stackrel{#1}{\neq}}}}
+\newcommand{\distset}[2]{\ensuremath{\mathrel{\stackrel{#1}{=}_{#2}}}}
 \newcommand{\latert}{\mathord{\blacktriangleright}}
 \newcommand{\latertinj}{\textlog{next}}
 
@@ -280,7 +277,7 @@
 
 \newcommand{\later}{\mathop{{\triangleright}}}
 \newcommand*{\lateropt}[1]{\mathop{{\later}^{#1}}}
-\newcommand{\always}{\mathop{\boxempty}}
+\newcommand{\persistently}{\mathop{\boxempty}}
 \newcommand{\plainly}{\mathop{\blacksquare}}
 \newcommand{\pers}{\mathop{\boxdot}}
 
@@ -486,6 +483,10 @@
 \newcommand{\cinl}{\textsf{inl}}
 \newcommand{\cinr}{\textsf{inr}}
 
+% Option
+\newcommand{\optionm}[1]{#1^?}
+\newcommand{\optionbot}{\bot}
+
 % STSs
 \newcommand{\STSCtx}{\textlog{StsCtx}}
 \newcommand{\STSInv}{\textlog{StsInv}}
@@ -527,5 +528,18 @@
 \newcommand*\BoxSlice[3]{\textlog{BoxSlice}(#1, #2, #3)}
 \newcommand*\ABox[3]{\textlog{Box}(#1, #2, #3)}
 
-\endinput
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% DEPRECATED MACRO ALIASES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Deprecated macro alises may be outphased and should not be used
 
+\newcommand{\maybe}[1]{\optionm{#1}}
+
+\newcommand{\nequiv}[1]{\dist{#1}}
+\newcommand{\nincl}[1]{\subseteqN{#1}}
+\newcommand{\notnequiv}[1]{\ndist{#1}}
+\newcommand{\nequivset}[1]{\distset{#1}}
+
+\newcommand{\always}{\persistently}
+
+\endinput

@@ -69,7 +69,7 @@ Below, $\melt$ ranges over $\monoid$ and $i$ ranges over $\set{1,2}$.
     \All \var:\type. \prop \mid
 %\\&
     \ownM{\term} \mid \mval(\term) \mid
-    \always\prop \mid
+    \persistently\prop \mid
     \plainly\prop \mid
     {\later\prop} \mid
     \upd \prop
@@ -79,7 +79,7 @@ In $\MU \var. \term$, the variable $\var$ can only appear under the later $\late
 Furthermore, the type of the definition must be \emph{complete}.
 The type $\Prop$ is complete, and if $\type$ is complete, then so is $\type' \to \type$.
 
-Note that the modalities $\upd$, $\always$, $\plainly$ and $\later$ bind more tightly than $*$, $\wand$, $\land$, $\lor$, and $\Ra$.
+Note that the modalities $\upd$, $\persistently$, $\plainly$ and $\later$ bind more tightly than $*$, $\wand$, $\land$, $\lor$, and $\Ra$.
 
 
 \paragraph{Variable conventions.}
@@ -197,7 +197,7 @@ In writing $\vctx, x:\type$, we presuppose that $x$ is not already declared in $
 		{\vctx \proves \wtt{\mval(\melt)}{\Prop}}
 \and
 	\infer{\vctx \proves \wtt{\prop}{\Prop}}
-		{\vctx \proves \wtt{\always\prop}{\Prop}}
+		{\vctx \proves \wtt{\persistently\prop}{\Prop}}
 \and
 	\infer{\vctx \proves \wtt{\prop}{\Prop}}
 		{\vctx \proves \wtt{\plainly\prop}{\Prop}}
@@ -218,7 +218,7 @@ In writing $\vctx, x:\type$, we presuppose that $x$ is not already declared in $
 The judgment $\vctx \mid \prop \proves \propB$ says that with free variables $\vctx$, proposition $\propB$ holds whenever assumption $\prop$ holds.
 Most of the rules will entirely omit the variable contexts $\vctx$.
 In this case, we assume the same arbitrary context is used for every constituent of the rules.
-%Furthermore, an arbitrary \emph{boxed} proposition context $\always\pfctx$ may be added to every constituent.
+%Furthermore, an arbitrary \emph{boxed} proposition context $\persistently\pfctx$ may be added to every constituent.
 Axioms $\vctx \mid \prop \provesIff \propB$ indicate that both $\vctx \mid \prop \proves \propB$ and $\vctx \mid \propB \proves \prop$ are proof rules of the logic.
 
 \judgment{\vctx \mid \prop \proves \propB}
@@ -336,7 +336,7 @@ Furthermore, we have the usual $\eta$ and $\beta$ laws for projections, $\textlo
   {\plainly{\prop} \proves \plainly{\propB}}
 \and
 \infer[$\plainly$-E]{}
-{\plainly\prop \proves \always\prop}
+{\plainly\prop \proves \persistently\prop}
 \and
 \begin{array}[c]{rMcMl}
   (\plainly P \Ra \plainly Q) &\proves& \plainly (\plainly P \Ra Q) \\
@@ -354,23 +354,23 @@ Furthermore, we have the usual $\eta$ and $\beta$ laws for projections, $\textlo
 
 \paragraph{Laws for the persistence modality.}
 \begin{mathpar}
-\inferhref{$\always$-mono}{pers-mono}
+\inferhref{$\persistently$-mono}{pers-mono}
   {\prop \proves \propB}
-  {\always{\prop} \proves \always{\propB}}
+  {\persistently{\prop} \proves \persistently{\propB}}
 \and
-\inferhref{$\always$-E}{pers-elim}
+\inferhref{$\persistently$-E}{pers-elim}
 {}
-{\always\prop \proves \prop}
+{\persistently\prop \proves \prop}
 \and
 \begin{array}[c]{rMcMl}
-  (\plainly P \Ra \always Q) &\proves& \always (\plainly P \Ra Q) \\
-  \always{\prop} \land \propB &\proves& \always{\prop} * \propB
+  (\plainly P \Ra \persistently Q) &\proves& \persistently (\plainly P \Ra Q) \\
+  \persistently{\prop} \land \propB &\proves& \persistently{\prop} * \propB
 \end{array}
 \and
 \begin{array}[c]{rMcMl}
-  \always{\prop} &\proves& \always\always\prop \\
-  \All x. \always{\prop} &\proves& \always{\All x. \prop} \\
-  \always{\Exists x. \prop} &\proves& \Exists x. \always{\prop}
+  \persistently{\prop} &\proves& \persistently\persistently\prop \\
+  \All x. \persistently{\prop} &\proves& \persistently{\All x. \prop} \\
+  \persistently{\Exists x. \prop} &\proves& \Exists x. \persistently{\prop}
 \end{array}
 \end{mathpar}
 
@@ -393,7 +393,7 @@ Furthermore, we have the usual $\eta$ and $\beta$ laws for projections, $\textlo
 \and
 \begin{array}[c]{rMcMl}
   \later{(\prop * \propB)} &\provesIff& \later\prop * \later\propB \\
-  \always{\later\prop} &\provesIff& \later\always{\prop} \\
+  \persistently{\later\prop} &\provesIff& \later\persistently{\prop} \\
   \plainly{\later\prop} &\provesIff& \later\plainly{\prop}
 \end{array}
 \end{mathpar}
@@ -403,7 +403,7 @@ Furthermore, we have the usual $\eta$ and $\beta$ laws for projections, $\textlo
 \begin{mathpar}
 \begin{array}{rMcMl}
 \ownM{\melt} * \ownM{\meltB} &\provesIff&  \ownM{\melt \mtimes \meltB} \\
-\ownM\melt &\proves& \always{\ownM{\mcore\melt}} \\
+\ownM\melt &\proves& \persistently{\ownM{\mcore\melt}} \\
 \TRUE &\proves&  \ownM{\munit} \\
 \later\ownM\melt &\proves& \Exists\meltB. \ownM\meltB \land \later(\melt = \meltB)
 \end{array}
@@ -460,7 +460,7 @@ The consistency statement of the logic reads as follows: For any $n$, we have
 where $(\later)^n$ is short for $\later$ being nested $n$ times.
 
 The reason we want a stronger consistency than the usual $\lnot(\TRUE \proves \FALSE)$ is our modalities: it should be impossible to derive a contradiction below the modalities.
-For $\always$ and $\plainly$, this follows from the elimination rules.
+For $\persistently$ and $\plainly$, this follows from the elimination rules.
 For updates, we use the fact that $\upd\FALSE \proves \upd\plainly\FALSE \proves \FALSE$.
 However, there is no elimination rule for $\later$, so we declare that it is impossible to derive a contradiction below any number of laters.
 
