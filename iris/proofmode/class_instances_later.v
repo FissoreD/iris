@@ -345,11 +345,11 @@ Qed.
 
 Global Instance into_laterN_forall {A} n (Φ Ψ : A → PROP) :
   (∀ x, IntoLaterN false n (Φ x) (Ψ x)) →
-  IntoLaterN false n (∀ x, Φ x) (∀ x, Ψ x).
+  IntoLaterN false n (bi_forall Φ) (bi_forall Ψ).
 Proof. rewrite /IntoLaterN /MaybeIntoLaterN laterN_forall=> ?. by apply forall_mono. Qed.
 Global Instance into_laterN_exist {A} n (Φ Ψ : A → PROP) :
   (∀ x, IntoLaterN false n (Φ x) (Ψ x)) →
-  IntoLaterN false n (∃ x, Φ x) (∃ x, Ψ x).
+  IntoLaterN false n (bi_exist Φ) (bi_exist Ψ).
 Proof. rewrite /IntoLaterN /MaybeIntoLaterN -laterN_exist_2=> ?. by apply exist_mono. Qed.
 
 Global Instance into_laterN_or_l n P1 P2 Q1 Q2 :

@@ -107,11 +107,11 @@ Global Instance make_monPred_at_or i P 𝓟 Q 𝓠 :
   MakeMonPredAt i (P ∨ Q) (𝓟 ∨ 𝓠).
 Proof. by rewrite /MakeMonPredAt monPred_at_or=><-<-. Qed.
 Global Instance make_monPred_at_forall {A} i (Φ : A → monPred) (Ψ : A → PROP) :
-  (∀ a, MakeMonPredAt i (Φ a) (Ψ a)) → MakeMonPredAt i (∀ a, Φ a) (∀ a, Ψ a).
-Proof. rewrite /MakeMonPredAt monPred_at_forall=>H. by setoid_rewrite <- H. Qed.
+  (∀ a, MakeMonPredAt i (Φ a) (Ψ a)) → MakeMonPredAt i (bi_forall Φ) (bi_forall Ψ).
+Proof. rewrite /MakeMonPredAt monPred_at_forall=>H. f_equiv=> ?. by rewrite H. Qed.
 Global Instance make_monPred_at_exists {A} i (Φ : A → monPred) (Ψ : A → PROP) :
-  (∀ a, MakeMonPredAt i (Φ a) (Ψ a)) → MakeMonPredAt i (∃ a, Φ a) (∃ a, Ψ a).
-Proof. rewrite /MakeMonPredAt monPred_at_exist=>H. by setoid_rewrite <- H. Qed.
+  (∀ a, MakeMonPredAt i (Φ a) (Ψ a)) → MakeMonPredAt i (bi_exist Φ) (bi_exist Ψ).
+Proof. rewrite /MakeMonPredAt monPred_at_exist=>H. f_equiv=> ?. by rewrite H. Qed.
 Global Instance make_monPred_at_persistently i P 𝓟 :
   MakeMonPredAt i P 𝓟 → MakeMonPredAt i (<pers> P) (<pers> 𝓟).
 Proof. by rewrite /MakeMonPredAt monPred_at_persistently=><-. Qed.
@@ -175,12 +175,14 @@ Proof.
 Qed.
 
 Global Instance as_emp_valid_monPred_at φ P (Φ : I → PROP) :
-  AsEmpValid0 φ P → (∀ i, MakeMonPredAt i P (Φ i)) → AsEmpValid φ (∀ i, Φ i) | 100.
+  AsEmpValid0 φ P →
+  (∀ i, MakeMonPredAt i P (Φ i)) →
+  AsEmpValid φ (bi_forall Φ) | 100.
 Proof.
   rewrite /MakeMonPredAt /AsEmpValid0 /AsEmpValid /bi_emp_valid=> -> EQ.
-  setoid_rewrite <-EQ. split.
-  - move=>[H]. apply bi.forall_intro=>i. rewrite -H. by rewrite monPred_at_emp.
-  - move=>HP. split=>i. rewrite monPred_at_emp HP bi.forall_elim //.
+  split.
+  - move=>[H]. apply bi.forall_intro=>i. rewrite -EQ -H monPred_at_emp //.
+  - move=>HP. split=>i. rewrite monPred_at_emp HP EQ bi.forall_elim //.
 Qed.
 Global Instance as_emp_valid_monPred_at_wand φ P Q (Φ Ψ : I → PROP) :
   AsEmpValid0 φ (P -∗ Q) →
@@ -406,10 +408,10 @@ Proof.
   rewrite -assoc bi.impl_elim_l bi.persistently_and_intuitionistically_sep_l. done.
 Qed.
 Global Instance frame_monPred_at_forall {X : Type} p (Ψ : X → monPred) 𝓡 𝓠 i :
-  Frame p 𝓡 (∀ x, Ψ x i) 𝓠 → FrameMonPredAt p i 𝓡 (∀ x, Ψ x) 𝓠.
+  Frame p 𝓡 (∀ x, Ψ x i) 𝓠 → FrameMonPredAt p i 𝓡 (bi_forall Ψ) 𝓠.
 Proof. rewrite /Frame /FrameMonPredAt=> ->. by rewrite monPred_at_forall. Qed.
 Global Instance frame_monPred_at_exist {X : Type} p (Ψ : X → monPred) 𝓡 𝓠 i :
-  Frame p 𝓡 (∃ x, Ψ x i) 𝓠 → FrameMonPredAt p i 𝓡 (∃ x, Ψ x) 𝓠.
+  Frame p 𝓡 (∃ x, Ψ x i) 𝓠 → FrameMonPredAt p i 𝓡 (bi_exist Ψ) 𝓠.
 Proof. rewrite /Frame /FrameMonPredAt=> ->. by rewrite monPred_at_exist. Qed.
 
 Global Instance frame_monPred_at_absorbingly p P 𝓡 𝓠 i :

@@ -20,7 +20,7 @@ Global Hint Extern 0 (FromAssumption _ _ _) =>
 (** Similarly, the lemma [from_exist_exist] is defined using a [Hint Extern] to
 enable the better unification algorithm.
 See https://gitlab.mpi-sws.org/iris/iris/issues/288 *)
-Lemma from_exist_exist {PROP : bi} {A} (Φ : A → PROP) : FromExist (∃ a, Φ a) Φ.
+Lemma from_exist_exist {PROP : bi} {A} (Φ : A → PROP) : FromExist (bi_exist Φ) Φ.
 Proof. by rewrite /FromExist. Qed.
 Global Hint Extern 0 (FromExist _ _) =>
   notypeclasses refine (from_exist_exist _) : typeclass_instances.
@@ -39,14 +39,14 @@ Global Instance as_emp_valid_equiv P Q : AsEmpValid0 (P ≡ Q) (P ∗-∗ Q).
 Proof. split; [ apply bi.equiv_wand_iff | apply bi.wand_iff_equiv ]. Qed.
 
 Global Instance as_emp_valid_forall {A : Type} (φ : A → Prop) (P : A → PROP) :
-  (∀ x, AsEmpValid (φ x) (P x)) → AsEmpValid (∀ x, φ x) (∀ x, P x).
+  (∀ x, AsEmpValid (φ x) (P x)) → AsEmpValid (∀ x, φ x) (bi_forall P).
 Proof.
   rewrite /AsEmpValid=>H1. split=>H2.
   - apply bi.forall_intro=>?. apply H1, H2.
   - intros x. apply H1. revert H2. by rewrite (bi.forall_elim x).
 Qed.
 Global Instance as_emp_valid_tforall {TT : tele} (φ : TT → Prop) (P : TT → PROP) :
-  (∀ x, AsEmpValid (φ x) (P x)) → AsEmpValid (∀.. x, φ x) (∀.. x, P x).
+  (∀ x, AsEmpValid (φ x) (P x)) → AsEmpValid (∀.. x, φ x) (bi_tforall P).
 Proof.
   rewrite /AsEmpValid !tforall_forall bi_tforall_forall.
   apply as_emp_valid_forall.
@@ -132,13 +132,13 @@ Proof.
 Qed.
 
 Global Instance from_assumption_forall {A} p (Φ : A → PROP) Q x :
-  FromAssumption p (Φ x) Q → KnownLFromAssumption p (∀ x, Φ x) Q.
+  FromAssumption p (Φ x) Q → KnownLFromAssumption p (bi_forall Φ) Q.
 Proof.
   rewrite /KnownLFromAssumption /FromAssumption=> <-.
   by rewrite forall_elim.
 Qed.
 Global Instance from_assumption_tforall {TT : tele} p (Φ : TT → PROP) Q x :
-  FromAssumption p (Φ x) Q → KnownLFromAssumption p (∀.. x, Φ x) Q.
+  FromAssumption p (Φ x) Q → KnownLFromAssumption p (bi_tforall Φ) Q.
 Proof.
   rewrite /KnownLFromAssumption /FromAssumption=> <-.
   by rewrite bi_tforall_forall forall_elim.
@@ -159,18 +159,18 @@ Global Instance into_pure_pure_impl `{!BiPureForall PROP} (φ1 φ2 : Prop) P1 P2
 Proof. rewrite /FromPure /IntoPure /= => <- ->. apply pure_impl_2. Qed.
 
 Global Instance into_pure_exist {A} (Φ : A → PROP) (φ : A → Prop) :
-  (∀ x, IntoPure (Φ x) (φ x)) → IntoPure (∃ x, Φ x) (∃ x, φ x).
-Proof. rewrite /IntoPure=>Hx. rewrite pure_exist. by setoid_rewrite Hx. Qed.
+  (∀ x, IntoPure (Φ x) (φ x)) → IntoPure (bi_exist Φ) (ex φ).
+Proof. rewrite /IntoPure=>Hx. rewrite pure_exist. f_equiv=> x. by rewrite Hx. Qed.
 Global Instance into_pure_texist {TT : tele} (Φ : TT → PROP) (φ : TT → Prop) :
-  (∀ x, IntoPure (Φ x) (φ x)) → IntoPure (∃.. x, Φ x) (∃.. x, φ x).
+  (∀ x, IntoPure (Φ x) (φ x)) → IntoPure (bi_texist Φ) (texist φ).
 Proof. rewrite /IntoPure texist_exist bi_texist_exist. apply into_pure_exist. Qed.
 Global Instance into_pure_forall `{!BiPureForall PROP}
     {A} (Φ : A → PROP) (φ : A → Prop) :
-  (∀ x, IntoPure (Φ x) (φ x)) → IntoPure (∀ x, Φ x) (∀ x, φ x).
-Proof. rewrite /IntoPure=>Hx. rewrite -pure_forall_2. by setoid_rewrite Hx. Qed.
+  (∀ x, IntoPure (Φ x) (φ x)) → IntoPure (bi_forall Φ) (∀ x, φ x).
+Proof. rewrite /IntoPure=>Hx. rewrite -pure_forall_2. f_equiv=> x. by rewrite Hx. Qed.
 Global Instance into_pure_tforall `{!BiPureForall PROP}
     {TT : tele} (Φ : TT → PROP) (φ : TT → Prop) :
-  (∀ x, IntoPure (Φ x) (φ x)) → IntoPure (∀.. x, Φ x) (∀.. x, φ x).
+  (∀ x, IntoPure (Φ x) (φ x)) → IntoPure (bi_tforall Φ) (tforall φ).
 Proof.
   rewrite /IntoPure !tforall_forall bi_tforall_forall. apply into_pure_forall.
 Qed.
@@ -257,22 +257,22 @@ Proof.
 Qed.
 
 Global Instance from_pure_exist {A} a (Φ : A → PROP) (φ : A → Prop) :
-  (∀ x, FromPure a (Φ x) (φ x)) → FromPure a (∃ x, Φ x) (∃ x, φ x).
+  (∀ x, FromPure a (Φ x) (φ x)) → FromPure a (bi_exist Φ) (ex φ).
 Proof.
   rewrite /FromPure=>Hx. rewrite pure_exist affinely_if_exist.
   by setoid_rewrite Hx.
 Qed.
 Global Instance from_pure_texist {TT : tele} a (Φ : TT → PROP) (φ : TT → Prop) :
-  (∀ x, FromPure a (Φ x) (φ x)) → FromPure a (∃.. x, Φ x) (∃.. x, φ x).
+  (∀ x, FromPure a (Φ x) (φ x)) → FromPure a (bi_texist Φ) (texist φ).
 Proof. rewrite /FromPure texist_exist bi_texist_exist. apply from_pure_exist. Qed.
 Global Instance from_pure_forall {A} a (Φ : A → PROP) (φ : A → Prop) :
-  (∀ x, FromPure a (Φ x) (φ x)) → FromPure a (∀ x, Φ x) (∀ x, φ x).
+  (∀ x, FromPure a (Φ x) (φ x)) → FromPure a (bi_forall Φ) (∀ x, φ x).
 Proof.
-  rewrite /FromPure=>Hx. rewrite pure_forall_1. setoid_rewrite <-Hx.
-  destruct a=>//=. apply affinely_forall.
+  rewrite /FromPure=>Hx. rewrite pure_forall_1.
+  destruct a; simpl in *; rewrite ?affinely_forall; by f_equiv.
 Qed.
 Global Instance from_pure_tforall {TT : tele} a (Φ : TT → PROP) (φ : TT → Prop) :
-  (∀ x, FromPure a (Φ x) (φ x)) → FromPure a (∀.. x, Φ x) (∀.. x, φ x).
+  (∀ x, FromPure a (Φ x) (φ x)) → FromPure a (bi_tforall Φ) (tforall φ).
 Proof.
   rewrite /FromPure !tforall_forall bi_tforall_forall. apply from_pure_forall.
 Qed.
@@ -507,10 +507,10 @@ Proof.
 Qed.
 
 Global Instance into_wand_forall {A} p q (Φ : A → PROP) P Q x :
-  IntoWand p q (Φ x) P Q → IntoWand p q (∀ x, Φ x) P Q.
+  IntoWand p q (Φ x) P Q → IntoWand p q (bi_forall Φ) P Q.
 Proof. rewrite /IntoWand=> <-. by rewrite (forall_elim x). Qed.
 Global Instance into_wand_tforall {TT : tele} p q (Φ : TT → PROP) P Q x :
-  IntoWand p q (Φ x) P Q → IntoWand p q (∀.. x, Φ x) P Q.
+  IntoWand p q (Φ x) P Q → IntoWand p q (bi_tforall Φ) P Q.
 Proof. rewrite /IntoWand=> <-. by rewrite bi_tforall_forall (forall_elim x). Qed.
 
 Global Instance into_wand_affine p q R P Q :
@@ -996,7 +996,7 @@ Proof. rewrite /IntoExist=> HP. by rewrite HP persistently_exist. Qed.
 Global Instance into_forall_forall {A} (Φ : A → PROP) : IntoForall (bi_forall Φ) Φ.
 Proof. by rewrite /IntoForall. Qed.
 Global Instance into_forall_tforall {TT : tele} (Φ : TT → PROP) :
-  IntoForall (∀.. a, Φ a) Φ | 10.
+  IntoForall (bi_tforall Φ) Φ | 10.
 Proof. by rewrite /IntoForall bi_tforall_forall. Qed.
 Global Instance into_forall_affinely {A} P (Φ : A → PROP) :
   IntoForall P Φ → IntoForall (<affine> P) (λ a, <affine> (Φ a))%I.
@@ -1095,13 +1095,13 @@ Global Instance elim_modal_wandM φ p p' P P' Q Q' mR :
 Proof. rewrite /ElimModal !wandM_sound. exact: elim_modal_wand. Qed.
 Global Instance elim_modal_forall {A} φ p p' P P' (Φ Ψ : A → PROP) :
   (∀ x, ElimModal φ p p' P P' (Φ x) (Ψ x)) →
-  ElimModal φ p p' P P' (∀ x, Φ x) (∀ x, Ψ x).
+  ElimModal φ p p' P P' (bi_forall Φ) (bi_forall Ψ).
 Proof.
   rewrite /ElimModal=> H ?. apply forall_intro=> a. rewrite (forall_elim a); auto.
 Qed.
 Global Instance elim_modal_tforall {TT : tele} φ p p' P P' (Φ Ψ : TT → PROP) :
   (∀ x, ElimModal φ p p' P P' (Φ x) (Ψ x)) →
-  ElimModal φ p p' P P' (∀.. x, Φ x) (∀.. x, Ψ x).
+  ElimModal φ p p' P P' (bi_tforall Φ) (bi_tforall Ψ).
 Proof. rewrite /ElimModal !bi_tforall_forall. apply elim_modal_forall. Qed.
 Global Instance elim_modal_absorbingly_here p P Q :
   Absorbing Q → ElimModal True p false (<absorb> P) P Q Q.
@@ -1121,12 +1121,12 @@ Global Instance add_modal_wandM P P' Q mR :
   AddModal P P' Q → AddModal P P' (mR -∗? Q).
 Proof. rewrite /AddModal wandM_sound. exact: add_modal_wand. Qed.
 Global Instance add_modal_forall {A} P P' (Φ : A → PROP) :
-  (∀ x, AddModal P P' (Φ x)) → AddModal P P' (∀ x, Φ x).
+  (∀ x, AddModal P P' (Φ x)) → AddModal P P' (bi_forall Φ).
 Proof.
   rewrite /AddModal=> H. apply forall_intro=> a. by rewrite (forall_elim a).
 Qed.
 Global Instance add_modal_tforall {TT : tele} P P' (Φ : TT → PROP) :
-  (∀ x, AddModal P P' (Φ x)) → AddModal P P' (∀.. x, Φ x).
+  (∀ x, AddModal P P' (Φ x)) → AddModal P P' (bi_tforall Φ).
 Proof. rewrite /AddModal bi_tforall_forall. apply add_modal_forall. Qed.
 
 (** ElimInv *)

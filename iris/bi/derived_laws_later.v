@@ -384,13 +384,13 @@ Proof.
   rewrite -persistent_and_affinely_sep_l. by apply wand_elim_r'.
 Qed.
 Global Instance forall_timeless {A} (Ψ : A → PROP) :
-  (∀ x, Timeless (Ψ x)) → Timeless (∀ x, Ψ x).
+  (∀ x, Timeless (Ψ x)) → Timeless (bi_forall Ψ).
 Proof.
   rewrite /Timeless=> HQ. rewrite except_0_forall later_forall.
   apply forall_mono; auto.
 Qed.
 Global Instance exist_timeless {A} (Ψ : A → PROP) :
-  (∀ x, Timeless (Ψ x)) → Timeless (∃ x, Ψ x).
+  (∀ x, Timeless (Ψ x)) → Timeless (bi_exist Ψ).
 Proof.
   rewrite /Timeless=> ?. rewrite later_exist_false. apply or_elim.
   - rewrite /bi_except_0; auto.

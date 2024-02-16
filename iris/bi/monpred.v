@@ -948,10 +948,10 @@ Section bi_facts.
     rewrite (objective_at Q i). by rewrite (objective_at P k).
   Qed.
   Global Instance forall_objective {A} Φ {H : ∀ x : A, Objective (Φ x)} :
-    @Objective I PROP (∀ x, Φ x)%I.
+    @Objective I PROP (bi_forall Φ).
   Proof. intros i j. unseal. do 2 f_equiv. by apply objective_at. Qed.
   Global Instance exists_objective {A} Φ {H : ∀ x : A, Objective (Φ x)} :
-    @Objective I PROP (∃ x, Φ x)%I.
+    @Objective I PROP (bi_exist Φ).
   Proof. intros i j. unseal. do 2 f_equiv. by apply objective_at. Qed.
 
   Global Instance sep_objective P Q `{!Objective P, !Objective Q} :

@@ -623,10 +623,10 @@ Proof. rewrite /Affine=> ->; auto. Qed.
 Global Instance or_affine P Q : Affine P → Affine Q → Affine (P ∨ Q).
 Proof.  rewrite /Affine=> -> ->; auto. Qed.
 Global Instance forall_affine `{Inhabited A} (Φ : A → PROP) :
-  (∀ x, Affine (Φ x)) → Affine (∀ x, Φ x).
+  (∀ x, Affine (Φ x)) → Affine (bi_forall Φ).
 Proof. intros. rewrite /Affine (forall_elim inhabitant). apply: affine. Qed.
 Global Instance exist_affine {A} (Φ : A → PROP) :
-  (∀ x, Affine (Φ x)) → Affine (∃ x, Φ x).
+  (∀ x, Affine (Φ x)) → Affine (bi_exist Φ).
 Proof. rewrite /Affine=> H. apply exist_elim=> a. by rewrite H. Qed.
 
 Global Instance sep_affine P Q : Affine P → Affine Q → Affine (P ∗ Q).
@@ -705,12 +705,12 @@ Proof. intros. by rewrite /Absorbing absorbingly_and_1 !absorbing. Qed.
 Global Instance or_absorbing P Q : Absorbing P → Absorbing Q → Absorbing (P ∨ Q).
 Proof. intros. by rewrite /Absorbing absorbingly_or !absorbing. Qed.
 Global Instance forall_absorbing {A} (Φ : A → PROP) :
-  (∀ x, Absorbing (Φ x)) → Absorbing (∀ x, Φ x).
+  (∀ x, Absorbing (Φ x)) → Absorbing (bi_forall Φ).
 Proof.
   rewrite /Absorbing=> ?. rewrite absorbingly_forall. auto using forall_mono.
 Qed.
 Global Instance exist_absorbing {A} (Φ : A → PROP) :
-  (∀ x, Absorbing (Φ x)) → Absorbing (∃ x, Φ x).
+  (∀ x, Absorbing (Φ x)) → Absorbing (bi_exist Φ).
 Proof.
   rewrite /Absorbing=> ?. rewrite absorbingly_exist. auto using exist_mono.
 Qed.
@@ -1164,13 +1164,13 @@ Global Instance or_persistent P Q :
   Persistent P → Persistent Q → Persistent (P ∨ Q).
 Proof. intros. by rewrite /Persistent persistently_or -!persistent. Qed.
 Global Instance forall_persistent `{!BiPersistentlyForall PROP} {A} (Ψ : A → PROP) :
-  (∀ x, Persistent (Ψ x)) → Persistent (∀ x, Ψ x).
+  (∀ x, Persistent (Ψ x)) → Persistent (bi_forall Ψ).
 Proof.
   intros. rewrite /Persistent persistently_forall.
   apply forall_mono=> x. by rewrite -!persistent.
 Qed.
 Global Instance exist_persistent {A} (Ψ : A → PROP) :
-  (∀ x, Persistent (Ψ x)) → Persistent (∃ x, Ψ x).
+  (∀ x, Persistent (Ψ x)) → Persistent (bi_exist Ψ).
 Proof.
   intros. rewrite /Persistent persistently_exist.
   apply exist_mono=> x. by rewrite -!persistent.

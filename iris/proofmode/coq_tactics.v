@@ -472,7 +472,7 @@ Class IntoIH (φ : Prop) (Δ : envs PROP) (Q : PROP) :=
 Global Instance into_ih_entails Δ Q : IntoIH (envs_entails Δ Q) Δ Q.
 Proof. by rewrite envs_entails_unseal /IntoIH bi.intuitionistically_elim. Qed.
 Global Instance into_ih_forall {A} (φ : A → Prop) Δ Φ :
-  (∀ x, IntoIH (φ x) Δ (Φ x)) → IntoIH (∀ x, φ x) Δ (∀ x, Φ x) | 2.
+  (∀ x, IntoIH (φ x) Δ (Φ x)) → IntoIH (∀ x, φ x) Δ (bi_forall Φ) | 2.
 Proof. rewrite /IntoIH=> HΔ ?. apply forall_intro=> x. by rewrite (HΔ x). Qed.
 Global Instance into_ih_impl (φ ψ : Prop) Δ Q :
   IntoIH φ Δ Q → IntoIH (ψ → φ) Δ (⌜ψ⌝ → Q) | 1.
