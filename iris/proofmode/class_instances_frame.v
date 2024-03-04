@@ -327,7 +327,7 @@ Global Instance frame_exist {A} p R (Φ : A → PROP)
     (TT : tele) (g : TT → A) (Ψ : TT → PROP) Q :
   (∀ c, FrameExistRequirements p R Φ (g c) (Ψ c)) →
   TCCbnTele (∃.. c, Ψ c)%I Q →
-  Frame p R (∃ a, Φ a) Q.
+  Frame p R (bi_exist Φ) Q.
 Proof.
   move=> H <-. rewrite /Frame bi_texist_exist.
   eapply frame_exist_helper=> c.
@@ -335,13 +335,13 @@ Proof.
 Qed.
 
 Global Instance frame_texist {TT : tele} p R (Φ Ψ : TT → PROP) :
-  (∀ x, Frame p R (Φ x) (Ψ x)) → Frame p R (∃.. x, Φ x) (∃.. x, Ψ x) | 2.
+  (∀ x, Frame p R (Φ x) (Ψ x)) → Frame p R (bi_texist Φ) (bi_texist Ψ) | 2.
 Proof. rewrite /Frame !bi_texist_exist. apply frame_exist_helper. Qed.
 Global Instance frame_forall {A} p R (Φ Ψ : A → PROP) :
-  (∀ a, Frame p R (Φ a) (Ψ a)) → Frame p R (∀ x, Φ x) (∀ x, Ψ x) | 2.
+  (∀ a, Frame p R (Φ a) (Ψ a)) → Frame p R (bi_forall Φ) (bi_forall Ψ) | 2.
 Proof. rewrite /Frame=> ?. by rewrite sep_forall_l; apply forall_mono. Qed.
 Global Instance frame_tforall {TT : tele} p R (Φ Ψ : TT → PROP) :
-  (∀ x, Frame p R (Φ x) (Ψ x)) → Frame p R (∀.. x, Φ x) (∀.. x, Ψ x) | 2.
+  (∀ x, Frame p R (Φ x) (Ψ x)) → Frame p R (bi_tforall Φ) (bi_tforall Ψ) | 2.
 Proof. rewrite /Frame !bi_tforall_forall. apply frame_forall. Qed.
 
 Global Instance frame_impl_persistent R P1 P2 Q2 :

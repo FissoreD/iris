@@ -1602,6 +1602,15 @@ Proof.
   Fail iIntros (? x).
 Abort.
 
+(* See issue #551 *)
+Lemma test_iSpecialize_without_eta {A} (Φ : A → PROP) x :
+  bi_forall Φ ⊢ Φ x.
+Proof.
+  iIntros "H".
+  iSpecialize ("H" $! x).
+  done.
+Qed.
+
 End tests.
 
 Section parsing_tests.

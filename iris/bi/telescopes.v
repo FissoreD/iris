@@ -69,27 +69,27 @@ Section telescopes.
   Proof. intros ?? EQ. rewrite !bi_texist_exist. rewrite EQ //. Qed.
 
   Global Instance bi_tforall_absorbing Ψ :
-    (∀ x, Absorbing (Ψ x)) → Absorbing (∀.. x, Ψ x).
+    (∀ x, Absorbing (Ψ x)) → Absorbing (bi_tforall Ψ).
   Proof. rewrite bi_tforall_forall. apply _. Qed.
   Global Instance bi_tforall_persistent `{!BiPersistentlyForall PROP} Ψ :
-    (∀ x, Persistent (Ψ x)) → Persistent (∀.. x, Ψ x).
+    (∀ x, Persistent (Ψ x)) → Persistent (bi_tforall Ψ).
   Proof. rewrite bi_tforall_forall. apply _. Qed.
 
   Global Instance bi_texist_affine Ψ :
-    (∀ x, Affine (Ψ x)) → Affine (∃.. x, Ψ x).
+    (∀ x, Affine (Ψ x)) → Affine (bi_texist Ψ).
   Proof. rewrite bi_texist_exist. apply _. Qed.
   Global Instance bi_texist_absorbing Ψ :
-    (∀ x, Absorbing (Ψ x)) → Absorbing (∃.. x, Ψ x).
+    (∀ x, Absorbing (Ψ x)) → Absorbing (bi_texist Ψ).
   Proof. rewrite bi_texist_exist. apply _. Qed.
   Global Instance bi_texist_persistent Ψ :
-    (∀ x, Persistent (Ψ x)) → Persistent (∃.. x, Ψ x).
+    (∀ x, Persistent (Ψ x)) → Persistent (bi_texist Ψ).
   Proof. rewrite bi_texist_exist. apply _. Qed.
 
   Global Instance bi_tforall_timeless Ψ :
-    (∀ x, Timeless (Ψ x)) → Timeless (∀.. x, Ψ x).
+    (∀ x, Timeless (Ψ x)) → Timeless (bi_tforall Ψ).
   Proof. rewrite bi_tforall_forall. apply _. Qed.
 
   Global Instance bi_texist_timeless Ψ :
-    (∀ x, Timeless (Ψ x)) → Timeless (∃.. x, Ψ x).
+    (∀ x, Timeless (Ψ x)) → Timeless (bi_texist Ψ).
   Proof. rewrite bi_texist_exist. apply _. Qed.
 End telescopes.
