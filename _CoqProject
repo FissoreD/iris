@@ -126,6 +126,7 @@ iris/program_logic/ownp.v
 iris/program_logic/total_lifting.v
 iris/program_logic/total_ectx_lifting.v
 iris/program_logic/atomic.v
+iris/program_logic/step_update.v
 iris/proofmode/base.v
 iris/proofmode/ident_name.v
 iris/proofmode/string_ident.v
