@@ -109,7 +109,7 @@ Section proph_map.
     rewrite proph_unseal /proph_def.
     iMod (ghost_map_insert p (proph_list_resolves pvs p) with "H●") as "[H● H◯]".
     { apply not_elem_of_dom. set_solver. }
-    iFrame. iPureIntro. split.
+    iModIntro. iFrame. iPureIntro. split.
     - apply resolves_insert; first done. set_solver.
     - rewrite dom_insert. set_solver.
   Qed.

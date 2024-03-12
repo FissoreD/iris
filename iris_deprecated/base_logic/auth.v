@@ -193,7 +193,7 @@ Section auth.
     iSplit; first done. iFrame "Hφ". iIntros (u b) "[% Hφ]".
     iMod (own_update_2 with "Hγa Hγf") as "[Hγa Hγf]".
     { eapply auth_update; eassumption. }
-    by iFrame.
+    iFrame. iExists _. by iFrame.
   Qed.
 
   Lemma auth_acc E N γ a :
