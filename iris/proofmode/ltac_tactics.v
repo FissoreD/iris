@@ -410,7 +410,7 @@ Ltac iFrameAnyIntuitionistic :=
     match Hs with [] => idtac | ?H :: ?Hs => repeat iFrameHyp H; go Hs end in
   match goal with
   | |- envs_entails ?Δ _ =>
-     let Hs := eval cbv in (env_dom (env_intuitionistic Δ)) in go Hs
+     let Hs := eval lazy in (env_dom (env_intuitionistic Δ)) in go Hs
   end.
 
 Ltac iFrameAnySpatial :=
@@ -419,7 +419,7 @@ Ltac iFrameAnySpatial :=
     match Hs with [] => idtac | ?H :: ?Hs => try iFrameHyp H; go Hs end in
   match goal with
   | |- envs_entails ?Δ _ =>
-     let Hs := eval cbv in (env_dom (env_spatial Δ)) in go Hs
+     let Hs := eval lazy in (env_dom (env_spatial Δ)) in go Hs
   end.
 
 Local Ltac _iFrame_go Hs :=
