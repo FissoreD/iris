@@ -175,11 +175,11 @@ Proof.
 Qed.
 
 Lemma tac_pure_revert Δ φ P Q :
-  FromAffinely P ⌜ φ ⌝ →
+  MakeAffinely ⌜ φ ⌝ P →
   envs_entails Δ (P -∗ Q) →
   (φ → envs_entails Δ Q).
 Proof.
-  rewrite /FromAffinely envs_entails_unseal. intros <- -> ?.
+  rewrite /MakeAffinely envs_entails_unseal. intros <- -> ?.
   by rewrite pure_True // affinely_True_emp left_id.
 Qed.
 
