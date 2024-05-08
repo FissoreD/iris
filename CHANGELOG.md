@@ -10,6 +10,11 @@ lemma.
 * Add lemma `na_own_empty` and persistence instance for `na_own p ∅` for
   non-atomic invariant tokens. (by Benjamin Peters)
 
+**Changes in `proofmode`:**
+
+* Change `iInduction` to always generate a magic wand instead of an implication
+  for reverted hypotheses.
+
 ## Iris 4.2.0 (2024-04-12)
 
 The highlights of this release are:
