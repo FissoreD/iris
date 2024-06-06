@@ -641,10 +641,10 @@ Next Obligation.
   intros K ?? F A ? B ? x; simpl in *. rewrite -{2}(view_map_id x).
   apply (view_map_ext _ _ _ _)=> y.
   - rewrite /= -{2}(map_fmap_id y).
-    apply map_fmap_equiv_ext=>k ??.
+    apply: map_fmap_equiv_ext=>k ??.
     apply rFunctor_map_id.
   - rewrite /= -{2}(map_fmap_id y).
-    apply map_fmap_equiv_ext=>k [df va] ?.
+    apply: map_fmap_equiv_ext=>k [df va] ?.
     split; first done. simpl.
     apply rFunctor_map_id.
 Qed.
@@ -653,10 +653,10 @@ Next Obligation.
   rewrite -view_map_compose.
   apply (view_map_ext _ _ _ _)=> y.
   - rewrite /= -map_fmap_compose.
-    apply map_fmap_equiv_ext=>k ??.
+    apply: map_fmap_equiv_ext=>k ??.
     apply rFunctor_map_compose.
   - rewrite /= -map_fmap_compose.
-    apply map_fmap_equiv_ext=>k [df va] ?.
+    apply: map_fmap_equiv_ext=>k [df va] ?.
     split; first done. simpl.
     apply rFunctor_map_compose.
 Qed.

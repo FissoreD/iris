@@ -1295,13 +1295,13 @@ Global Typeclasses Opaque option_dist.
 Global Arguments optionO : clear implicits.
 
 Global Instance option_fmap_ne {A B : ofe} n:
-  Proper ((dist n ==> dist n) ==> dist n ==> dist n) (@fmap option _ A B).
+  Proper ((dist n ==> dist n) ==> dist n ==> dist n) (@fmap A B (option A) (option B) _).
 Proof. intros f f' Hf ?? []; constructor; auto. Qed.
 Global Instance option_mbind_ne {A B : ofe} n:
-  Proper ((dist n ==> dist n) ==> dist n ==> dist n) (@mbind option _ A B).
+  Proper ((dist n ==> dist n) ==> dist n ==> dist n) (@mbind A (option A) (option B) _).
 Proof. destruct 2; simpl; auto. Qed.
 Global Instance option_mjoin_ne {A : ofe} n:
-  Proper (dist n ==> dist n) (@mjoin option _ A).
+  Proper (dist n ==> dist n) (@mjoin (option A) (option (option A)) _).
 Proof. destruct 1 as [?? []|]; simpl; by constructor. Qed.
 
 Global Instance option_fmap_dist_inj {A B : ofe} (f : A → B) n :

@@ -87,7 +87,7 @@ Section to_inv_heap.
   Implicit Types (h : gmap L (V * (V -d> PropO))).
 
   Lemma to_inv_heap_valid h : ✓ to_inv_heap h.
-  Proof. intros l. rewrite lookup_fmap. by case (h !! l). Qed.
+  Proof. intros l. rewrite lookup_fmap. by case: (h !! l). Qed.
 
   Lemma to_inv_heap_singleton l v I :
     to_inv_heap {[l := (v, I)]} =@{inv_heap_mapUR L V} {[l := (Excl' v, to_agree I)]}.

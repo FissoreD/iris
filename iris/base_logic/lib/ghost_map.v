@@ -100,7 +100,7 @@ Section lemmas.
     done.
   Qed.
 
-  Global Instance ghost_map_elem_combine_gives γ k v1 dq1 v2 dq2 : 
+  Global Instance ghost_map_elem_combine_gives γ k v1 dq1 v2 dq2 :
     CombineSepGives (k ↪[γ]{dq1} v1) (k ↪[γ]{dq2} v2) ⌜✓ (dq1 ⋅ dq2) ∧ v1 = v2⌝.
   Proof.
     rewrite /CombineSepGives. iIntros "[H1 H2]".
@@ -116,7 +116,7 @@ Section lemmas.
   Qed.
 
   Global Instance ghost_map_elem_combine_as k γ dq1 dq2 v1 v2 :
-    CombineSepAs (k ↪[γ]{dq1} v1) (k ↪[γ]{dq2} v2) (k ↪[γ]{dq1 ⋅ dq2} v1) | 60. 
+    CombineSepAs (k ↪[γ]{dq1} v1) (k ↪[γ]{dq2} v2) (k ↪[γ]{dq1 ⋅ dq2} v1) | 60.
     (* higher cost than the Fractional instance [combine_sep_fractional_bwd],
        which kicks in for #qs *)
   Proof.
@@ -205,7 +205,11 @@ Section lemmas.
     ghost_map_auth γ q1 m1 -∗ ghost_map_auth γ q2 m2 -∗ ⌜(q1 + q2 ≤ 1)%Qp ∧ m1 = m2⌝.
   Proof.
     unseal. iIntros "H1 H2".
-    iCombine "H1 H2" gives %[? ?%(inj _)]%gmap_view_auth_dfrac_op_valid.
+    iCombine "H1 H2" gives %[? Heq]%gmap_view_auth_dfrac_op_valid.
+    (* Ideally we would directly use [map_fmap_equiv_inj _
+    to_agree_inj], but then unification gets confused by the [ofe_car]
+    coercion. *)
+    apply map_fmap_equiv_inj in Heq; [| exact to_agree_inj].
     iPureIntro. split; first done. by fold_leibniz.
   Qed.
   Lemma ghost_map_auth_agree γ q1 q2 m1 m2 :
