@@ -723,6 +723,30 @@ No applicable tactic.
   "H" : ⌜φ⌝ -∗ P
   --------------------------------------∗
   ⌜φ⌝ -∗ P
+"test_iInduction_revert_pure"
+     : string
+1 goal
+  
+  PROP : bi
+  n : nat
+  P : nat → PROP
+  Hn : 0 < S n
+  ============================
+  "IH" : <affine> ⌜0 < n⌝ -∗ P n
+  --------------------------------------□
+  P (S n)
+1 goal
+  
+  PROP : bi
+  n : nat
+  Hn : 0 < S n
+  P : nat → PROP
+  ============================
+  "IH" : <affine> ⌜0 < n⌝ -∗ P n
+  --------------------------------------□
+  P (S n)
+"test_iInduction_revert_pure_affine"
+     : string
 "test_iFrame_not_add_emp_for_intuitionistically"
      : string
 1 goal

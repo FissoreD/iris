@@ -1602,6 +1602,32 @@ Proof.
   iIntros (Hφ) "H". iRevert (Hφ). Show. done.
 Qed.
 
+Check "test_iInduction_revert_pure".
+Lemma test_iInduction_revert_pure (n : nat) (Hn : 0 < n) (P : nat → PROP) :
+  ⊢ P n.
+Proof.
+  (* Check that we consistently get [<affine> _ -∗], not [→] *)
+  iInduction n as [|n] "IH" forall (Hn); first lia.
+  Show.
+Restart.
+Proof.
+  iInduction n as [|n] "IH"; first lia.
+  Show.
+Abort.
+
+Check "test_iInduction_revert_pure_affine".
+Lemma test_iInduction_revert_pure_affine `{!BiAffine PROP}
+  (n : nat) (Hn : 0 < n) (P : nat → PROP) : ⊢ P n.
+Proof.
+  (* Check that we consistently get [-∗], not [→]; and no [<affine>] *)
+  iInduction n as [|n] "IH" forall (Hn); first lia.
+  (* "IH" : ⌜0 < n⌝ -∗ P n *)
+Restart.
+Proof.
+  iInduction n as [|n] "IH"; first lia.
+  (* "IH" : ⌜0 < n⌝ → P n*)
+Abort.
+
 (* Check that when framing things under the □ modality, we do not add [emp] in
 affine BIs. *)
 Check "test_iFrame_not_add_emp_for_intuitionistically".

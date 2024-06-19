@@ -605,7 +605,7 @@ Ltac iForallRevert x :=
   | Prop =>
      revert x; first
        [eapply tac_pure_revert;
-         [tc_solve (* [FromAffinely], should never fail *)
+         [tc_solve (* [MakeAffinely], should never fail *)
          |]
        |err x]
   | _ =>

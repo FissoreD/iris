@@ -175,11 +175,11 @@ Proof.
 Qed.
 
 Lemma tac_pure_revert Δ φ P Q :
-  FromAffinely P ⌜ φ ⌝ →
+  MakeAffinely ⌜ φ ⌝ P →
   envs_entails Δ (P -∗ Q) →
   (φ → envs_entails Δ Q).
 Proof.
-  rewrite /FromAffinely envs_entails_unseal. intros <- -> ?.
+  rewrite /MakeAffinely envs_entails_unseal. intros <- -> ?.
   by rewrite pure_True // affinely_True_emp left_id.
 Qed.
 
@@ -474,9 +474,14 @@ Proof. by rewrite envs_entails_unseal /IntoIH bi.intuitionistically_elim. Qed.
 Global Instance into_ih_forall {A} (φ : A → Prop) Δ Φ :
   (∀ x, IntoIH (φ x) Δ (Φ x)) → IntoIH (∀ x, φ x) Δ (∀ x, Φ x) | 2.
 Proof. rewrite /IntoIH=> HΔ ?. apply forall_intro=> x. by rewrite (HΔ x). Qed.
-Global Instance into_ih_impl (φ ψ : Prop) Δ Q :
-  IntoIH φ Δ Q → IntoIH (ψ → φ) Δ (⌜ψ⌝ → Q) | 1.
-Proof. rewrite /IntoIH=> HΔ ?. apply impl_intro_l, pure_elim_l. auto. Qed.
+Global Instance into_ih_impl (φ ψ : Prop) Δ P Q :
+  MakeAffinely ⌜ φ ⌝ P →
+  IntoIH ψ Δ Q → IntoIH (φ → ψ) Δ (P -∗ Q) | 1.
+Proof.
+  rewrite /IntoIH /MakeAffinely=> <- HΔ ?.
+  rewrite -persistent_impl_wand_affinely. apply impl_intro_l, pure_elim_l. auto.
+Qed.
+
 (** The instances [into_ih_Forall] and [into_ih_Forall2] are used to support
 induction principles for mutual inductive types such as finitely branching trees:
 
