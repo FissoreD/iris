@@ -1,6 +1,6 @@
 From stdpp Require Export sets gmap mapset.
 From iris.algebra Require Export cmra.
-From iris.algebra Require Import updates local_updates big_op.
+From iris.algebra Require Import updates local_updates big_op proofmode_classes.
 From iris.prelude Require Import options.
 
 (* The union CMRA *)
@@ -63,6 +63,27 @@ Section gset.
     - rewrite big_opS_empty. done.
     - unfold_leibniz. rewrite big_opS_insert // IH //.
   Qed.
+
+  (* The following instance splits [X ∪ Y] into [X] and [Y] *)
+  Global Instance gset_is_op_default_split X Y :
+    IsOp'LR (X ∪ Y) X Y | 1.
+  Proof. done. Qed.
+  (* The following instance simplifies [X ⋅ X] into [X]. As a side-effect, terms
+    [X] which do not have a toplevel [⋅] or [∪] get duplicated when split. *)
+  Global Instance gset_is_op_idemp X :
+    IsOp' X X X | 5.
+  Proof. rewrite /IsOp' /IsOp. set_solver. Qed.
+  (* The following instances simplify [X ⋅ ∅] and [∅ ⋅ X] into [X]. *)
+  Global Instance gset_is_op_unit_l X :
+    IsOp' X ∅ X | 10.
+  Proof. rewrite /IsOp' /IsOp. set_solver. Qed.
+  Global Instance gset_is_op_unit_r X :
+    IsOp' X X ∅ | 10.
+  Proof. rewrite /IsOp' /IsOp. set_solver. Qed.
+  (* If none of the above applies, [X ⋅ Y] simplifies to [X ∪ Y] *)
+  Global Instance gset_is_op_default_combine X Y :
+    IsOp' (X ∪ Y) X Y | 99.
+  Proof. done. Qed.
 
   (** Add support [X ≼ Y] to [set_solver]. (We get support for [⋅] for free
   because it is definitionally equal to [∪]). *)

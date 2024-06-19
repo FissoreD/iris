@@ -1,6 +1,6 @@
 From stdpp Require Export sets coPset.
 From iris.algebra Require Export cmra.
-From iris.algebra Require Import updates local_updates.
+From iris.algebra Require Import updates local_updates proofmode_classes.
 From iris.prelude Require Import options.
 (** This is pretty much the same as algebra/gset, but I was not able to
 generalize the construction without breaking canonical structures. *)
@@ -58,6 +58,27 @@ Section coPset.
     rewrite local_update_unital_discrete=> Z' _ /leibniz_equiv_iff->.
     split; first done. rewrite coPset_op. set_solver.
   Qed.
+
+  (* The following instance splits [X ∪ Y] into [X] and [Y] *)
+  Global Instance coPset_is_op_default_split X Y :
+    IsOp'LR (X ∪ Y) X Y | 1.
+  Proof. done. Qed.
+  (* The following instance simplifies [X ⋅ X] into [X]. As a side-effect,
+     terms [X] which do not have a toplevel [⋅] or [∪] get duplicated when split.*)
+  Global Instance coPset_is_op_idemp X :
+    IsOp' X X X | 5.
+  Proof. rewrite /IsOp' /IsOp. set_solver. Qed.
+  (* The following instances simplify [X ⋅ ∅] and [∅ ⋅ X] into [X]. *)
+  Global Instance coPset_is_op_unit_l X :
+    IsOp' X ∅ X | 10.
+  Proof. rewrite /IsOp' /IsOp. set_solver. Qed.
+  Global Instance coPset_is_op_unit_r X :
+    IsOp' X X ∅ | 10.
+  Proof. rewrite /IsOp' /IsOp. set_solver. Qed.
+  (* If none of the above applies, [X ⋅ Y] simplifies to [X ∪ Y] *)
+  Global Instance coPset_is_op_default_combine X Y :
+    IsOp' (X ∪ Y) X Y | 99.
+  Proof. done. Qed.
 End coPset.
 
 (* The disjoint union CMRA *)

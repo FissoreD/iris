@@ -1,4 +1,4 @@
-From iris.algebra Require Import frac.
+From iris.algebra Require Import frac gset.
 From iris.proofmode Require Import tactics monpred.
 From iris.base_logic Require Import base_logic.
 From iris.base_logic.lib Require Import invariants cancelable_invariants na_invariants ghost_var.
@@ -284,6 +284,19 @@ Section iris_tests.
     iIntros "[H1 H2]". Show.
     iCombine "H1 H2" as "H". Show.
     iExact "H".
+  Qed.
+
+  Check "test_gset_split_combine".
+  Lemma test_gset_split_combine `{!inG Σ (gsetR nat)} γ :
+    own γ (∅ : gset nat) -∗ own γ {[ 0 ]} -∗ own γ {[ 1 ]} -∗
+      own γ {[ 0 ]} ∗ own γ {[ 0 ]}.
+  Proof.
+(* This tests that sets are simplified appropriately when combined or split *)
+    iIntros "He [H0 H0'] H1". Show.
+    iCombine "H0 He" as "H0". Show. (* Gets rid of [⋅ ∅] *)
+    iCombine "H0 H0'" as "H0". Show. (* Use idempotency of [⋅] for [gset] *)
+    iCombine "H1 H0" as "H". Show. (* Prints as a pretty {[1;0]} *)
+    iDestruct "H" as "[H1 #$]". (* Still destructs as {[1]} ⋅ {[0]} *)
   Qed.
 
   Check "test_iDestruct_mod_not_fresh".
