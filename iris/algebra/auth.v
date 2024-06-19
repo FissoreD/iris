@@ -13,39 +13,39 @@ a2]. *)
 
 (** * Definition of the view relation *)
 (** The authoritative camera is obtained by instantiating the view camera. *)
-Definition auth_view_rel_raw {A : ucmra} (n : nat) (a b : A) : Prop :=
+Definition auth_view_rel_raw `{SI : indexT} {A : ucmra} (n : index) (a b : A) : Prop :=
   b ≼{n} a ∧ ✓{n} a.
-Lemma auth_view_rel_raw_mono (A : ucmra) n1 n2 (a1 a2 b1 b2 : A) :
+Lemma auth_view_rel_raw_mono `{SI : indexT} (A : ucmra) n1 n2 (a1 a2 b1 b2 : A) :
   auth_view_rel_raw n1 a1 b1 →
   a1 ≡{n2}≡ a2 →
   b2 ≼{n2} b1 →
-  n2 ≤ n1 →
+  n2 ⪯ᵢ n1 →
   auth_view_rel_raw n2 a2 b2.
 Proof.
   intros [??] Ha12 ??. split.
   - trans b1; [done|]. rewrite -Ha12. by apply cmra_includedN_le with n1.
   - rewrite -Ha12. by apply cmra_validN_le with n1.
 Qed.
-Lemma auth_view_rel_raw_valid (A : ucmra) n (a b : A) :
+Lemma auth_view_rel_raw_valid `{SI : indexT} (A : ucmra) n (a b : A) :
   auth_view_rel_raw n a b → ✓{n} b.
 Proof. intros [??]; eauto using cmra_validN_includedN. Qed.
-Lemma auth_view_rel_raw_unit (A : ucmra) n :
+Lemma auth_view_rel_raw_unit `{SI : indexT} (A : ucmra) n :
   ∃ a : A, auth_view_rel_raw n a ε.
 Proof. exists ε. split; [done|]. apply ucmra_unit_validN. Qed.
-Canonical Structure auth_view_rel {A : ucmra} : view_rel A A :=
+Canonical Structure auth_view_rel `{SI : indexT} {A : ucmra} : view_rel A A :=
   ViewRel auth_view_rel_raw (auth_view_rel_raw_mono A)
           (auth_view_rel_raw_valid A) (auth_view_rel_raw_unit A).
 
-Lemma auth_view_rel_unit {A : ucmra} n (a : A) : auth_view_rel n a ε ↔ ✓{n} a.
+Lemma auth_view_rel_unit `{SI : indexT} {A : ucmra} n (a : A) : auth_view_rel n a ε ↔ ✓{n} a.
 Proof. split; [by intros [??]|]. split; auto using ucmra_unit_leastN. Qed.
-Lemma auth_view_rel_exists {A : ucmra} n (b : A) :
+Lemma auth_view_rel_exists `{SI : indexT} {A : ucmra} n (b : A) :
   (∃ a, auth_view_rel n a b) ↔ ✓{n} b.
 Proof.
   split; [|intros; exists b; by split].
   intros [a Hrel]. eapply auth_view_rel_raw_valid, Hrel.
 Qed.
 
-Global Instance auth_view_rel_discrete {A : ucmra} :
+Global Instance auth_view_rel_discrete `{SI : indexT} {A : ucmra} :
   CmraDiscrete A → ViewRelDiscrete (auth_view_rel (A:=A)).
 Proof.
   intros ? n a b [??]; split.
@@ -58,17 +58,17 @@ Qed.
 This way, one can use [auth A] with [A : Type] instead of [A : ucmra], and let
 canonical structure search determine the corresponding camera instance. *)
 Notation auth A := (view (A:=A) (B:=A) auth_view_rel_raw).
-Definition authO (A : ucmra) : ofe := viewO (A:=A) (B:=A) auth_view_rel.
-Definition authR (A : ucmra) : cmra := viewR (A:=A) (B:=A) auth_view_rel.
-Definition authUR (A : ucmra) : ucmra := viewUR (A:=A) (B:=A) auth_view_rel.
+Definition authO `{SI : indexT} (A : ucmra) : ofe := viewO (A:=A) (B:=A) auth_view_rel.
+Definition authR `{SI : indexT} (A : ucmra) : cmra := viewR (A:=A) (B:=A) auth_view_rel.
+Definition authUR `{SI : indexT} (A : ucmra) : ucmra := viewUR (A:=A) (B:=A) auth_view_rel.
 
-Definition auth_auth {A: ucmra} : dfrac → A → auth A := view_auth.
-Definition auth_frag {A: ucmra} : A → auth A := view_frag.
+Definition auth_auth `{SI : indexT} {A: ucmra} : dfrac → A → auth A := view_auth.
+Definition auth_frag `{SI : indexT} {A: ucmra} : A → auth A := view_frag.
 
 Global Typeclasses Opaque auth_auth auth_frag.
 
-Global Instance: Params (@auth_auth) 2 := {}.
-Global Instance: Params (@auth_frag) 1 := {}.
+Global Instance: Params (@auth_auth) 3 := {}.
+Global Instance: Params (@auth_frag) 2 := {}.
 
 Notation "● dq a" := (auth_auth dq a)
   (at level 20, dq custom dfrac at level 1, format "● dq  a").
@@ -79,28 +79,28 @@ Notation "◯ a" := (auth_frag a) (at level 20).
 general version in terms of [●] and [◯], and because such a lemma has never
 been needed in practice. *)
 Section auth.
-  Context {A : ucmra}.
+  Context `{SI : indexT} {A : ucmra}.
   Implicit Types a b : A.
   Implicit Types x y : auth A.
   Implicit Types q : frac.
   Implicit Types dq : dfrac.
 
-  Global Instance auth_auth_ne dq : NonExpansive (@auth_auth A dq).
+  Global Instance auth_auth_ne dq : NonExpansive (@auth_auth SI A dq).
   Proof. rewrite /auth_auth. apply _. Qed.
-  Global Instance auth_auth_proper dq : Proper ((≡) ==> (≡)) (@auth_auth A dq).
+  Global Instance auth_auth_proper dq : Proper ((≡) ==> (≡)) (@auth_auth SI A dq).
   Proof. rewrite /auth_auth. apply _. Qed.
-  Global Instance auth_frag_ne : NonExpansive (@auth_frag A).
+  Global Instance auth_frag_ne : NonExpansive (@auth_frag SI A).
   Proof. rewrite /auth_frag. apply _. Qed.
-  Global Instance auth_frag_proper : Proper ((≡) ==> (≡)) (@auth_frag A).
+  Global Instance auth_frag_proper : Proper ((≡) ==> (≡)) (@auth_frag SI A).
   Proof. rewrite /auth_frag. apply _. Qed.
 
-  Global Instance auth_auth_dist_inj n : Inj2 (=) (dist n) (dist n) (@auth_auth A).
+  Global Instance auth_auth_dist_inj n : Inj2 (=) (dist n) (dist n) (@auth_auth SI A).
   Proof. rewrite /auth_auth. apply _. Qed.
-  Global Instance auth_auth_inj : Inj2 (=) (≡) (≡) (@auth_auth A).
+  Global Instance auth_auth_inj : Inj2 (=) (≡) (≡) (@auth_auth SI A).
   Proof. rewrite /auth_auth. apply _. Qed.
-  Global Instance auth_frag_dist_inj n : Inj (dist n) (dist n) (@auth_frag A).
+  Global Instance auth_frag_dist_inj n : Inj (dist n) (dist n) (@auth_frag SI A).
   Proof. rewrite /auth_frag. apply _. Qed.
-  Global Instance auth_frag_inj : Inj (≡) (≡) (@auth_frag A).
+  Global Instance auth_frag_inj : Inj (≡) (≡) (@auth_frag SI A).
   Proof. rewrite /auth_frag. apply _. Qed.
 
   Global Instance auth_ofe_discrete : OfeDiscrete A → OfeDiscrete (authO A).
@@ -143,7 +143,7 @@ Section auth.
     IsOp a b1 b2 → IsOp' (◯ a) (◯ b1) (◯ b2).
   Proof. rewrite /auth_frag. apply _. Qed.
   Global Instance auth_frag_sep_homomorphism :
-    MonoidHomomorphism op op (≡) (@auth_frag A).
+    MonoidHomomorphism op op (≡) (@auth_frag SI A).
   Proof. rewrite /auth_frag. apply _. Qed.
 
   Lemma big_opL_auth_frag {B} (g : nat → B → A) (l : list B) :
@@ -268,7 +268,7 @@ Section auth.
     ✓ (●{dq} a ⋅ ◯ b) ↔ ✓ dq ∧ b ≼ a ∧ ✓ a.
   Proof.
     rewrite auth_both_dfrac_valid. setoid_rewrite <-cmra_discrete_included_iff.
-    naive_solver eauto using O.
+    naive_solver eauto using zero.
   Qed.
   Lemma auth_both_valid_discrete `{!CmraDiscrete A} a b :
     ✓ (● a ⋅ ◯ b) ↔ b ≼ a ∧ ✓ a.
@@ -355,45 +355,45 @@ Section auth.
 End auth.
 
 (** * Functor *)
-Program Definition authURF (F : urFunctor) : urFunctor := {|
+Program Definition authURF `{SI : indexT} (F : urFunctor) : urFunctor := {|
   urFunctor_car A _ B _ := authUR (urFunctor_car F A B);
   urFunctor_map A1 _ A2 _ B1 _ B2 _ fg :=
     viewO_map (urFunctor_map F fg) (urFunctor_map F fg)
 |}.
 Next Obligation.
-  intros F A1 ? A2 ? B1 ? B2 ? n f g Hfg.
+  intros ? F A1 ? A2 ? B1 ? B2 ? n f g Hfg.
   apply viewO_map_ne; by apply urFunctor_map_ne.
 Qed.
 Next Obligation.
-  intros F A ? B ? x; simpl in *. rewrite -{2}(view_map_id x).
+  intros ? F A ? B ? x; simpl in *. rewrite -{2}(view_map_id x).
   apply (view_map_ext _ _ _ _)=> y; apply urFunctor_map_id.
 Qed.
 Next Obligation.
-  intros F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x; simpl in *.
+  intros ? F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x; simpl in *.
   rewrite -view_map_compose.
   apply (view_map_ext _ _ _ _)=> y; apply urFunctor_map_compose.
 Qed.
 Next Obligation.
-  intros F A1 ? A2 ? B1 ? B2 ? fg; simpl.
+  intros ? F A1 ? A2 ? B1 ? B2 ? fg; simpl.
   apply view_map_cmra_morphism; [apply _..|]=> n a b [??]; split.
   - by apply (cmra_morphism_monotoneN _).
   - by apply (cmra_morphism_validN _).
 Qed.
 
-Global Instance authURF_contractive F :
+Global Instance authURF_contractive `{SI : indexT} F :
   urFunctorContractive F → urFunctorContractive (authURF F).
 Proof.
   intros ? A1 ? A2 ? B1 ? B2 ? n f g Hfg.
   apply viewO_map_ne; by apply urFunctor_map_contractive.
 Qed.
 
-Program Definition authRF (F : urFunctor) : rFunctor := {|
+Program Definition authRF `{SI : indexT} (F : urFunctor) : rFunctor := {|
   rFunctor_car A _ B _ := authR (urFunctor_car F A B);
   rFunctor_map A1 _ A2 _ B1 _ B2 _ fg :=
     viewO_map (urFunctor_map F fg) (urFunctor_map F fg)
 |}.
-Solve Obligations with apply authURF.
+Solve Obligations with apply @authURF.
 
-Global Instance authRF_contractive F :
+Global Instance authRF_contractive `{SI : indexT} F :
   urFunctorContractive F → rFunctorContractive (authRF F).
 Proof. apply authURF_contractive. Qed.

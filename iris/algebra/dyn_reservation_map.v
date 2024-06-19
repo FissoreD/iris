@@ -42,17 +42,17 @@ Global Instance: Params (@DynReservationMap) 1 := {}.
 Global Instance: Params (@dyn_reservation_map_data_proj) 1 := {}.
 Global Instance: Params (@dyn_reservation_map_token_proj) 1 := {}.
 
-Definition dyn_reservation_map_data {A : cmra} (k : positive) (a : A) : dyn_reservation_map A :=
+Definition dyn_reservation_map_data `{SI : indexT} {A : cmra} (k : positive) (a : A) : dyn_reservation_map A :=
   DynReservationMap {[ k := a ]} ε.
-Definition dyn_reservation_map_token {A : cmra} (E : coPset) : dyn_reservation_map A :=
+Definition dyn_reservation_map_token `{SI : indexT} {A : cmra} (E : coPset) : dyn_reservation_map A :=
   DynReservationMap ∅ (CoPset E).
-Global Instance: Params (@dyn_reservation_map_data) 2 := {}.
+Global Instance: Params (@dyn_reservation_map_data) 3 := {}.
 
 (** We consruct the OFE and CMRA structure via an isomorphism with
 [reservation_map]. *)
 
 Section ofe.
-  Context {A : ofe}.
+  Context `{SI : indexT} {A : ofe}.
   Implicit Types x y : dyn_reservation_map A.
 
   Local Definition to_reservation_map x : reservation_map A :=
@@ -95,23 +95,23 @@ Section ofe.
   Proof. intros ? [??]; apply _. Qed.
 End ofe.
 
-Global Arguments dyn_reservation_mapO : clear implicits.
+Global Arguments dyn_reservation_mapO {_} _.
 
 Section cmra.
-  Context {A : cmra}.
+  Context `{SI : indexT} {A : cmra}.
   Implicit Types a b : A.
   Implicit Types x y : dyn_reservation_map A.
   Implicit Types k : positive.
 
-  Global Instance dyn_reservation_map_data_ne i : NonExpansive (@dyn_reservation_map_data A i).
+  Global Instance dyn_reservation_map_data_ne i : NonExpansive (@dyn_reservation_map_data SI A i).
   Proof. intros ? ???. rewrite /dyn_reservation_map_data. solve_proper. Qed.
   Global Instance dyn_reservation_map_data_proper N :
-    Proper ((≡) ==> (≡)) (@dyn_reservation_map_data A N).
+    Proper ((≡) ==> (≡)) (@dyn_reservation_map_data SI A N).
   Proof. solve_proper. Qed.
   Global Instance dyn_reservation_map_data_discrete N a :
     Discrete a → Discrete (dyn_reservation_map_data N a).
   Proof. intros. apply DynReservationMap_discrete; apply _. Qed.
-  Global Instance dyn_reservation_map_token_discrete E : Discrete (@dyn_reservation_map_token A E).
+  Global Instance dyn_reservation_map_token_discrete E : Discrete (@dyn_reservation_map_token SI A E).
   Proof. intros. apply DynReservationMap_discrete; apply _. Qed.
 
   Local Instance dyn_reservation_map_valid_instance : Valid (dyn_reservation_map A) := λ x,
@@ -179,9 +179,9 @@ Section cmra.
       + by rewrite -Hm.
       + split; first done. intros i. by rewrite -(dist_None n) -Hm dist_None.
     - intros [m [E|]]; rewrite dyn_reservation_map_valid_eq dyn_reservation_map_validN_eq /=
-        ?cmra_valid_validN; naive_solver eauto using O.
-    - intros n [m [E|]]; rewrite dyn_reservation_map_validN_eq /=;
-        naive_solver eauto using cmra_validN_S.
+        ?cmra_valid_validN; naive_solver eauto using zero.
+    - intros n m [r [E|]]; rewrite dyn_reservation_map_validN_eq /=;
+        naive_solver eauto using cmra_validN_le.
     - intros n [m1 [E1|]] [m2 [E2|]]=> //=; rewrite dyn_reservation_map_validN_eq /=.
       rewrite {1}/op /cmra_op /=. case_decide; last done.
       intros [Hm [Hinf Hdisj]]; split; first by eauto using cmra_validN_op_l.
@@ -305,9 +305,8 @@ Section cmra.
     k ∈ E → ✓ a → dyn_reservation_map_token E ~~> dyn_reservation_map_data k a.
   Proof.
     intros ??. apply cmra_total_update=> n [mf [Ef|]] //.
-    rewrite dyn_reservation_map_validN_eq /= {1}/op {1}/cmra_op /=.
-    case_decide; last done. rewrite !left_id_L.
-    intros [Hmf [Hinf Hdisj]]; split; last split.
+    rewrite dyn_reservation_map_validN_eq /= {1}/op {1}/cmra_op /=. case_decide; last done.
+    rewrite !left_id_L. intros [Hmf [Hinf Hdisj]]; split; last split.
     - destruct (Hdisj k) as [Hmfi|]; last set_solver.
       intros j. rewrite lookup_op.
       destruct (decide (k = j)) as [<-|].
@@ -346,5 +345,5 @@ Section cmra.
   Qed.
 End cmra.
 
-Global Arguments dyn_reservation_mapR : clear implicits.
-Global Arguments dyn_reservation_mapUR : clear implicits.
+Global Arguments dyn_reservation_mapR {_} _.
+Global Arguments dyn_reservation_mapUR {_} _.

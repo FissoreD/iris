@@ -5,15 +5,15 @@ From iris.algebra Require Export auth dfrac max_prefix_list.
 From iris.algebra Require Import updates local_updates proofmode_classes.
 From iris.prelude Require Import options.
 
-Definition mono_listR (A : ofe) : cmra  := authR (max_prefix_listUR A).
-Definition mono_listUR (A : ofe) : ucmra  := authUR (max_prefix_listUR A).
+Definition mono_listR `{SI : indexT} (A : ofe) : cmra  := authR (max_prefix_listUR A).
+Definition mono_listUR `{SI : indexT} (A : ofe) : ucmra  := authUR (max_prefix_listUR A).
 
-Definition mono_list_auth {A : ofe} (q : dfrac) (l : list A) : mono_listR A :=
+Definition mono_list_auth `{SI : indexT} {A : ofe} (q : dfrac) (l : list A) : mono_listR A :=
   ●{q} (to_max_prefix_list l) ⋅ ◯ (to_max_prefix_list l).
-Definition mono_list_lb {A : ofe} (l : list A) : mono_listR A :=
+Definition mono_list_lb `{SI : indexT} {A : ofe} (l : list A) : mono_listR A :=
   ◯ (to_max_prefix_list l).
-Global Instance: Params (@mono_list_auth) 2 := {}.
-Global Instance: Params (@mono_list_lb) 1 := {}.
+Global Instance: Params (@mono_list_auth) 3 := {}.
+Global Instance: Params (@mono_list_lb) 2 := {}.
 Global Typeclasses Opaque mono_list_auth mono_list_lb.
 
 Notation "●ML dq l" := (mono_list_auth dq l)
@@ -21,24 +21,24 @@ Notation "●ML dq l" := (mono_list_auth dq l)
 Notation "◯ML l" := (mono_list_lb l) (at level 20).
 
 Section mono_list_props.
-  Context {A : ofe}.
+  Context `{SI : indexT} {A : ofe}.
   Implicit Types l : list A.
   Implicit Types q : frac.
   Implicit Types dq : dfrac.
 
   (** Setoid properties *)
-  Global Instance mono_list_auth_ne dq : NonExpansive (@mono_list_auth A dq).
+  Global Instance mono_list_auth_ne dq : NonExpansive (@mono_list_auth SI A dq).
   Proof. solve_proper. Qed.
-  Global Instance mono_list_auth_proper dq : Proper ((≡) ==> (≡)) (@mono_list_auth A dq).
+  Global Instance mono_list_auth_proper dq : Proper ((≡) ==> (≡)) (@mono_list_auth SI A dq).
   Proof. solve_proper. Qed.
-  Global Instance mono_list_lb_ne : NonExpansive (@mono_list_lb A).
+  Global Instance mono_list_lb_ne : NonExpansive (@mono_list_lb SI A).
   Proof. solve_proper. Qed.
-  Global Instance mono_list_lb_proper : Proper ((≡) ==> (≡)) (@mono_list_lb A).
+  Global Instance mono_list_lb_proper : Proper ((≡) ==> (≡)) (@mono_list_lb SI A).
   Proof. solve_proper. Qed.
 
-  Global Instance mono_list_lb_dist_inj n : Inj (dist n) (dist n) (@mono_list_lb A).
+  Global Instance mono_list_lb_dist_inj n : Inj (dist n) (dist n) (@mono_list_lb SI A).
   Proof. rewrite /mono_list_lb. by intros ?? ?%(inj _)%(inj _). Qed.
-  Global Instance mono_list_lb_inj : Inj (≡) (≡) (@mono_list_lb A).
+  Global Instance mono_list_lb_inj : Inj (≡) (≡) (@mono_list_lb SI A).
   Proof. rewrite /mono_list_lb. by intros ?? ?%(inj _)%(inj _). Qed.
 
   (** * Operation *)
@@ -102,7 +102,7 @@ Section mono_list_props.
     ✓ (●ML{dq1} l1 ⋅ ●ML{dq2} l2) ↔ ✓ (dq1 ⋅ dq2) ∧ l1 ≡ l2.
   Proof.
     rewrite cmra_valid_validN equiv_dist.
-    setoid_rewrite mono_list_auth_dfrac_op_validN. naive_solver eauto using O.
+    setoid_rewrite mono_list_auth_dfrac_op_validN. naive_solver eauto using zero.
   Qed.
   Lemma mono_list_auth_op_valid l1 l2 : ✓ (●ML l1 ⋅ ●ML l2) ↔ False.
   Proof. rewrite mono_list_auth_dfrac_op_valid. naive_solver. Qed.
@@ -183,16 +183,16 @@ Section mono_list_props.
   Proof. eapply auth_updateP_both_unpersist. Qed.
 End mono_list_props.
 
-Definition mono_listURF (F : oFunctor) : urFunctor :=
+Definition mono_listURF `{SI : indexT} (F : oFunctor) : urFunctor :=
   authURF (max_prefix_listURF F).
 
-Global Instance mono_listURF_contractive F :
+Global Instance mono_listURF_contractive `{SI : indexT} F :
   oFunctorContractive F → urFunctorContractive (mono_listURF F).
 Proof. apply _. Qed.
 
-Definition mono_listRF (F : oFunctor) : rFunctor :=
+Definition mono_listRF `{SI : indexT} (F : oFunctor) : rFunctor :=
   authRF (max_prefix_listURF F).
 
-Global Instance mono_listRF_contractive F :
+Global Instance mono_listRF_contractive `{SI : indexT} F :
   oFunctorContractive F → rFunctorContractive (mono_listRF F).
 Proof. apply _. Qed.

@@ -27,7 +27,7 @@ Definition to_mra {A} {R : relation A} (a : A) : mra R :=
 Global Arguments mra_car {_ _} _.
 
 Section mra.
-  Context {A} {R : relation A}.
+  Context `{SI : indexT} {A} {R : relation A}.
   Implicit Types a b : A.
   Implicit Types x y : mra R.
 
@@ -103,7 +103,7 @@ Section mra.
   Proof. intros a. set_solver. Qed.
 
   Lemma mra_included x y : x ≼ y ↔ y ≡ x ⋅ y.
-  Proof.
+  Proof using SI.
     split; [|by intros ?; exists y].
     intros [z ->]; rewrite assoc mra_idemp; done.
   Qed.
@@ -139,16 +139,16 @@ Section mra.
   Qed.
 End mra.
 
-Global Arguments mraO {_} _.
-Global Arguments mraR {_} _.
-Global Arguments mraUR {_} _.
+Global Arguments mraO {_ _} _.
+Global Arguments mraR {_ _} _.
+Global Arguments mraUR {_ _} _.
 
 (** If [R] is a partial order, relative to a reflexive relation [S] on the
 carrier [A], then [to_mra] is proper and injective. The theory for
 arbitrary relations [S] is overly general, so we do not declare the results
 as instances. Below we provide instances for [S] being [=] and [≡]. *)
 Section mra_over_rel.
-  Context {A} {R : relation A} (S : relation A).
+  Context `{SI : indexT} {A} {R : relation A} (S : relation A).
   Implicit Types a b : A.
   Implicit Types x y : mra R.
 
@@ -168,19 +168,19 @@ Section mra_over_rel.
   Qed.
 End mra_over_rel.
 
-Global Instance to_mra_inj {A} {R : relation A} :
+Global Instance to_mra_inj `{SI : indexT} {A} {R : relation A} :
   Reflexive R →
   AntiSymm (=) R →
   Inj (=) (≡@{mra R}) (to_mra) | 0. (* Lower cost than [to_mra_equiv_inj] *)
 Proof. intros. by apply (to_mra_rel_inj (=)). Qed.
 
-Global Instance to_mra_proper `{Equiv A} {R : relation A} :
+Global Instance to_mra_proper `{SI : indexT} `{Equiv A} {R : relation A} :
   Reflexive (≡@{A}) →
   Proper ((≡) ==> (≡) ==> iff) R →
   Proper ((≡) ==> (≡@{mra R})) (to_mra).
 Proof. intros. by apply (to_mra_rel_proper (≡)). Qed.
 
-Global Instance to_mra_equiv_inj `{Equiv A} {R : relation A} :
+Global Instance to_mra_equiv_inj `{SI : indexT} `{Equiv A} {R : relation A} :
   Reflexive R →
   AntiSymm (≡) R →
   Inj (≡) (≡@{mra R}) (to_mra) | 1.

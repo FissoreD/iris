@@ -20,9 +20,9 @@ From iris.algebra Require Export auth frac updates local_updates.
 From iris.algebra Require Import ufrac proofmode_classes.
 From iris.prelude Require Import options.
 
-Definition ufrac_authR (A : cmra) : cmra :=
+Definition ufrac_authR `{SI : indexT} (A : cmra) : cmra :=
   authR (optionUR (prodR ufracR A)).
-Definition ufrac_authUR (A : cmra) : ucmra :=
+Definition ufrac_authUR `{SI : indexT} (A : cmra) : ucmra :=
   authUR (optionUR (prodR ufracR A)).
 
 (** Note in the signature of [ufrac_auth_auth] and [ufrac_auth_frag] we use
@@ -32,30 +32,30 @@ instances with carrier [Qp], namely [fracR] and [ufracR]. When writing things
 like [ufrac_auth_auth q a ∧ ✓ q] we want Coq to infer the type of [q] as [Qp]
 such that the [✓] of the default [fracR] camera is used, and not the [✓] of
 the [ufracR] camera. *)
-Definition ufrac_auth_auth {A : cmra} (q : Qp) (x : A) : ufrac_authR A :=
+Definition ufrac_auth_auth `{SI : indexT} {A : cmra} (q : Qp) (x : A) : ufrac_authR A :=
   ● (Some (q : ufracR,x)).
-Definition ufrac_auth_frag {A : cmra} (q : Qp) (x : A) : ufrac_authR A :=
+Definition ufrac_auth_frag `{SI : indexT} {A : cmra} (q : Qp) (x : A) : ufrac_authR A :=
   ◯ (Some (q : ufracR,x)).
 
 Global Typeclasses Opaque ufrac_auth_auth ufrac_auth_frag.
 
-Global Instance: Params (@ufrac_auth_auth) 2 := {}.
-Global Instance: Params (@ufrac_auth_frag) 2 := {}.
+Global Instance: Params (@ufrac_auth_auth) 3 := {}.
+Global Instance: Params (@ufrac_auth_frag) 3 := {}.
 
 Notation "●U_ q a" := (ufrac_auth_auth q a) (at level 10, q at level 9, format "●U_ q  a").
 Notation "◯U_ q a" := (ufrac_auth_frag q a) (at level 10, q at level 9, format "◯U_ q  a").
 
 Section ufrac_auth.
-  Context {A : cmra}.
+  Context `{SI : indexT} {A : cmra}.
   Implicit Types a b : A.
 
-  Global Instance ufrac_auth_auth_ne q : NonExpansive (@ufrac_auth_auth A q).
+  Global Instance ufrac_auth_auth_ne q : NonExpansive (@ufrac_auth_auth SI A q).
   Proof. solve_proper. Qed.
-  Global Instance ufrac_auth_auth_proper q : Proper ((≡) ==> (≡)) (@ufrac_auth_auth A q).
+  Global Instance ufrac_auth_auth_proper q : Proper ((≡) ==> (≡)) (@ufrac_auth_auth SI A q).
   Proof. solve_proper. Qed.
-  Global Instance ufrac_auth_frag_ne q : NonExpansive (@ufrac_auth_frag A q).
+  Global Instance ufrac_auth_frag_ne q : NonExpansive (@ufrac_auth_frag SI A q).
   Proof. solve_proper. Qed.
-  Global Instance ufrac_auth_frag_proper q : Proper ((≡) ==> (≡)) (@ufrac_auth_frag A q).
+  Global Instance ufrac_auth_frag_proper q : Proper ((≡) ==> (≡)) (@ufrac_auth_frag SI A q).
   Proof. solve_proper. Qed.
 
   Global Instance ufrac_auth_auth_discrete q a : Discrete a → Discrete (●U_q a).
@@ -155,16 +155,16 @@ Section ufrac_auth.
   Qed.
 End ufrac_auth.
 
-Definition ufrac_authURF (F : rFunctor) : urFunctor :=
+Definition ufrac_authURF `{SI : indexT} (F : rFunctor) : urFunctor :=
   authURF (optionURF (prodRF (constRF ufracR) F)).
 
-Global Instance ufrac_authURF_contractive F :
+Global Instance ufrac_authURF_contractive `{SI : indexT} F :
   rFunctorContractive F → urFunctorContractive (ufrac_authURF F).
 Proof. apply _. Qed.
 
-Definition ufrac_authRF (F : rFunctor) : rFunctor :=
+Definition ufrac_authRF `{SI : indexT} (F : rFunctor) : rFunctor :=
   authRF (optionURF (prodRF (constRF ufracR) F)).
 
-Global Instance ufrac_authRF_contractive F :
+Global Instance ufrac_authRF_contractive `{SI : indexT} F :
   rFunctorContractive F → rFunctorContractive (ufrac_authRF F).
 Proof. apply _. Qed.

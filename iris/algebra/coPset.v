@@ -7,6 +7,7 @@ generalize the construction without breaking canonical structures. *)
 
 (* The union CMRA *)
 Section coPset.
+  Context `{SI : indexT}.
   Implicit Types X Y : coPset.
 
   Canonical Structure coPsetO := discreteO coPset.
@@ -47,7 +48,7 @@ Section coPset.
   Canonical Structure coPsetUR := Ucmra coPset coPset_ucmra_mixin.
 
   Lemma coPset_opM X mY : X ⋅? mY = X ∪ default ∅ mY.
-  Proof. destruct mY; by rewrite /= ?right_id_L. Qed.
+  Proof using SI. destruct mY; by rewrite /= ?right_id_L. Qed.
 
   Lemma coPset_update X Y : X ~~> Y.
   Proof. done. Qed.
@@ -66,6 +67,7 @@ Inductive coPset_disj :=
   | CoPsetBot : coPset_disj.
 
 Section coPset_disj.
+  Context `{SI : indexT}.
   Local Arguments op _ _ !_ !_ /.
   Canonical Structure coPset_disjO := leibnizO coPset_disj.
 

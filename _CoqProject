@@ -24,6 +24,8 @@
 
 iris/prelude/options.v
 iris/prelude/prelude.v
+iris/algebra/stepindex.v
+iris/algebra/finite_stepindex.v
 iris/algebra/monoid.v
 iris/algebra/cmra.v
 iris/algebra/big_op.v

@@ -43,6 +43,7 @@ Notation "{# q }" := (DfracOwn q) (in custom dfrac at level 1, q constr).
 Notation "" := (DfracOwn 1) (in custom dfrac).
 
 Section dfrac.
+  Context `{SI : indexT}.
   Canonical Structure dfracO := leibnizO dfrac.
 
   Implicit Types p q : Qp.
@@ -189,7 +190,7 @@ Section dfrac.
   Qed.
 
   Lemma dfrac_valid_own_l dq q : ✓ (DfracOwn q ⋅ dq) → (q < 1)%Qp.
-  Proof. rewrite comm. apply dfrac_valid_own_r. Qed.
+  Proof using SI. rewrite comm. apply dfrac_valid_own_r. Qed.
 
   Lemma dfrac_valid_discarded : ✓ DfracDiscarded.
   Proof. done. Qed.

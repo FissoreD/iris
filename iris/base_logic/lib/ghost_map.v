@@ -205,7 +205,9 @@ Section lemmas.
     ghost_map_auth γ q1 m1 -∗ ghost_map_auth γ q2 m2 -∗ ⌜(q1 + q2 ≤ 1)%Qp ∧ m1 = m2⌝.
   Proof.
     unseal. iIntros "H1 H2".
-    iCombine "H1 H2" gives %[? ?%(inj _)]%gmap_view_auth_dfrac_op_valid.
+    iCombine "H1 H2" gives %[? Hm]%gmap_view_auth_dfrac_op_valid.
+    (* FIXME: Why doesn't [apply (inj _) in Hm] work? *)
+    apply (map_fmap_equiv_inj _ (@to_agree_inj natI (leibnizO V))) in Hm.
     iPureIntro. split; first done. by fold_leibniz.
   Qed.
   Lemma ghost_map_auth_agree γ q1 q2 m1 m2 :
@@ -225,7 +227,9 @@ Section lemmas.
       %(av' & _ & _ & Hav' & _ & Hincl)%gmap_view_both_dfrac_valid_discrete_total.
     iPureIntro.
     apply lookup_fmap_Some in Hav' as [v' [<- Hv']].
-    apply to_agree_included_L in Hincl. by rewrite Hincl.
+    (* FIXME: Why do we need [(SI:=natI) (A:=leibnizO V)] *)
+    apply (to_agree_included_L (SI:=natI) (A:=leibnizO V)) in Hincl.
+    by rewrite Hincl.
   Qed.
 
   Global Instance ghost_map_lookup_combine_gives_1 {γ q m k dq v} :
@@ -332,7 +336,7 @@ Section lemmas.
     iApply (own_update_2 with "Hauth Hfrag").
     rewrite map_fmap_union.
     rewrite -!(big_opM_fmap to_agree (λ k, gmap_view_frag k (DfracOwn 1))).
-    apply gmap_view_replace_big.
+    apply: gmap_view_replace_big.
     - rewrite !dom_fmap_L. done.
     - by apply map_Forall_fmap.
   Qed.

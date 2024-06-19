@@ -1,7 +1,7 @@
 From iris.algebra Require Export cmra.
 From iris.prelude Require Import options.
 
-Local Arguments validN _ _ _ !_ /.
+Local Arguments validN _ _ _ _ !_ /.
 Local Arguments valid _ _  !_ /.
 
 Inductive excl (A : Type) :=
@@ -21,7 +21,7 @@ Global Instance maybe_Excl {A} : Maybe (@Excl A) := λ x,
   match x with Excl a => Some a | _ => None end.
 
 Section excl.
-Context {A : ofe}.
+Context `{SI : indexT} {A : ofe}.
 Implicit Types a b : A.
 Implicit Types x y : excl A.
 
@@ -80,10 +80,10 @@ Local Instance excl_op_instance : Op (excl A) := λ x y, ExclBot.
 Lemma excl_cmra_mixin : CmraMixin (excl A).
 Proof.
   split; try discriminate.
-  - by intros n []; destruct 1; constructor.
+  - by intros [] n; destruct 1; constructor.
   - by destruct 1; intros ?.
-  - intros x; split; [done|]. by move=> /(_ 0).
-  - intros n [?|]; simpl; auto with lia.
+  - intros x; split; [done|]. by move=> /(_ zero).
+  - intros n m [?|]; simpl; auto.
   - by intros [?|] [?|] [?|]; constructor.
   - by intros [?|] [?|]; constructor.
   - by intros n [?|] [?|].
@@ -121,8 +121,8 @@ End excl.
   confused by going from [ucmra]'s to [cmra]'s and back. *)
 Global Hint Extern 0 (_ ≼ ExclBot) => apply: ExclBot_included : core.
 
-Global Arguments exclO : clear implicits.
-Global Arguments exclR : clear implicits.
+Global Arguments exclO {_} _.
+Global Arguments exclR {_} _.
 
 (* Functor *)
 Definition excl_map {A B} (f : A → B) (x : excl A) : excl B :=
@@ -132,37 +132,37 @@ Proof. by destruct x. Qed.
 Lemma excl_map_compose {A B C} (f : A → B) (g : B → C) (x : excl A) :
   excl_map (g ∘ f) x = excl_map g (excl_map f x).
 Proof. by destruct x. Qed.
-Lemma excl_map_ext {A B : ofe} (f g : A → B) x :
+Lemma excl_map_ext `{SI : indexT} {A B : ofe} (f g : A → B) x :
   (∀ x, f x ≡ g x) → excl_map f x ≡ excl_map g x.
 Proof. by destruct x; constructor. Qed.
-Global Instance excl_map_ne {A B : ofe} n :
+Global Instance excl_map_ne `{SI : indexT} {A B : ofe} n :
   Proper ((dist n ==> dist n) ==> dist n ==> dist n) (@excl_map A B).
 Proof. by intros f f' Hf; destruct 1; constructor; apply Hf. Qed.
-Global Instance excl_map_cmra_morphism {A B : ofe} (f : A → B) :
+Global Instance excl_map_cmra_morphism `{SI : indexT} {A B : ofe} (f : A → B) :
   NonExpansive f → CmraMorphism (excl_map f).
 Proof. split; try done; try apply _. by intros n [a|]. Qed.
-Definition exclO_map {A B} (f : A -n> B) : exclO A -n> exclO B :=
+Definition exclO_map `{SI : indexT} {A B} (f : A -n> B) : exclO A -n> exclO B :=
   OfeMor (excl_map f).
-Global Instance exclO_map_ne A B : NonExpansive (@exclO_map A B).
+Global Instance exclO_map_ne `{SI : indexT} A B : NonExpansive (@exclO_map SI A B).
 Proof. by intros n f f' Hf []; constructor; apply Hf. Qed.
 
-Program Definition exclRF (F : oFunctor) : rFunctor := {|
+Program Definition exclRF `{SI : indexT} (F : oFunctor) : rFunctor := {|
   rFunctor_car A _ B _ := (exclR (oFunctor_car F A B));
   rFunctor_map A1 _ A2 _ B1 _ B2 _ fg := exclO_map (oFunctor_map F fg)
 |}.
 Next Obligation.
-  intros F A1 ? A2 ? B1 ? B2 ? n x1 x2 ??. by apply exclO_map_ne, oFunctor_map_ne.
+  intros ? F A1 ? A2 ? B1 ? B2 ? n x1 x2 ??. by apply exclO_map_ne, oFunctor_map_ne.
 Qed.
 Next Obligation.
-  intros F A ? B ? x; simpl. rewrite -{2}(excl_map_id x).
+  intros ? F A ? B ? x; simpl. rewrite -{2}(excl_map_id x).
   apply excl_map_ext=>y. by rewrite oFunctor_map_id.
 Qed.
 Next Obligation.
-  intros F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x; simpl. rewrite -excl_map_compose.
+  intros ? F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x; simpl. rewrite -excl_map_compose.
   apply excl_map_ext=>y; apply oFunctor_map_compose.
 Qed.
 
-Global Instance exclRF_contractive F :
+Global Instance exclRF_contractive `{SI : indexT} F :
   oFunctorContractive F → rFunctorContractive (exclRF F).
 Proof.
   intros A1 ? A2 ? B1 ? B2 ? n x1 x2 ??. by apply exclO_map_ne, oFunctor_map_contractive.

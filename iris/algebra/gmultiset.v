@@ -5,7 +5,7 @@ From iris.prelude Require Import options.
 
 (* The multiset union CMRA *)
 Section gmultiset.
-  Context `{Countable K}.
+  Context `{Countable K} `{SI : indexT}.
   Implicit Types X Y : gmultiset K.
 
   Canonical Structure gmultisetO := discreteO (gmultiset K).
@@ -95,6 +95,6 @@ Section gmultiset.
 
 End gmultiset.
 
-Global Arguments gmultisetO _ {_ _}.
-Global Arguments gmultisetR _ {_ _}.
-Global Arguments gmultisetUR _ {_ _}.
+Global Arguments gmultisetO _ {_ _ _}.
+Global Arguments gmultisetR _ {_ _ _}.
+Global Arguments gmultisetUR _ {_ _ _}.

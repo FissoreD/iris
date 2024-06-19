@@ -67,8 +67,8 @@ Section cofe.
 
     Global Instance monPred_cofe `{!Cofe PROP} : Cofe monPredO.
     Proof.
-      unshelve refine (iso_cofe_subtype (A:=I-d>PROP) _ MonPred monPred_at _ _ _);
-        [apply _|by apply monPred_sig_dist|done|].
+      unshelve refine (@cofe_from_finite_cofe _ (iso_finite_cofe_subtype (A:=I-d>PROP) _ MonPred monPred_at _ _ _));
+        [apply _|by apply monPred_sig_dist|done| ].
       intros c i j Hij. apply @limit_preserving;
         [by apply bi.limit_preserving_entails; intros ??|]=>n. by rewrite Hij.
     Qed.

@@ -33,15 +33,15 @@ Global Instance: Params (@ReservationMap) 1 := {}.
 Global Instance: Params (@reservation_map_data_proj) 1 := {}.
 Global Instance: Params (@reservation_map_token_proj) 1 := {}.
 
-Definition reservation_map_data {A : cmra} (k : positive) (a : A) : reservation_map A :=
+Definition reservation_map_data `{SI : indexT} {A : cmra} (k : positive) (a : A) : reservation_map A :=
   ReservationMap {[ k := a ]} ε.
-Definition reservation_map_token {A : cmra} (E : coPset) : reservation_map A :=
+Definition reservation_map_token `{SI : indexT} {A : cmra} (E : coPset) : reservation_map A :=
   ReservationMap ∅ (CoPset E).
-Global Instance: Params (@reservation_map_data) 2 := {}.
+Global Instance: Params (@reservation_map_data) 3 := {}.
 
 (* Ofe *)
 Section ofe.
-  Context {A : ofe}.
+  Context `{SI : indexT} {A : ofe}.
   Implicit Types x y : reservation_map A.
 
   Local Instance reservation_map_equiv : Equiv (reservation_map A) := λ x y,
@@ -80,24 +80,24 @@ Section ofe.
   Proof. intros ? [??]; apply _. Qed.
 End ofe.
 
-Global Arguments reservation_mapO : clear implicits.
+Global Arguments reservation_mapO {_} _.
 
 (* Camera *)
 Section cmra.
-  Context {A : cmra}.
+  Context `{SI : indexT} {A : cmra}.
   Implicit Types a b : A.
   Implicit Types x y : reservation_map A.
   Implicit Types k : positive.
 
-  Global Instance reservation_map_data_ne i : NonExpansive (@reservation_map_data A i).
+  Global Instance reservation_map_data_ne i : NonExpansive (@reservation_map_data SI A i).
   Proof. solve_proper. Qed.
   Global Instance reservation_map_data_proper k :
-    Proper ((≡) ==> (≡)) (@reservation_map_data A k).
+    Proper ((≡) ==> (≡)) (@reservation_map_data SI A k).
   Proof. solve_proper. Qed.
   Global Instance reservation_map_data_discrete k a :
     Discrete a → Discrete (reservation_map_data k a).
   Proof. intros. apply ReservationMap_discrete; apply _. Qed.
-  Global Instance reservation_map_token_discrete E : Discrete (@reservation_map_token A E).
+  Global Instance reservation_map_token_discrete E : Discrete (@reservation_map_token SI A E).
   Proof. intros. apply ReservationMap_discrete; apply _. Qed.
 
   Local Instance reservation_map_valid_instance : Valid (reservation_map A) := λ x,
@@ -149,12 +149,12 @@ Section cmra.
     split; [intros [[z1 z2] Hz]; split; [exists z1|exists z2]; apply Hz|].
     intros [[z1 Hz1] [z2 Hz2]]; exists (ReservationMap z1 z2); split; auto.
   Qed.
-  
+
   Lemma reservation_map_data_proj_validN n x : ✓{n} x → ✓{n} reservation_map_data_proj x.
   Proof. by destruct x as [? [?|]]=> // -[??]. Qed.
   Lemma reservation_map_token_proj_validN n x : ✓{n} x → ✓{n} reservation_map_token_proj x.
   Proof. by destruct x as [? [?|]]=> // -[??]. Qed.
-  
+
   Lemma reservation_map_cmra_mixin : CmraMixin (reservation_map A).
   Proof.
     apply cmra_total_mixin.
@@ -165,9 +165,9 @@ Section cmra.
       + by rewrite -Hm.
       + intros i. by rewrite -(dist_None n) -Hm dist_None.
     - intros [m [E|]]; rewrite reservation_map_valid_eq reservation_map_validN_eq /=
-        ?cmra_valid_validN; naive_solver eauto using O.
-    - intros n [m [E|]]; rewrite reservation_map_validN_eq /=;
-        naive_solver eauto using cmra_validN_S.
+        ?cmra_valid_validN; naive_solver eauto using zero.
+    - intros n m [k [E|]]; rewrite reservation_map_validN_eq /=;
+        naive_solver eauto using cmra_validN_le.
     - split; simpl; [by rewrite assoc|by rewrite assoc_L].
     - split; simpl; [by rewrite comm|by rewrite comm_L].
     - split; simpl; [by rewrite cmra_core_l|by rewrite left_id_L].
@@ -268,7 +268,7 @@ Section cmra.
       + by rewrite lookup_singleton_ne // left_id_L.
     - intros j. destruct (decide (k = j)); first set_solver.
       rewrite lookup_op lookup_singleton_ne //.
-      destruct (Hdisj j) as [Hmfi|?]; last set_solver. rewrite Hmfi; auto.
+      destruct (Hdisj j) as [Hmfi|?]; last set_solver. rewrite Hmfi. auto.
   Qed.
   Lemma reservation_map_updateP P (Q : reservation_map A → Prop) k a :
     a ~~>: P →
@@ -297,5 +297,5 @@ Section cmra.
   Qed.
 End cmra.
 
-Global Arguments reservation_mapR : clear implicits.
-Global Arguments reservation_mapUR : clear implicits.
+Global Arguments reservation_mapR {_} _.
+Global Arguments reservation_mapUR {_} _.

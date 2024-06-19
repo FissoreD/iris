@@ -242,7 +242,7 @@ Section internal_eq_derived.
       set (h1 (f : A -n> B) :=
         exist (λ f : A -d> B, NonExpansive (f : A → B)) f (ofe_mor_ne A B f)).
       set (h2 (f : sigO (λ f : A -d> B, NonExpansive (f : A → B))) :=
-        @OfeMor A B (`f) (proj2_sig f)).
+        @OfeMor _ A B (`f) (proj2_sig f)).
       assert (∀ f, h2 (h1 f) = f) as Hh by (by intros []).
       assert (NonExpansive h2) by (intros ??? EQ; apply EQ).
       by rewrite -{2}[f]Hh -{2}[g]Hh -f_equivI -sig_equivI.

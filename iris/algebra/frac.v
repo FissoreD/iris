@@ -13,6 +13,7 @@ From iris.prelude Require Import options.
 Notation frac := Qp (only parsing).
 
 Section frac.
+  Context `{SI : indexT}.
   Canonical Structure fracO := leibnizO frac.
 
   Local Instance frac_valid_instance : Valid frac := λ x, (x ≤ 1)%Qp.

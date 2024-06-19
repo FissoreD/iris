@@ -6,28 +6,28 @@ From iris.prelude Require Import options.
    make the following hold:
      x ~~> P → Some c ~~> Some P
 *)
-Definition cmra_updateP {A : cmra} (x : A) (P : A → Prop) := ∀ n mz,
+Definition cmra_updateP `{SI : indexT} {A : cmra} (x : A) (P : A → Prop) := ∀ n mz,
   ✓{n} (x ⋅? mz) → ∃ y, P y ∧ ✓{n} (y ⋅? mz).
 Global Instance: Params (@cmra_updateP) 1 := {}.
 Infix "~~>:" := cmra_updateP (at level 70).
 
-Definition cmra_update {A : cmra} (x y : A) := ∀ n mz,
+Definition cmra_update `{SI : indexT} {A : cmra} (x y : A) := ∀ n mz,
   ✓{n} (x ⋅? mz) → ✓{n} (y ⋅? mz).
 Infix "~~>" := cmra_update (at level 70).
 Global Instance: Params (@cmra_update) 1 := {}.
 
 Section updates.
-Context {A : cmra}.
+Context `{SI : indexT} {A : cmra}.
 Implicit Types x y : A.
 
 Global Instance cmra_updateP_proper :
-  Proper ((≡) ==> pointwise_relation _ iff ==> iff) (@cmra_updateP A).
+  Proper ((≡) ==> pointwise_relation _ iff ==> iff) (@cmra_updateP SI A).
 Proof.
   rewrite /pointwise_relation /cmra_updateP=> x x' Hx P P' HP;
     split=> ? n mz; setoid_subst; naive_solver.
 Qed.
 Global Instance cmra_update_proper :
-  Proper ((≡) ==> (≡) ==> iff) (@cmra_update A).
+  Proper ((≡) ==> (≡) ==> iff) (@cmra_update SI A).
 Proof.
   rewrite /cmra_update=> x x' Hx y y' Hy; split=> ? n mz ?; setoid_subst; auto.
 Qed.
@@ -56,8 +56,8 @@ Proof. move=>??[z|]=>[/exclusiveN_l[]|_]. by apply cmra_valid_validN. Qed.
   ([impl], [iff], [eq], ...) and [≡] but below [⊑].
   [eq] (at 100) < [≡] (at 150) < [cmra_update] (at 170) < [⊑] (at 200) *)
 Global Instance cmra_update_rewrite_relation :
-  RewriteRelation (@cmra_update A) | 170 := {}.
-Global Instance cmra_update_preorder : PreOrder (@cmra_update A).
+  RewriteRelation (@cmra_update SI A) | 170 := {}.
+Global Instance cmra_update_preorder : PreOrder (@cmra_update SI A).
 Proof.
   split.
   - intros x. by apply cmra_update_updateP, cmra_updateP_id.
@@ -65,12 +65,12 @@ Proof.
     eauto using cmra_updateP_compose with subst.
 Qed.
 Global Instance cmra_update_proper_update :
-  Proper (flip cmra_update ==> cmra_update ==> impl) (@cmra_update A).
+  Proper (flip cmra_update ==> cmra_update ==> impl) (@cmra_update SI A).
 Proof.
   intros x1 x2 Hx y1 y2 Hy ?. etrans; [apply Hx|]. by etrans; [|apply Hy].
 Qed.
 Global Instance cmra_update_flip_proper_update :
-  Proper (cmra_update ==> flip cmra_update ==> flip impl) (@cmra_update A).
+  Proper (cmra_update ==> flip cmra_update ==> flip impl) (@cmra_update SI A).
 Proof.
   intros x1 x2 Hx y1 y2 Hy ?. etrans; [apply Hx|]. by etrans; [|apply Hy].
 Qed.
@@ -110,10 +110,10 @@ Proof. rewrite comm. apply cmra_update_op_l. Qed.
 Lemma cmra_update_included x y : x ≼ y → y ~~> x.
 Proof. intros [z ->]. apply cmra_update_op_l. Qed.
 
-Lemma cmra_update_valid0 x y : (✓{0} x → x ~~> y) → x ~~> y.
+Lemma cmra_update_valid0 x y : (✓{zero} x → x ~~> y) → x ~~> y.
 Proof.
   intros H n mz Hmz. apply H, Hmz.
-  apply (cmra_validN_le n); last lia.
+  apply (cmra_validN_le n); last stepindex.
   destruct mz.
   - eapply cmra_validN_op_l, Hmz.
   - apply Hmz.
@@ -136,33 +136,33 @@ Lemma cmra_discrete_updateP `{!CmraDiscrete A} (x : A) (P : A → Prop) :
   x ~~>: P ↔ ∀ mz, ✓ (x ⋅? mz) → ∃ y, P y ∧ ✓ (y ⋅? mz).
 Proof.
   unfold cmra_updateP. setoid_rewrite <-cmra_discrete_valid_iff.
-  naive_solver eauto using O.
+  naive_solver eauto using zero.
 Qed.
 Lemma cmra_discrete_update `{!CmraDiscrete A} (x y : A) :
   x ~~> y ↔ ∀ mz, ✓ (x ⋅? mz) → ✓ (y ⋅? mz).
 Proof.
   unfold cmra_update. setoid_rewrite <-cmra_discrete_valid_iff.
-  naive_solver eauto using O.
+  naive_solver eauto using zero.
 Qed.
 
-Lemma cmra_discrete_total_updateP `{!CmraDiscrete A, CmraTotal A}
+Lemma cmra_discrete_total_updateP `{!CmraDiscrete A, !CmraTotal A}
     (x : A) (P : A → Prop) :
   x ~~>: P ↔ ∀ z, ✓ (x ⋅ z) → ∃ y, P y ∧ ✓ (y ⋅ z).
 Proof.
   rewrite cmra_total_updateP; setoid_rewrite <-cmra_discrete_valid_iff.
-  naive_solver eauto using O.
+  naive_solver eauto using zero.
 Qed.
-Lemma cmra_discrete_total_update `{!CmraDiscrete A, CmraTotal A} (x y : A) :
+Lemma cmra_discrete_total_update `{!CmraDiscrete A, !CmraTotal A} (x y : A) :
   x ~~> y ↔ ∀ z, ✓ (x ⋅ z) → ✓ (y ⋅ z).
 Proof.
   rewrite cmra_total_update; setoid_rewrite <-cmra_discrete_valid_iff.
-  naive_solver eauto using O.
+  naive_solver eauto using zero.
 Qed.
 End updates.
 
 (** * Transport *)
 Section cmra_transport.
-  Context {A B : cmra} (H : A = B).
+  Context `{SI : indexT} {A B : cmra} (H : A = B).
   Notation T := (cmra_transport H).
   Lemma cmra_transport_updateP (P : A → Prop) (Q : B → Prop) x :
     x ~~>: P → (∀ y, P y → Q (T y)) → T x ~~>: Q.
@@ -174,7 +174,7 @@ End cmra_transport.
 
 (** * Isomorphism *)
 Section iso_cmra.
-  Context {A B : cmra} (f : A → B) (g : B → A).
+  Context `{SI : indexT} {A B : cmra} (f : A → B) (g : B → A).
 
   Lemma iso_cmra_updateP (P : B → Prop) (Q : A → Prop) y
       (gf : ∀ x, g (f x) ≡ x)
@@ -203,7 +203,7 @@ Section iso_cmra.
 End iso_cmra.
 
 Section update_lift_cmra.
-  Context {A B : cmra}.
+  Context `{SI : indexT} {A B : cmra}.
   Implicit Types a : A.
   Implicit Types b : B.
 
@@ -225,7 +225,7 @@ End update_lift_cmra.
 
 (** * Product *)
 Section prod.
-  Context {A B : cmra}.
+  Context `{SI : indexT} {A B : cmra}.
   Implicit Types x : A * B.
 
   Lemma prod_updateP P1 P2 (Q : A * B → Prop) x :
@@ -248,7 +248,7 @@ End prod.
 
 (** * Option *)
 Section option.
-  Context {A : cmra}.
+  Context `{SI : indexT} {A : cmra}.
   Implicit Types x y : A.
 
   Lemma option_updateP (P : A → Prop) (Q : option A → Prop) x :

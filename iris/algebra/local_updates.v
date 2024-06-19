@@ -2,20 +2,20 @@ From iris.algebra Require Export cmra.
 From iris.prelude Require Import options.
 
 (** * Local updates *)
-Definition local_update {A : cmra} (x y : A * A) := ∀ n mz,
+Definition local_update `{SI : indexT} {A : cmra} (x y : A * A) := ∀ n mz,
   ✓{n} x.1 → x.1 ≡{n}≡ x.2 ⋅? mz → ✓{n} y.1 ∧ y.1 ≡{n}≡ y.2 ⋅? mz.
-Global Instance: Params (@local_update) 1 := {}.
+Global Instance: Params (@local_update) 2 := {}.
 Infix "~l~>" := local_update (at level 70).
 
 Section updates.
-  Context {A : cmra}.
+  Context `{SI : indexT} {A : cmra}.
   Implicit Types x y : A.
 
   Global Instance local_update_proper :
-    Proper ((≡) ==> (≡) ==> iff) (@local_update A).
+    Proper ((≡) ==> (≡) ==> iff) (@local_update SI A).
   Proof. unfold local_update. by repeat intro; setoid_subst. Qed.
 
-  Global Instance local_update_preorder : PreOrder (@local_update A).
+  Global Instance local_update_preorder : PreOrder (@local_update SI A).
   Proof. split; unfold local_update; red; naive_solver. Qed.
 
   Lemma exclusive_local_update `{!Exclusive y} x x' : ✓ x' → (x,y) ~l~> (x',x').
@@ -72,29 +72,29 @@ Section updates.
   Proof.
     rewrite /local_update /=. setoid_rewrite <-cmra_discrete_valid_iff.
     setoid_rewrite <-(λ n, discrete_iff n x).
-    setoid_rewrite <-(λ n, discrete_iff n x'). naive_solver eauto using O.
+    setoid_rewrite <-(λ n, discrete_iff n x'). naive_solver eauto using zero.
   Qed.
 
   Lemma local_update_valid0 x y x' y' :
-    (✓{0} x → ✓{0} y → Some y ≼{0} Some x → (x,y) ~l~> (x',y')) →
+    (✓{zero} x → ✓{zero} y → Some y ≼{zero} Some x → (x,y) ~l~> (x',y')) →
     (x,y) ~l~> (x',y').
   Proof.
     intros Hup n mz Hmz Hz; simpl in *. apply Hup; auto.
-    - by apply (cmra_validN_le n); last lia.
-    - apply (cmra_validN_le n); last lia.
+    - by apply (cmra_validN_le n); stepindex.
+    - apply (cmra_validN_le n); last stepindex.
       move: Hmz; rewrite Hz. destruct mz; simpl; eauto using cmra_validN_op_l.
-    - eapply (cmra_includedN_le n); last lia.
+    - eapply (cmra_includedN_le n); last auto using index_zero_minimum.
       apply Some_includedN_opM. eauto.
   Qed.
   Lemma local_update_valid `{!CmraDiscrete A} x y x' y' :
     (✓ x → ✓ y → Some y ≼ Some x → (x,y) ~l~> (x',y')) → (x,y) ~l~> (x',y').
   Proof.
-    rewrite !(cmra_discrete_valid_iff 0) (cmra_discrete_included_iff 0).
+    rewrite !(cmra_discrete_valid_iff zero) (cmra_discrete_included_iff zero).
     apply local_update_valid0.
   Qed.
 
   Lemma local_update_total_valid0 `{!CmraTotal A} x y x' y' :
-    (✓{0} x → ✓{0} y → y ≼{0} x → (x,y) ~l~> (x',y')) → (x,y) ~l~> (x',y').
+    (✓{zero} x → ✓{zero} y → y ≼{zero} x → (x,y) ~l~> (x',y')) → (x,y) ~l~> (x',y').
   Proof.
     intros Hup. apply local_update_valid0=> ?? Hincl. apply Hup; auto.
     by apply Some_includedN_total.
@@ -102,13 +102,13 @@ Section updates.
   Lemma local_update_total_valid `{!CmraTotal A, !CmraDiscrete A} x y x' y' :
     (✓ x → ✓ y → y ≼ x → (x,y) ~l~> (x',y')) → (x,y) ~l~> (x',y').
   Proof.
-    rewrite !(cmra_discrete_valid_iff 0) (cmra_discrete_included_iff 0).
+    rewrite !(cmra_discrete_valid_iff zero) (cmra_discrete_included_iff zero).
     apply local_update_total_valid0.
   Qed.
 End updates.
 
 Section updates_unital.
-  Context {A : ucmra}.
+  Context `{SI : indexT} {A : ucmra}.
   Implicit Types x y : A.
 
   Lemma local_update_unital x y x' y' :
@@ -135,84 +135,99 @@ Section updates_unital.
   Proof. rewrite -{2}(right_id ε op x). by apply cancel_local_update. Qed.
 End updates_unital.
 
-(** * Unit *)
-Lemma unit_local_update (x y x' y' : unit) : (x, y) ~l~> (x', y').
-Proof. destruct x,y,x',y'; reflexivity. Qed.
+Section updates_unit.
+  Context `{SI : indexT}.
+  (** * Unit *)
+  Lemma unit_local_update (x y x' y' : unit) : (x, y) ~l~> (x', y').
+  Proof. destruct x,y,x',y'; reflexivity. Qed.
+End updates_unit.
 
-(** * Dependently-typed functions over a discrete domain *)
-Lemma discrete_fun_local_update {A} {B : A → ucmra} (f g f' g' : discrete_fun B) :
-  (∀ x : A, (f x, g x) ~l~> (f' x, g' x)) →
-  (f, g) ~l~> (f', g').
-Proof.
-  setoid_rewrite local_update_unital. intros Hupd n h Hf Hg.
-  split=> x; eapply Hupd, Hg; eauto.
-Qed.
+Section updates_discrete_fun.
+  Context `{SI : indexT}.
+  (** * Dependently-typed functions over a discrete domain *)
+  Lemma discrete_fun_local_update {A} {B : A → ucmra} (f g f' g' : discrete_fun B) :
+    (∀ x : A, (f x, g x) ~l~> (f' x, g' x)) →
+    (f, g) ~l~> (f', g').
+  Proof.
+    setoid_rewrite local_update_unital. intros Hupd n h Hf Hg.
+    split=> x; eapply Hupd, Hg; eauto.
+  Qed.
+End updates_discrete_fun.
 
-(** * Product *)
-Lemma prod_local_update {A B : cmra} (x y x' y' : A * B) :
-  (x.1,y.1) ~l~> (x'.1,y'.1) → (x.2,y.2) ~l~> (x'.2,y'.2) →
-  (x,y) ~l~> (x',y').
-Proof.
-  intros Hup1 Hup2 n mz [??] [??]; simpl in *.
-  destruct (Hup1 n (fst <$> mz)); [done|by destruct mz|].
-  destruct (Hup2 n (snd <$> mz)); [done|by destruct mz|].
-  by destruct mz.
-Qed.
+Section updates_product.
+  Context `{SI : indexT}.
+  (** * Product *)
+  Lemma prod_local_update {A B : cmra} (x y x' y' : A * B) :
+    (x.1,y.1) ~l~> (x'.1,y'.1) → (x.2,y.2) ~l~> (x'.2,y'.2) →
+    (x,y) ~l~> (x',y').
+  Proof.
+    intros Hup1 Hup2 n mz [??] [??]; simpl in *.
+    destruct (Hup1 n (fst <$> mz)); [done|by destruct mz|].
+    destruct (Hup2 n (snd <$> mz)); [done|by destruct mz|].
+    by destruct mz.
+  Qed.
 
-Lemma prod_local_update' {A B : cmra} (x1 y1 x1' y1' : A) (x2 y2 x2' y2' : B) :
-  (x1,y1) ~l~> (x1',y1') → (x2,y2) ~l~> (x2',y2') →
-  ((x1,x2),(y1,y2)) ~l~> ((x1',x2'),(y1',y2')).
-Proof. intros. by apply prod_local_update. Qed.
-Lemma prod_local_update_1 {A B : cmra} (x1 y1 x1' y1' : A) (x2 y2 : B) :
-  (x1,y1) ~l~> (x1',y1') → ((x1,x2),(y1,y2)) ~l~> ((x1',x2),(y1',y2)).
-Proof. intros. by apply prod_local_update. Qed.
-Lemma prod_local_update_2 {A B : cmra} (x1 y1 : A) (x2 y2 x2' y2' : B) :
-  (x2,y2) ~l~> (x2',y2') → ((x1,x2),(y1,y2)) ~l~> ((x1,x2'),(y1,y2')).
-Proof. intros. by apply prod_local_update. Qed.
+  Lemma prod_local_update' {A B : cmra} (x1 y1 x1' y1' : A) (x2 y2 x2' y2' : B) :
+    (x1,y1) ~l~> (x1',y1') → (x2,y2) ~l~> (x2',y2') →
+    ((x1,x2),(y1,y2)) ~l~> ((x1',x2'),(y1',y2')).
+  Proof. intros. by apply prod_local_update. Qed.
+  Lemma prod_local_update_1 {A B : cmra} (x1 y1 x1' y1' : A) (x2 y2 : B) :
+    (x1,y1) ~l~> (x1',y1') → ((x1,x2),(y1,y2)) ~l~> ((x1',x2),(y1',y2)).
+  Proof. intros. by apply prod_local_update. Qed.
+  Lemma prod_local_update_2 {A B : cmra} (x1 y1 : A) (x2 y2 x2' y2' : B) :
+    (x2,y2) ~l~> (x2',y2') → ((x1,x2),(y1,y2)) ~l~> ((x1,x2'),(y1,y2')).
+  Proof. intros. by apply prod_local_update. Qed.
+End updates_product.
 
-(** * Option *)
-Lemma option_local_update {A : cmra} (x y x' y' : A) :
-  (x, y) ~l~> (x',y') →
-  (Some x, Some y) ~l~> (Some x', Some y').
-Proof.
-  intros Hup. apply local_update_unital=>n mz Hxv Hx; simpl in *.
-  destruct (Hup n mz); first done.
-  { destruct mz as [?|]; inversion_clear Hx; auto. }
-  split; first done. destruct mz as [?|]; constructor; auto.
-Qed.
+Section updates_option.
+  Context `{SI : indexT}.
 
-Lemma option_local_update_None {A: ucmra} (x x' y': A):
-  (x, ε) ~l~> (x', y') ->
-  (Some x, None) ~l~> (Some x', Some y').
-Proof.
-  intros Hup. apply local_update_unital=> n mz.
-  rewrite left_id=> ? <-.
-  destruct (Hup n (Some x)); simpl in *; first done.
-  - by rewrite left_id.
-  - split; first done. rewrite -Some_op. by constructor.
-Qed.
+  (** * Option *)
+  (* TODO: Investigate whether we can use these in proving the very similar local
+    updates on finmaps. *)
+  Lemma option_local_update {A : cmra} (x y x' y' : A) :
+    (x, y) ~l~> (x',y') →
+    (Some x, Some y) ~l~> (Some x', Some y').
+  Proof.
+    intros Hup. apply local_update_unital=>n mz Hxv Hx; simpl in *.
+    destruct (Hup n mz); first done.
+    { destruct mz as [?|]; inversion_clear Hx; auto. }
+    split; first done. destruct mz as [?|]; constructor; auto.
+  Qed.
 
-Lemma alloc_option_local_update {A : cmra} (x : A) y :
-  ✓ x →
-  (None, y) ~l~> (Some x, Some x).
-Proof.
-  move=>Hx. apply local_update_unital=> n z _ /= Heq. split.
-  { rewrite Some_validN. apply cmra_valid_validN. done. }
-  destruct z as [z|]; last done. destruct y; inversion Heq.
-Qed.
+  Lemma option_local_update_None {A: ucmra} (x x' y': A):
+    (x, ε) ~l~> (x', y') ->
+    (Some x, None) ~l~> (Some x', Some y').
+  Proof.
+    intros Hup. apply local_update_unital=> n mz.
+    rewrite left_id=> ? <-.
+    destruct (Hup n (Some x)); simpl in *; first done.
+    - by rewrite left_id.
+    - split; first done. rewrite -Some_op. by constructor.
+  Qed.
 
-Lemma delete_option_local_update {A : cmra} (x : option A) (y : A) :
-  Exclusive y → (x, Some y) ~l~> (None, None).
-Proof.
-  move=>Hex. apply local_update_unital=>n z /= Hy Heq. split; first done.
-  destruct z as [z|]; last done. exfalso.
-  move: Hy. rewrite Heq /= -Some_op=>Hy. eapply Hex.
-  eapply cmra_validN_le; [|lia]. eapply Hy.
-Qed.
+  Lemma alloc_option_local_update {A : cmra} (x : A) y :
+    ✓ x →
+    (None, y) ~l~> (Some x, Some x).
+  Proof.
+    move=>Hx. apply local_update_unital=> n z _ /= Heq. split.
+    { rewrite Some_validN. apply cmra_valid_validN. done. }
+    destruct z as [z|]; last done. destruct y; inversion Heq.
+  Qed.
 
-Lemma delete_option_local_update_cancelable {A : cmra} (mx : option A) :
-  Cancelable mx → (mx, mx) ~l~> (None, None).
-Proof.
-  intros ?. apply local_update_unital=>n mf /= Hmx Heq. split; first done.
-  rewrite left_id. eapply (cancelableN mx); by rewrite right_id_L.
-Qed.
+  Lemma delete_option_local_update {A : cmra} (x : option A) (y : A) :
+    Exclusive y → (x, Some y) ~l~> (None, None).
+  Proof.
+    move=>Hex. apply local_update_unital=>n z /= Hy Heq. split; first done.
+    destruct z as [z|]; last done. exfalso.
+    move: Hy. rewrite Heq /= -Some_op=>Hy. eapply Hex.
+    eapply cmra_validN_le; first eapply Hy. stepindex.
+  Qed.
+
+  Lemma delete_option_local_update_cancelable {A : cmra} (mx : option A) :
+    Cancelable mx → (mx, mx) ~l~> (None, None).
+  Proof.
+    intros ?. apply local_update_unital=>n mf /= Hmx Heq. split; first done.
+    rewrite left_id. eapply (cancelableN mx); by rewrite right_id_L.
+  Qed.
+End updates_option.

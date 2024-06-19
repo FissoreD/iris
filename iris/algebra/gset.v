@@ -5,7 +5,7 @@ From iris.prelude Require Import options.
 
 (* The union CMRA *)
 Section gset.
-  Context `{Countable K}.
+  Context `{SI : indexT} `{Countable K}.
   Implicit Types X Y : gset K.
 
   Canonical Structure gsetO := discreteO (gset K).
@@ -41,7 +41,7 @@ Section gset.
   Canonical Structure gsetUR := Ucmra (gset K) gset_ucmra_mixin.
 
   Lemma gset_opM X mY : X ⋅? mY = X ∪ default ∅ mY.
-  Proof. destruct mY; by rewrite /= ?right_id_L. Qed.
+  Proof using SI. destruct mY; by rewrite /= ?right_id_L. Qed.
 
   Lemma gset_update X Y : X ~~> Y.
   Proof. done. Qed.
@@ -71,9 +71,9 @@ Section gset.
   Proof. intros [?]; constructor. by rewrite gset_included. Qed.
 End gset.
 
-Global Arguments gsetO _ {_ _}.
-Global Arguments gsetR _ {_ _}.
-Global Arguments gsetUR _ {_ _}.
+Global Arguments gsetO {_} _ {_ _}.
+Global Arguments gsetR {_} _ {_ _}.
+Global Arguments gsetUR {_} _ {_ _}.
 
 (* The disjoint union CMRA *)
 Inductive gset_disj K `{Countable K} :=
@@ -83,7 +83,7 @@ Global Arguments GSet {_ _ _} _.
 Global Arguments GSetBot {_ _ _}.
 
 Section gset_disj.
-  Context `{Countable K}.
+  Context `{SI : indexT} `{Countable K}.
   Local Arguments op _ _ !_ !_ /.
   Local Arguments cmra_op _ !_ !_ /.
   Local Arguments ucmra_op _ !_ !_ /.
@@ -253,6 +253,6 @@ Section gset_disj.
   Proof. intros [?]; constructor. by rewrite gset_disj_valid_op. Qed.
 End gset_disj.
 
-Global Arguments gset_disjO _ {_ _}.
-Global Arguments gset_disjR _ {_ _}.
-Global Arguments gset_disjUR _ {_ _}.
+Global Arguments gset_disjO {_} _ {_ _}.
+Global Arguments gset_disjR {_} _ {_ _}.
+Global Arguments gset_disjUR {_} _ {_ _}.

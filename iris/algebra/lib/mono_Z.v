@@ -5,23 +5,24 @@ From iris.prelude Require Import options.
 (** Authoritative CMRA over [max_Z]. The authoritative element is a
 monotonically increasing [Z], while a fragment is a lower bound. *)
 
-Definition mono_Z   := auth (option max_ZR).
-Definition mono_ZR  := authR (optionUR max_ZR).
-Definition mono_ZUR := authUR (optionUR max_ZR).
+Definition mono_Z   `{SI: indexT} := auth (option max_ZR).
+Definition mono_ZR  `{SI: indexT} := authR (optionUR max_ZR).
+Definition mono_ZUR `{SI: indexT} := authUR (optionUR max_ZR).
 
 (** [mono_Z_auth] is the authoritative element. The definition includes the
 fragment at the same value so that lemma [mono_Z_included], which states that
 [mono_Z_lb n ≼ mono_Z_auth dq n], holds. Without this trick, a frame-preserving
 update lemma would be required instead. *)
-Definition mono_Z_auth (dq : dfrac) (n : Z) : mono_Z :=
+Definition mono_Z_auth `{SI : indexT} (dq : dfrac) (n : Z) : mono_Z :=
   ●{dq} (Some (MaxZ n)) ⋅ ◯ (Some (MaxZ n)).
-Definition mono_Z_lb (n : Z) : mono_Z := ◯ (Some (MaxZ n)).
+Definition mono_Z_lb `{SI : indexT} (n : Z) : mono_Z := ◯ (Some (MaxZ n)).
 
 Notation "●MZ dq a" := (mono_Z_auth dq a)
   (at level 20, dq custom dfrac at level 1, format "●MZ dq  a").
 Notation "◯MZ a" := (mono_Z_lb a) (at level 20).
 
 Section mono_Z.
+  Context `{SI : indexT}.
   Implicit Types (n : Z).
 
   Local Open Scope Z_scope.

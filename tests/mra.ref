@@ -2,6 +2,7 @@
      : string
 1 goal
   
+  SI : indexT
   X, Y : gset nat
   H : X = Y
   ============================

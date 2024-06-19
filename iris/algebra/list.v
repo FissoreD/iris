@@ -4,7 +4,7 @@ From iris.algebra Require Import big_op.
 From iris.prelude Require Import options.
 
 Section ofe.
-Context {A : ofe}.
+Context `{SI : indexT} {A : ofe}.
 Implicit Types l : list A.
 
 Local Instance list_dist : Dist (list A) := λ n, Forall2 (dist n).
@@ -85,18 +85,50 @@ Fixpoint list_compl_go `{!Cofe A} (c0 : list A) (c : chain listO) : listO :=
   | x :: c0 => compl (chain_map (default x ∘ head) c) :: list_compl_go c0 (chain_map tail c)
   end.
 
+Fixpoint list_lbcompl_go `{!Cofe A} (c0 : list A) {α} Hα (c : bchain listO α) : listO :=
+  match c0 with
+  | [] => []
+  | x :: c0 => lbcompl Hα (bchain_map (default x ∘ head) c) :: list_lbcompl_go c0 Hα (bchain_map tail c)
+  end.
+
 Global Program Instance list_cofe `{!Cofe A} : Cofe listO :=
-  {| compl c := list_compl_go (c 0) c |}.
+  {|
+    compl c := list_compl_go (c zero) c;
+    lbcompl α Hα c := list_lbcompl_go (c zero (proper_limit_not_zero Hα)) Hα c
+  |}.
 Next Obligation.
-  intros ? n c; rewrite /compl.
-  assert (c 0 ≡{0}≡ c n) as Hc0 by (symmetry; apply chain_cauchy; lia).
-  revert Hc0. generalize (c 0)=> c0. revert c.
+  intros ? α c; simpl.
+  assert (c zero ≡{zero}≡ c α) as Hc0 by (symmetry; apply chain_cauchy, index_zero_minimum).
+  revert Hc0. generalize (c zero)=> c0. revert c.
   induction c0 as [|x c0 IH]=> c Hc0 /=.
   { by inversion Hc0. }
   apply symmetry, cons_dist_eq in Hc0 as (x' & xs' & Hx & Hc0 & Hcn).
   rewrite Hcn. f_equiv.
-  - by rewrite conv_compl /= Hcn /=.
-  - rewrite IH /= ?Hcn //.
+  - rewrite conv_compl.
+    by rewrite /chain_map //= Hcn.
+  - rewrite IH. all: rewrite /chain_map /= ?Hcn //.
+Qed.
+Next Obligation.
+  intros ? α Hα c β Hβ; simpl.
+  assert (c zero (proper_limit_not_zero Hα) ≡{zero}≡ c β Hβ) as Hc0 
+    by (symmetry; apply bchain_cauchy, index_zero_minimum).
+  revert Hc0. generalize (c zero (proper_limit_not_zero Hα))=> c0. revert c.
+  induction c0 as [|x c0 IH]=> c Hc0 /=.
+  { by inversion Hc0. }
+  apply symmetry in Hc0.
+  apply cons_dist_eq in Hc0 as (x' & xs' & Hx & Hc0 & Hcn).
+  rewrite Hcn. f_equiv.
+  - rewrite (conv_lbcompl _ _ _ β Hβ). by rewrite /bchain_map //= Hcn.
+  - rewrite IH. all: rewrite /bchain_map /= ?Hcn //.
+Qed.
+Next Obligation.
+  intros ? α Hα c d β Hne; simpl. specialize (Hne zero (proper_limit_not_zero Hα)) as Heq.
+  move: Heq. generalize (c zero (proper_limit_not_zero Hα)) as c0 => c0.
+  generalize (d zero (proper_limit_not_zero Hα)) as d0 => d0 Heq.
+  induction Heq as [ | ???? Heq1 Heq2 IH ] in c, d, Hne |-*; simpl; eauto.
+  constructor.
+  - apply: lbcompl_ne=> γ Hγ. by rewrite /bchain_map //= Hne Heq1.
+  - apply: IH=> γ Hγ. rewrite /bchain_map. cbn; by rewrite Hne.
 Qed.
 
 Global Instance list_ofe_discrete : OfeDiscrete A → OfeDiscrete listO.
@@ -121,19 +153,19 @@ Proof.
 Qed.
 End ofe.
 
-Global Arguments listO : clear implicits.
+Global Arguments listO {SI} _.
 
 (** Non-expansiveness of higher-order list functions and big-ops *)
-Global Instance list_fmap_ne {A B : ofe} n :
+Global Instance list_fmap_ne `{SI : indexT} {A B : ofe} n :
   Proper ((dist n ==> dist n) ==> dist n ==> dist n) (fmap (M:=list) (A:=A) (B:=B)).
 Proof. intros f1 f2 Hf l1 l2 Hl; by eapply Forall2_fmap, Forall2_impl; eauto. Qed.
-Global Instance list_omap_ne {A B : ofe} n :
+Global Instance list_omap_ne `{SI : indexT} {A B : ofe} n :
   Proper ((dist n ==> dist n) ==> dist n ==> dist n) (omap (M:=list) (A:=A) (B:=B)).
 Proof.
   intros f1 f2 Hf. induction 1 as [|x1 x2 l1 l2 Hx Hl]; csimpl; [constructor|].
   destruct (Hf _ _ Hx); [f_equiv|]; auto.
 Qed.
-Global Instance imap_ne {A B : ofe} n :
+Global Instance imap_ne `{SI : indexT} {A B : ofe} n :
   Proper (pointwise_relation _ ((dist n ==> dist n)) ==> dist n ==> dist n)
          (imap (A:=A) (B:=B)).
 Proof.
@@ -141,13 +173,14 @@ Proof.
   induction Hl as [|x1 x2 l1 l2 ?? IH]; intros f1 f2 Hf; simpl; [constructor|].
   f_equiv; [by apply Hf|]. apply IH. intros i y1 y2 Hy. by apply Hf.
 Qed.
-Global Instance list_bind_ne {A B : ofe} (f : A → list A) n :
+Global Instance list_bind_ne `{SI : indexT} {A B : ofe} (f : A → list A) n :
   Proper ((dist n ==> dist n) ==> dist n ==> dist n)
          (mbind (M:=list) (A:=A) (B:=B)).
 Proof. intros f1 f2 Hf. induction 1; csimpl; [constructor|f_equiv; auto]. Qed.
-Global Instance list_join_ne {A : ofe} : NonExpansive (mjoin (M:=list) (A:=A)).
+Global Instance list_join_ne `{SI : indexT} {A : ofe} :
+  NonExpansive (mjoin (M:=list) (A:=A)).
 Proof. induction 1; simpl; [constructor|solve_proper]. Qed.
-Global Instance zip_with_ne {A B C : ofe} n :
+Global Instance zip_with_ne `{SI : indexT} {A B C : ofe} n :
   Proper ((dist n ==> dist n ==> dist n) ==> dist n ==> dist n ==> dist n)
          (zip_with (A:=A) (B:=B) (C:=C)).
 Proof.
@@ -155,11 +188,12 @@ Proof.
   induction 1; destruct 1; simpl; [constructor..|f_equiv; try apply Hf; auto].
 Qed.
 
-Global Instance list_fmap_dist_inj {A B : ofe} (f : A → B) n :
+Global Instance list_fmap_dist_inj `{SI : indexT} {A B : ofe} (f : A → B) n :
   Inj (≡{n}≡) (≡{n}≡) f → Inj (≡{n}@{list A}≡) (≡{n}@{list B}≡) (fmap f).
 Proof. apply list_fmap_inj. Qed.
 
-Lemma big_opL_ne_2 {M : ofe} {o : M → M → M} `{!Monoid o} {A : ofe} (f g : nat → A → M) l1 l2 n :
+Lemma big_opL_ne_2 `{SI : indexT} {M : ofe}
+    {o : M → M → M} `{!Monoid o} {A : ofe} (f g : nat → A → M) l1 l2 n :
   l1 ≡{n}≡ l2 →
   (∀ k y1 y2,
     l1 !! k = Some y1 → l2 !! k = Some y2 → y1 ≡{n}≡ y2 → f k y1 ≡{n}≡ g k y2) →
@@ -172,31 +206,31 @@ Proof.
 Qed.
 
 (** Functor *)
-Lemma list_fmap_ext_ne {A} {B : ofe} (f g : A → B) (l : list A) n :
+Lemma list_fmap_ext_ne `{SI : indexT} {A} {B : ofe} (f g : A → B) (l : list A) n :
   (∀ x, f x ≡{n}≡ g x) → f <$> l ≡{n}≡ g <$> l.
 Proof. intros Hf. by apply Forall2_fmap, Forall_Forall2_diag, Forall_true. Qed.
-Definition listO_map {A B} (f : A -n> B) : listO A -n> listO B :=
+Definition listO_map `{SI : indexT} {A B} (f : A -n> B) : listO A -n> listO B :=
   OfeMor (fmap f : listO A → listO B).
-Global Instance listO_map_ne A B : NonExpansive (@listO_map A B).
+Global Instance listO_map_ne `{SI : indexT} A B : NonExpansive (@listO_map SI A B).
 Proof. intros n f g ? l. by apply list_fmap_ext_ne. Qed.
 
-Program Definition listOF (F : oFunctor) : oFunctor := {|
+Program Definition listOF `{SI : indexT} (F : oFunctor) : oFunctor := {|
   oFunctor_car A _ B _ := listO (oFunctor_car F A B);
   oFunctor_map A1 _ A2 _ B1 _ B2 _ fg := listO_map (oFunctor_map F fg)
 |}.
 Next Obligation.
-  by intros F A1 ? A2 ? B1 ? B2 ? n f g Hfg; apply listO_map_ne, oFunctor_map_ne.
+  by intros ? F A1 ? A2 ? B1 ? B2 ? n f g Hfg; apply listO_map_ne, oFunctor_map_ne.
 Qed.
 Next Obligation.
-  intros F A ? B ? x. rewrite /= -{2}(list_fmap_id x).
+  intros ? F A ? B ? x. rewrite /= -{2}(list_fmap_id x).
   apply list_fmap_equiv_ext=>???. apply oFunctor_map_id.
 Qed.
 Next Obligation.
-  intros F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x. rewrite /= -list_fmap_compose.
+  intros ? F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x. rewrite /= -list_fmap_compose.
   apply list_fmap_equiv_ext=>???; apply oFunctor_map_compose.
 Qed.
 
-Global Instance listOF_contractive F :
+Global Instance listOF_contractive `{SI : indexT} F :
   oFunctorContractive F → oFunctorContractive (listOF F).
 Proof.
   by intros ? A1 ? A2 ? B1 ? B2 ? n f g Hfg; apply listO_map_ne, oFunctor_map_contractive.

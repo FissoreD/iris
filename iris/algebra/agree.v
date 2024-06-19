@@ -1,7 +1,7 @@
 From iris.algebra Require Export cmra.
 From iris.prelude Require Import options.
 
-Local Arguments validN _ _ _ !_ /.
+Local Arguments validN _ _ _ _ !_ /.
 Local Arguments valid _ _  !_ /.
 Local Arguments op _ _ _ !_ /.
 Local Arguments pcore _ _ !_ /.
@@ -50,7 +50,7 @@ Proof.
 Qed.
 
 Section agree.
-Context {A : ofe}.
+Context `{SI : indexT} {A : ofe}.
 Implicit Types a b : A.
 Implicit Types x y : agree A.
 
@@ -72,7 +72,7 @@ Proof.
         destruct (H2 b) as (c&?&?); eauto. by exists c; split; last etrans.
       * intros a ?. destruct (H2' a) as (b&?&?); auto.
         destruct (H1' b) as (c&?&?); eauto. by exists c; split; last etrans.
-  - intros n m x y [??] ?; split; naive_solver eauto using dist_le with si_solver.
+  - intros n m x y [??]; split; naive_solver stepindex using dist_le.
 Qed.
 Canonical Structure agreeO := Ofe (agree A) agree_ofe_mixin.
 
@@ -107,12 +107,12 @@ Qed.
 Lemma agree_idemp x : x ⋅ x ≡ x.
 Proof. intros n; split=> a /=; setoid_rewrite elem_of_app; naive_solver. Qed.
 
-Local Instance agree_validN_ne n : Proper (dist n ==> impl) (@validN (agree A) _ n).
+Local Instance agree_validN_ne n : Proper (dist n ==> impl) (@validN SI (agree A) _ n).
 Proof.
   intros x y [H H']; rewrite /impl !agree_validN_def; intros Hv a b Ha Hb.
   destruct (H' a) as (a'&?&<-); auto. destruct (H' b) as (b'&?&<-); auto.
 Qed.
-Local Instance agree_validN_proper n : Proper (equiv ==> iff) (@validN (agree A) _ n).
+Local Instance agree_validN_proper n : Proper (equiv ==> iff) (@validN SI (agree A) _ n).
 Proof. move=> x y /equiv_dist H. by split; rewrite (H n). Qed.
 
 Local Instance agree_op_ne' x : NonExpansive (op x).
@@ -139,7 +139,7 @@ Qed.
 Definition agree_cmra_mixin : CmraMixin (agree A).
 Proof.
   apply cmra_total_mixin; try apply _ || by eauto.
-  - intros n x; rewrite !agree_validN_def; eauto using dist_le.
+  - intros n m x; rewrite !agree_validN_def; eauto using dist_le.
   - intros x. apply agree_idemp.
   - intros n x y; rewrite !agree_validN_def /=.
     setoid_rewrite elem_of_app; naive_solver.
@@ -264,8 +264,8 @@ Proof. rewrite to_agree_op_valid. by fold_leibniz. Qed.
 End agree.
 
 Global Instance: Params (@to_agree) 1 := {}.
-Global Arguments agreeO : clear implicits.
-Global Arguments agreeR : clear implicits.
+Global Arguments agreeO {_} _.
+Global Arguments agreeR {_} _.
 
 Program Definition agree_map {A B} (f : A → B) (x : agree A) : agree B :=
   {| agree_car := f <$> agree_car x |}.
@@ -280,7 +280,7 @@ Lemma agree_map_to_agree {A B} (f : A → B) (x : A) :
 Proof. by apply agree_eq. Qed.
 
 Section agree_map.
-  Context {A B : ofe} (f : A → B) {Hf: NonExpansive f}.
+  Context `{SI : indexT} {A B : ofe} (f : A → B) {Hf: NonExpansive f}.
 
   Local Instance agree_map_ne : NonExpansive (agree_map f).
   Proof using Type*.
@@ -310,31 +310,31 @@ Section agree_map.
   Qed.
 End agree_map.
 
-Definition agreeO_map {A B} (f : A -n> B) : agreeO A -n> agreeO B :=
+Definition agreeO_map `{SI : indexT} {A B: ofe} (f : A -n> B) : agreeO A -n> agreeO B :=
   OfeMor (agree_map f : agreeO A → agreeO B).
-Global Instance agreeO_map_ne A B : NonExpansive (@agreeO_map A B).
+Global Instance agreeO_map_ne `{SI : indexT} A B : NonExpansive (@agreeO_map SI A B).
 Proof.
   intros n f g Hfg x; split=> b /=;
     setoid_rewrite elem_of_list_fmap; naive_solver.
 Qed.
 
-Program Definition agreeRF (F : oFunctor) : rFunctor := {|
+Program Definition agreeRF `{SI : indexT} (F : oFunctor) : rFunctor := {|
   rFunctor_car A _ B _ := agreeR (oFunctor_car F A B);
   rFunctor_map A1 _ A2 _ B1 _ B2 _ fg := agreeO_map (oFunctor_map F fg)
 |}.
 Next Obligation.
-  intros ? A1 ? A2 ? B1 ? B2 ? n ???; simpl. by apply agreeO_map_ne, oFunctor_map_ne.
+  intros ? ? A1 ? A2 ? B1 ? B2 ? n ???; simpl. by apply agreeO_map_ne, oFunctor_map_ne.
 Qed.
 Next Obligation.
-  intros F A ? B ? x; simpl. rewrite -{2}(agree_map_id x).
+  intros ? F A ? B ? x; simpl. rewrite -{2}(agree_map_id x).
   apply (agree_map_ext _)=>y. by rewrite oFunctor_map_id.
 Qed.
 Next Obligation.
-  intros F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x; simpl. rewrite -agree_map_compose.
+  intros ? F A1 ? A2 ? A3 ? B1 ? B2 ? B3 ? f g f' g' x; simpl. rewrite -agree_map_compose.
   apply (agree_map_ext _)=>y; apply oFunctor_map_compose.
 Qed.
 
-Global Instance agreeRF_contractive F :
+Global Instance agreeRF_contractive `{SI : indexT} F :
   oFunctorContractive F → rFunctorContractive (agreeRF F).
 Proof.
   intros ? A1 ? A2 ? B1 ? B2 ? n ???; simpl.
