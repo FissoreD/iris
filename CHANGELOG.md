@@ -17,6 +17,10 @@ lemma.
 * Add lemma `na_own_empty` and persistence instance for `na_own p ∅` for
   non-atomic invariant tokens. (by Benjamin Peters)
 
+**Infrastructure:**
+
+* Add support for compiling the packages with dune. (by Rodolphe Lepigre) 
+
 ## Iris 4.2.0 (2024-04-12)
 
 The highlights of this release are:

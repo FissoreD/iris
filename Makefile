@@ -3,6 +3,12 @@ all: Makefile.coq
 	+@$(MAKE) -f Makefile.coq all
 .PHONY: all
 
+# Build with dune.
+# This exists only for CI; you should just call `dune build` directly instead.
+dune:
+	@dune build --display=short
+.PHONY: dune
+
 # Permit local customization
 -include Makefile.local
 

@@ -10,6 +10,8 @@
 -Q iris_heap_lang iris.heap_lang
 -Q iris_unstable iris.unstable
 -Q iris_deprecated iris.deprecated
+
+# Custom flags (to be kept in sync with the dune file at the root of the repo).
 # We sometimes want to locally override notation, and there is no good way to do that with scopes.
 -arg -w -arg -notation-overridden
 # Cannot use non-canonical projections as it causes massive unification failures
