@@ -227,6 +227,13 @@ Section iris_tests.
     done.
   Qed.
 
+  Check "test_iInv_error_no_update".
+  Lemma test_iInv_error_no_update N P : inv N P -∗ True.
+  Proof.
+    iIntros "H".
+    Fail iInv N as "H".
+  Abort.
+
   (* test destruction of existentials when opening an invariant *)
   Lemma test_iInv_13 N:
     inv N (∃ (v1 v2 v3 : nat), emp ∗ emp ∗ emp) ={⊤}=∗ ▷ emp.

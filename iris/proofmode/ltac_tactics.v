@@ -1989,7 +1989,9 @@ Tactic Notation "iInvCore" constr(select) "with" constr(pats) "as" open_constr(H
   end;
     [tc_solve ||
      let I := match goal with |- ElimInv _ ?I  _ _ _ _ _ => I end in
-     fail "iInv: cannot eliminate invariant" I
+     fail "iInv: cannot open invariant" I "in the current goal"
+       "(the goal should be a fancy update or WP,"
+       "or another modality that supports invariant opening)"
     |iSolveSideCondition
     |let R := fresh in intros R; pm_reduce;
      (* Now we are left proving [envs_entails Δ'' R]. *)

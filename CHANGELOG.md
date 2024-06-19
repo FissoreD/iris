@@ -9,6 +9,8 @@ lemma.
 
 * Remove the `*` specialization pattern. This pattern has been deprecated and a
   no-op since 2017. See https://gitlab.mpi-sws.org/iris/iris/-/merge_requests/41.
+* Improve the error message of `iInv` in case the goal does not support
+  invariant opening.
 
 **Changes in `base_logic`:**
 
