@@ -17,6 +17,20 @@ Proof.
   pose proof (bi.wand_iff_refl (PROP:=PROP) (<affine> True)).
 Abort.
 
+(** Rewriting on big ops. *)
+Goal ∀{PROP : bi} {l : list nat} {Φ Ψ} {R : PROP},
+  (∀ k i, Φ k i ⊢ Ψ k i) → (R ⊢ [∗ list] k↦i ∈ l, Φ k i) →
+  R ⊢ [∗ list] k↦i ∈ l, Ψ k i.
+Proof. move=> > H ?. by setoid_rewrite <-H. Qed.
+Goal ∀{PROP : bi} {m : gmap nat nat} {Φ Ψ} {R : PROP},
+  (∀ k i, Φ k i ⊢ Ψ k i) → (R ⊢ [∗ map] k↦i ∈ m, Φ k i) →
+  R ⊢ [∗ map] k↦i ∈ m, Ψ k i.
+Proof. move=> > H ?. by setoid_rewrite <-H. Qed.
+Goal ∀{PROP : bi} {m1 m2 : gmap nat nat} {Φ Ψ} {R : PROP},
+  (∀ k i j, Φ k i j ⊢ Ψ k i j) → (R ⊢ [∗ map] k↦i;j ∈ m1;m2, Φ k i j) →
+  R ⊢ [∗ map] k↦i;j ∈ m1;m2, Ψ k i j.
+Proof. move=> > H ?. by setoid_rewrite <-H. Qed.
+
 (** Some basic tests to make sure patterns work in big ops. *)
 Definition big_sepM_pattern_value
     {PROP : bi} (m : gmap nat (nat * nat)) : PROP :=
