@@ -5,6 +5,11 @@ lemma.
 
 ## Iris master
 
+**Changes in `proofmode`:**
+
+* Remove the `*` specialization pattern. This pattern has been deprecated and a
+  no-op since 2017. See https://gitlab.mpi-sws.org/iris/iris/-/merge_requests/41.
+
 **Changes in `base_logic`:**
 
 * Add lemma `na_own_empty` and persistence instance for `na_own p ∅` for

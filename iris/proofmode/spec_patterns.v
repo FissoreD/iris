@@ -13,7 +13,6 @@ Record spec_goal := SpecGoal {
 }.
 
 Inductive spec_pat :=
-  | SForall : spec_pat
   | SIdent : ident → list spec_pat → spec_pat
   | SPureGoal (perform_done : bool) : spec_pat
   | SGoal : spec_goal → spec_pat
@@ -67,7 +66,6 @@ Fixpoint parse_go (ts : list token) (k : stack) : option (list spec_pat) :=
   | TBracketL :: TIntuitionistic :: ts => parse_goal ts GIntuitionistic false [] [] k
   | TBracketL :: TModal :: ts => parse_goal ts GModal false [] [] k
   | TBracketL :: ts => parse_goal ts GSpatial false [] [] k
-  | TForall :: ts => parse_go ts (StPat SForall :: k)
   | _ => None
   end
 with parse_goal (ts : list token)

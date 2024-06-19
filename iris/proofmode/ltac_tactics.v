@@ -813,9 +813,6 @@ Ltac iSpecializePat_go H1 pats :=
   let Δ := iGetCtx in
   lazymatch pats with
     | [] => idtac
-    | SForall :: ?pats =>
-       idtac "[IPM] The * specialization pattern is deprecated because it is applied implicitly.";
-       iSpecializePat_go H1 pats
     | SIdent ?H2 [] :: ?pats =>
        (* If we not need to specialize [H2] we can avoid a lot of unncessary
        context manipulation. *)
@@ -974,7 +971,7 @@ Fixpoint use_tac_specialize_intuitionistic_helper {M}
     (Δ : envs M) (pats : list spec_pat) : bool :=
   match pats with
   | [] => false
-  | (SForall | SPureGoal _) :: pats =>
+  | SPureGoal _ :: pats =>
      use_tac_specialize_intuitionistic_helper Δ pats
   | SAutoFrame _ :: _ => true
   | SIdent H _ :: pats =>
