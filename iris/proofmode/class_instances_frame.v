@@ -413,11 +413,13 @@ Proof.
 Qed.
 
 Global Instance frame_bupd `{!BiBUpd PROP} p R P Q :
-  Frame p R P Q → Frame p R (|==> P) (|==> Q) | 2.
-Proof. rewrite /Frame=><-. by rewrite bupd_frame_l. Qed.
+  (FrameInstantiateExistDisabled → Frame p R P Q) →
+  Frame p R (|==> P) (|==> Q) | 2.
+Proof. rewrite /Frame=>/(_ ltac:(constructor))<-. by rewrite bupd_frame_l. Qed.
 Global Instance frame_fupd `{!BiFUpd PROP} p E1 E2 R P Q :
-  Frame p R P Q → Frame p R (|={E1,E2}=> P) (|={E1,E2}=> Q) | 2.
-Proof. rewrite /Frame=><-. by rewrite fupd_frame_l. Qed.
+  (FrameInstantiateExistDisabled → Frame p R P Q) →
+  Frame p R (|={E1,E2}=> P) (|={E1,E2}=> Q) | 2.
+Proof. rewrite /Frame=>/(_ ltac:(constructor))<-. by rewrite fupd_frame_l. Qed.
 
 Global Instance frame_except_0 p R P Q Q' :
   Frame p R P Q → MakeExcept0 Q Q' →
