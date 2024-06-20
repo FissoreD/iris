@@ -662,6 +662,38 @@ Section plainly_derived.
   Global Instance except_0_plain P : Plain P → Plain (◇ P).
   Proof. rewrite /bi_except_0; apply _. Qed.
 
+  (* Interaction with fixpoint *)
+  Lemma fixpoint_plain {A} (F : (A -d> bi_ofeO PROP) -> A -d> bi_ofeO PROP) `{Contractive F}:
+    (∀ Φ, (∀ x, Plain (Φ x)) → (∀ x, Plain (F Φ x))) →
+    ∀ x, Plain (fixpoint F x).
+  Proof.
+    intros ?.
+    apply fixpoint_ind.
+    - intros ?? Heq ??. by rewrite -(Heq _).
+    - exists (fun _ => bi_emp); intros; apply emp_plain.
+    - auto.
+    - apply limit_preserving_forall; intros; apply limit_preserving_Plain.
+      intros ??; auto.
+  Qed.
+
+Lemma fixpoint_plain_absorbing {A} (F : (A -d> bi_ofeO PROP) -> A -d> bi_ofeO PROP) `{Contractive F}:
+    (∀ Φ, (∀ x, Plain (Φ x)) → (∀ x, Absorbing (Φ x)) → (∀ x, Plain (F Φ x) ∧ Absorbing (F Φ x))) →
+    ∀ x, Plain (fixpoint F x) ∧ Absorbing (fixpoint F x).
+Proof.
+  intros ??.
+  apply fixpoint_ind.
+  - intros ?? Heq ??. by rewrite -(Heq _).
+  - exists (fun _ => bi_pure True); intros; split; [apply pure_plain | apply bi.pure_absorbing].
+  - intros x Hpa y.
+    assert ((∀y, Plain (x y)) ∧ (∀y, Absorbing (x y))) as [??] by (split; intros; eapply Hpa; eauto).
+    eauto.
+  - apply limit_preserving_forall; intros.
+    apply limit_preserving_and; [apply limit_preserving_Plain; intros ??; auto|].
+    apply bi.limit_preserving_entails.
+    + intros ????. by apply bi.absorbingly_ne.
+    + intros ??; auto.
+Qed.
+
 End plainly_derived.
 
 (* When declared as an actual instance, [plain_persistent] will cause
