@@ -151,7 +151,7 @@ Module interp_monad.
   Proof. by inversion 1. Qed.
 
   Lemma mret_inv {A} (v: A) s v' s' :
-    mret (M:=InterpretM) v s = (inl v', s') → v = v' ∧ s = s'.
+    mret (MA:=InterpretM A) v s = (inl v', s') → v = v' ∧ s = s'.
   Proof. by inversion 1. Qed.
 
   Lemma interp_bind_inv A B (x: InterpretM A) (f: A → InterpretM B) r s s' :
@@ -176,7 +176,7 @@ Module interp_monad.
   Qed.
 
   Lemma interp_fmap_inv {A B} (f: A → B) x s v s' :
-    (fmap (M:=InterpretM) f x) s = (inl v, s') →
+    (fmap (MA:=InterpretM A) f x) s = (inl v, s') →
     ∃ v0, v = f v0 ∧ x s = (inl v0, s').
   Proof.
     rewrite /fmap /interp_fmap.
@@ -240,7 +240,7 @@ Module interp_monad.
   Qed.
 
   Lemma interp_fmap_inr_inv {A B} (f: A → B) (x: InterpretM A) s e s' :
-    (f <$> x) s = (inr e, s') →
+    (fmap (MB := InterpretM B) f x) s = (inr e, s') →
     x s = (inr e, s').
   Proof.
     rewrite /fmap /interp_fmap.

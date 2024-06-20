@@ -1320,12 +1320,11 @@ Global Instance prod_map_cmra_morphism {A A' B B' : cmra} (f : A → A') (g : B 
 Proof.
   split; first apply _.
   - by intros n x [??]; split; simpl; apply cmra_morphism_validN.
-  - intros x. etrans; last apply (reflexivity (mbind _ _)).
-    etrans; first apply (reflexivity (_ <$> mbind _ _)). simpl.
-    assert (Hf := cmra_morphism_pcore f (x.1)).
-    destruct (pcore (f (x.1))), (pcore (x.1)); inversion_clear Hf=>//=.
-    assert (Hg := cmra_morphism_pcore g (x.2)).
-    destruct (pcore (g (x.2))), (pcore (x.2)); inversion_clear Hg=>//=.
+  - intros [x1 x2]. rewrite /= !pair_pcore. simpl.
+    pose proof (Hf := cmra_morphism_pcore f (x1)).
+    destruct (pcore (f (x1))), (pcore (x1)); inversion_clear Hf=>//=.
+    pose proof (Hg := cmra_morphism_pcore g (x2)).
+    destruct (pcore (g (x2))), (pcore (x2)); inversion_clear Hg=>//=.
     by setoid_subst.
   - intros. by rewrite /prod_map /= !cmra_morphism_op.
 Qed.
