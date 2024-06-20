@@ -216,7 +216,9 @@ theories/base_logic/lib is for constructions in the base logic (using own)
 ## Naming
 * `*_ctx` for persistent facts (often an invariant) needed by everything in a library
 * `*_interp` for a function from some representation to iProp
-* If you have lemma `foo` which is an iff and you want single direction versions, name them `foo_1` (forward) and `foo_2` (backward)
+* If you have lemma `foo` which is an `↔` and you want single direction versions, name them `foo_1` (forward) and `foo_2` (backward).
+  Make sure to curry and substitute equalities in the `_1` and `_2` lemmas.
+  For example, given `elem_of_list_fmap l y : y ∈ f <$> l ↔ ∃ x, y = f x ∧ x ∈ l`, we have `elem_of_list_fmap_2 l x : x ∈ l → f x ∈ f <$> l`.
 * If you have a lemma `foo` parametrized by an equivalence relation, you might want a version specialized to Leibniz equality for better rewrite support; name that version `foo_L` and state it with plain equality (e.g., `dom_empty_L` in stdpp). You might take an assumption `LeibnizEquiv A` if the original version took an equivalence (say the OFE equivalence) to assume that the provided equivalence is plain equality.
 * Lower-case theorem names, lower-case types, upper-case constructors
 * **TODO:** how should `f (g x) = f' (g' x)` be named?
