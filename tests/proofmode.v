@@ -1616,16 +1616,48 @@ Lemma test_auto_wand_iff P : ⊢ P ∗-∗ P.
 Proof. auto. Qed.
 
 Check "test_iIntros_auto_name_used_later".
-Lemma test_iIntros_auto_name_used_later (Φ: nat → PROP) :
-  ⊢ ∀ x y, Φ (x+y).
+Lemma test_iIntros_auto_name_used_later (Φ : nat → PROP) :
+  ⊢ ∀ x y, Φ (x + y).
 Proof.
-  (* This test documents a difference between [intros ...] and [iIntros (...)]:
-  the latter will pick [x] as the name for the [?] here (matching the name in the goal)
-  and then fail later when another [x] is attempted to be introduced. [intros] will
-  somehow realize that [x] is coming later, and pick a different name for the [?]. *)
-  Fail iIntros (? x).
+  iIntros (? x).
+Restart.
+  iIntros (?) "%x".
+Restart.
+  iIntros "% %x".
 Abort.
 
+Check "test_iDestruct_auto_name_used_later".
+Lemma test_iDestruct_auto_name_used_later (Φ : nat → PROP) :
+  (∃ y z : nat, Φ y) -∗ ∃ x, Φ x.
+Proof.
+  iDestruct 1 as (? y) "H".
+Restart.
+  iDestruct 1 as (?) "[%y H]".
+Restart.
+  iIntros "(% & %y & ?)".
+Abort.
+
+Check "test_iMod_auto_name_used_later".
+Lemma test_iMod_auto_name_used_later (Φ : nat → PROP) :
+  ◇ (∃ y z : nat, Φ y) -∗ ◇ ∃ x, Φ x.
+Proof.
+  iMod 1 as (? y) "H".
+Restart.
+  iMod 1 as (?) "[%y H]".
+Restart.
+  iIntros ">(% & %y & ?)".
+Abort.
+
+Check "test_iIntros_iDestruct_auto_name_used_later".
+Lemma test_iIntros_iDestruct_auto_name_used_later (Φ : nat → PROP) :
+  ⊢ ∀ x, (∃ y, Φ (x + y)) -∗ ∃ y, Φ (x + y).
+Proof.
+  iIntros (?) "[%x ?]".
+Restart.
+  (** Sadly this still fails *)
+  Fail iDestruct 1 as (x) "?".
+  Fail iDestruct 1 as "[%x ?]".
+Abort.
 End tests.
 
 Section parsing_tests.

@@ -736,6 +736,14 @@ No applicable tactic.
   ∃ _ : nat, True
 "test_iIntros_auto_name_used_later"
      : string
+"test_iDestruct_auto_name_used_later"
+     : string
+"test_iMod_auto_name_used_later"
+     : string
+"test_iIntros_iDestruct_auto_name_used_later"
+     : string
+The command has indeed failed with message:
+x is already used.
 The command has indeed failed with message:
 x is already used.
 "elim_mod_accessor"
