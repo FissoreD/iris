@@ -106,9 +106,13 @@ Global Arguments cmra_mixin : simpl never.
 Add Printing Constructor cmra.
 (* FIXME(Coq #6294) : we need the new unification algorithm here. *)
 Global Hint Extern 0 (PCore _) => refine (cmra_pcore _); shelve : typeclass_instances.
+Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-PCore _ {{cmra_pcore _}}. }}.
 Global Hint Extern 0 (Op _) => refine (cmra_op _); shelve : typeclass_instances.
+Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-Op _ {{cmra_op _}}. }}.
 Global Hint Extern 0 (Valid _) => refine (cmra_valid _); shelve : typeclass_instances.
+Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-Valid _ {{cmra_valid _}}. }}.
 Global Hint Extern 0 (ValidN _) => refine (cmra_validN _); shelve : typeclass_instances.
+Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-ValidN _ {{cmra_validN _}}. }}.
 Coercion cmra_ofeO (A : cmra) : ofe := Ofe A (cmra_ofe_mixin A).
 Canonical Structure cmra_ofeO.
 
@@ -241,6 +245,7 @@ Global Arguments ucmra_mixin : simpl never.
 Add Printing Constructor ucmra.
 (* FIXME(Coq #6294) : we need the new unification algorithm here. *)
 Global Hint Extern 0 (Unit _) => refine (ucmra_unit _); shelve : typeclass_instances.
+Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-Unit _ {{ucmra_unit _}}. }}.
 Coercion ucmra_ofeO (A : ucmra) : ofe := Ofe A (ucmra_ofe_mixin A).
 Canonical Structure ucmra_ofeO.
 Coercion ucmra_cmraR (A : ucmra) : cmra :=

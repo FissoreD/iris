@@ -80,6 +80,10 @@ Add Printing Constructor ofe.
 (* FIXME(Coq #6294) : we need the new unification algorithm here. *)
 Global Hint Extern 0 (Equiv _) => refine (ofe_equiv _); shelve : typeclass_instances.
 Global Hint Extern 0 (Dist _) => refine (ofe_dist _); shelve : typeclass_instances.
+Elpi Accumulate TC.Solver lp:{{
+  :after "0" tc-stdpp.base.tc-Equiv _ {{ofe_equiv _}}.
+  :after "0" tc-iris.algebra.ofe.tc-Dist _ {{ofe_dist _}}.
+}}.
 Global Arguments ofe_car : simpl never.
 Global Arguments ofe_equiv : simpl never.
 Global Arguments ofe_dist : simpl never.

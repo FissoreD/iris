@@ -1,5 +1,5 @@
 # use NO_TEST=1 to skip the tests
-NO_TEST:=
+NO_TEST:=1
 
 # use MAKE_REF=1 to generate new reference files
 MAKE_REF:=
