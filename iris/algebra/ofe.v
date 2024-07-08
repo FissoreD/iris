@@ -29,6 +29,16 @@ Global Hint Extern 1 => si_solver : si_solver.
 
 (** Unbundled version *)
 Class Dist A := dist : nat → relation A.
+
+Elpi Accumulate TC.Solver lp:{{
+  tc-stdpp.base.tc-Inj2 A3 A1 
+    (app [{{prod}}, A3, A1]) A2 A0 
+    ((app [{{@dist}} | _]) as T)
+    (app [{{@pair}}, A3, A1]) 
+    (app [{{@pair_inj'}}, A3, A2, A1, A0]) :-
+    coq.unify-eq T (app [{{@prod_relation}}, A3, A1, A2, A0]) ok.
+}}.
+
 Global Hint Mode Dist ! : typeclass_instances.
 Global Instance: Params (@dist) 3 := {}.
 Notation "x ≡{ n }≡ y" := (dist n x y)
@@ -1059,6 +1069,23 @@ Section sum.
   Local Instance sum_dist : Dist (A + B) := λ n, sum_relation (dist n) (dist n).
   Global Instance inl_ne : NonExpansive (@inl A B) := _.
   Global Instance inr_ne : NonExpansive (@inr A B) := _.
+
+Elpi Accumulate TC.Solver lp:{{
+  tc-stdpp.base.tc-Inj A3 (app [{{@sum}}, A3, A1]) A2 
+    (app [{{@dist}} | _] as T) 
+    (app [{{@inl}}, A3, A1]) 
+    (app [{{@inl_inj'}}, A3, A2, A1, A0]) :-
+    coq.unify-eq T (app [{{@sum_relation}}, A3, A1, A2, A0]) ok.
+
+  tc-stdpp.base.tc-Inj A1 (app [{{@sum}}, A3, A1]) 
+    A0 
+    (app [{{@dist}} | _] as T) 
+    (app [{{@inr}}, A3, A1]) 
+    (app [{{@inr_inj'}}, A3, A2, A1, A0]) :-
+    coq.unify-eq T (app [{{@sum_relation}}, A3, A1, A2, A0]) ok.
+}}.
+
+
   Global Instance inl_ne_inj n : Inj (dist n) (dist n) (@inl A B) := _.
   Global Instance inr_ne_inj n : Inj (dist n) (dist n) (@inr A B) := _.
 
@@ -1772,7 +1799,7 @@ Section sigT.
 
   Global Instance sigT_discrete x : Discrete (projT2 x) → Discrete x.
   Proof.
-    move: x => [xa x] ? [ya y] [] /=; intros -> => /= Hxy n.
+    move: x => [xa x] /= ? [ya y] [] /=; intros -> => /= Hxy n.
     exists eq_refl => /=. apply equiv_dist, (discrete_0 _), Hxy.
   Qed.
 

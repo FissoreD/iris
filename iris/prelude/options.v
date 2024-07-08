@@ -20,3 +20,14 @@ that at least global hints are annotated. *)
 this file everywhere.
 From iris.prelude Require Import options.
 *)
+
+(* Elpi Override TC TC.Solver None.
+Elpi Accumulate TC.Compiler lp:{{
+  :after "firstHook"
+  main _.
+}}. *)
+
+Global Set Debug "-elpitime".
+Elpi Accumulate TC.Solver lp:{{
+  :after "firstHook" time-is-active _ :- !, fail.
+}}.

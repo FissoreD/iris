@@ -656,6 +656,12 @@ Lemma discrete_id_free x `{!CmraDiscrete A}:
 Proof.
   intros Hx y ??. apply (Hx y), (discrete_0 _); eauto using cmra_discrete_valid.
 Qed.
+ 
+Goal @Symmetric (cmra_car A) (@dist (cmra_car A) (ofe_dist (cmra_ofeO A)) O).
+  simpl.
+  apply _.
+Qed.
+
 Global Instance id_free_op_r x y : IdFree y → Cancelable x → IdFree (x ⋅ y).
 Proof.
   intros ?? z ? Hid%symmetry. revert Hid. rewrite -assoc=>/(cancelableN x) ?.
@@ -684,10 +690,23 @@ Section ucmra.
   Proof. by exists x; rewrite left_id. Qed.
   Lemma ucmra_unit_least x : ε ≼ x.
   Proof. by exists x; rewrite left_id. Qed.
+
+  Goal forall A, ucmra_car A = cmra_car (ucmra_cmraR A).
+  Proof. reflexivity. Qed.
+
+  Goal exists R, @Comm (ucmra_car A) (ucmra_car A) R
+  (@op (ucmra_car A) (cmra_op (ucmra_cmraR A))).
+    eexists.  apply _.
+  Qed.
+
   Global Instance ucmra_unit_right_id : RightId (≡) ε (@op A _).
   Proof. by intros x; rewrite (comm op) left_id. Qed.
   Global Instance ucmra_unit_core_id : CoreId (ε:A).
   Proof. apply ucmra_pcore_unit. Qed.
+
+  Goal @CoreId (ucmra_cmraR A) (@ε (cmra_car (ucmra_cmraR A)) (ucmra_unit A)).
+    apply _.
+  Qed.
 
   Global Instance cmra_unit_cmra_total : CmraTotal A.
   Proof.
@@ -695,9 +714,21 @@ Section ucmra.
     - apply ucmra_unit_least.
     - apply (core_id _).
   Qed.
+
+  Check @eq_refl Type (cmra_car (ucmra_cmraR A)) : (ucmra_car A = cmra_car (ucmra_cmraR A)).
+
+  Goal exists R, @LeftId (ucmra_car A) R (@ε (ucmra_car A) (ucmra_unit A)) (@op (cmra_car (ucmra_cmraR A)) (cmra_op (ucmra_cmraR A))).
+  Proof. eexists; apply _. Qed.
+
   Global Instance empty_cancelable : Cancelable (ε:A).
   Proof. intros ???. by rewrite !left_id. Qed.
 
+  Goal @LeftId (ofe_car (ucmra_ofeO A))
+    (@equiv (ofe_car (ucmra_ofeO A)) (ofe_equiv (ucmra_ofeO A)))
+    (@ε (ofe_car (ucmra_ofeO A)) (ucmra_unit A))
+    (@op (ucmra_car A) (cmra_op (ucmra_cmraR A))).
+  Proof. simpl; apply _. Qed.
+  
   (* For big ops *)
   Global Instance cmra_monoid : Monoid (@op A _) := {| monoid_unit := ε |}.
 End ucmra.
@@ -913,6 +944,41 @@ Global Instance rFunctor_oFunctor_compose_contractive_2
 Proof.
   intros ? A1 ? A2 ? B1 ? B2 ? n [f1 g1] [f2 g2] Hfg; simpl in *.
   f_equiv; split; simpl in *; f_contractive; destruct Hfg; by split.
+Qed.
+
+Elpi Accumulate TC.Solver lp:{{
+  tc-iris.algebra.cmra.tc-CmraMorphism X X R S :-
+    ID = {{@id _}}, not (R  = ID),
+    coq.unify-eq R ID ok,
+    tc-iris.algebra.cmra.tc-CmraMorphism X X ID S.
+}}.
+
+Goal forall (B : cmra), (forall (A1 : ofe) (Cofe0 : Cofe A1) 
+	              (A2 : ofe) (Cofe1 : Cofe A2) (B1 : ofe) 
+                  (Cofe2 : Cofe B1) (B2 : ofe) (Cofe3 : Cofe B2)
+                  (fg : prod (ofe_car (ofe_morO A2 A1))
+                          (ofe_car (ofe_morO B1 B2))),
+                @CmraMorphism
+                  ((fun (A3 : ofe) (_ : Cofe A3) (A4 : ofe) (_ : Cofe A4) =>
+                    B) A1 Cofe0 B1 Cofe2)
+                  ((fun (A3 : ofe) (_ : Cofe A3) (A4 : ofe) (_ : Cofe A4) =>
+                    B) A2 Cofe1 B2 Cofe3)
+                  (ofe_mor_car _ _
+                     ((fun (A3 : ofe) (Cofe4 : Cofe A3) 
+                         (A4 : ofe) (_ : Cofe A4) 
+                         (B3 : ofe) (Cofe5 : Cofe B3) 
+                         (B4 : ofe) (_ : Cofe B4)
+                         (_ : prod (ofe_car (ofe_morO A4 A3))
+                                (ofe_car (ofe_morO B3 B4))) =>
+                       @cid
+                         (cmra_ofeO
+                            ((fun (A5 : ofe) (_ : Cofe A5) 
+                                (A6 : ofe) (_ : Cofe A6) => B) A3 Cofe4 B3
+                               Cofe5))) A1 Cofe0 A2 Cofe1 B1 Cofe2 B2 Cofe3
+                        fg))).
+Proof.
+  intros.
+  apply _.
 Qed.
 
 Program Definition constRF (B : cmra) : rFunctor :=
