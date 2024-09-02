@@ -29,5 +29,5 @@ Elpi Accumulate TC.Compiler lp:{{
 
 Global Set Debug "-elpitime".
 Elpi Accumulate TC.Solver lp:{{
-  :after "firstHook" time-is-active _ :- !, fail.
+  :after "firstHook" tc.time-is-active _ :- !, fail.
 }}.

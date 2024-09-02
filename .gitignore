@@ -25,3 +25,5 @@ Makefile.package.*
 _opam
 _build
 *.install
+TC.Solver.html
+TC.Solver.txt

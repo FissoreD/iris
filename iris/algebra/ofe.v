@@ -28,9 +28,10 @@ Create HintDb si_solver.
 Global Hint Extern 1 => si_solver : si_solver.
 
 (** Unbundled version *)
+Elpi TC.Pending_mode !.
 Class Dist A := dist : nat → relation A.
 
-Elpi Accumulate TC.Solver lp:{{
+Elpi Accumulate TC.Solver lp:{{ % unif
   tc-stdpp.base.tc-Inj2 A3 A1 
     (app [{{prod}}, A3, A1]) A2 A0 
     ((app [{{@dist}} | _]) as T)
@@ -79,20 +80,25 @@ Record OfeMixin A `{Equiv A, Dist A} := {
 }.
 
 (** Bundled version *)
+#[projections(primitive=no)] (* FIXME: making this primitive leads to strange
+TC resolution failures in view.v *)
 Structure ofe := Ofe {
   ofe_car :> Type;
   ofe_equiv : Equiv ofe_car;
   ofe_dist : Dist ofe_car;
   ofe_mixin : OfeMixin ofe_car
 }.
+
+Elpi TC.AddRecordFields (ofe) (Ofe) 4.
+
 Global Arguments Ofe _ {_ _} _.
 Add Printing Constructor ofe.
 (* FIXME(Coq #6294) : we need the new unification algorithm here. *)
 Global Hint Extern 0 (Equiv _) => refine (ofe_equiv _); shelve : typeclass_instances.
 Global Hint Extern 0 (Dist _) => refine (ofe_dist _); shelve : typeclass_instances.
-Elpi Accumulate TC.Solver lp:{{
-  :after "0" tc-stdpp.base.tc-Equiv _ {{ofe_equiv _}}.
-  :after "0" tc-iris.algebra.ofe.tc-Dist _ {{ofe_dist _}}.
+Elpi Accumulate TC.Solver lp:{{ % hints
+  :before "1" tc-stdpp.base.tc-Equiv _ S :- coq.unify-eq {{ofe_equiv _}} S ok.
+  :before "1" tc-iris.algebra.ofe.tc-Dist _ S :- coq.unify-eq {{ofe_dist _}} S ok.
 }}.
 Global Arguments ofe_car : simpl never.
 Global Arguments ofe_equiv : simpl never.
@@ -138,12 +144,14 @@ End ofe_mixin.
 
 Global Hint Extern 1 (_ ≡{_}≡ _) => apply equiv_dist; assumption : core.
 
+Elpi TC.Pending_mode + !.
 (** Discrete OFEs and discrete OFE elements *)
 Class Discrete {A : ofe} (x : A) := discrete_0 y : x ≡{0}≡ y → x ≡ y.
 Global Arguments discrete_0 {_} _ {_} _ _.
 Global Hint Mode Discrete + ! : typeclass_instances.
 Global Instance: Params (@Discrete) 1 := {}.
 
+Elpi TC.Pending_mode !.
 Class OfeDiscrete (A : ofe) := #[global] ofe_discrete_discrete (x : A) :: Discrete x.
 Global Hint Mode OfeDiscrete ! : typeclass_instances.
 
@@ -161,6 +169,7 @@ Program Definition chain_map {A B : ofe} (f : A → B)
 Next Obligation. by intros A B f Hf c n i ?; apply Hf, chain_cauchy. Qed.
 
 Notation Compl A := (chain A%type → A).
+Elpi TC.Pending_mode !.
 Class Cofe (A : ofe) := {
   compl : Compl A;
   conv_compl n c : compl c ≡{n}≡ c n;
@@ -441,6 +450,7 @@ Ltac solve_contractive :=
   solve_proper_core ltac:(fun _ => first [f_contractive | f_equiv]).
 
 (** Limit preserving predicates *)
+Elpi TC.Pending_mode + + !.
 Class LimitPreserving `{!Cofe A} (P : A → Prop) : Prop :=
   limit_preserving (c : chain A) : (∀ n, P (c n)) → P (compl c).
 Global Hint Mode LimitPreserving + + ! : typeclass_instances.
@@ -895,7 +905,10 @@ Global Arguments prodO : clear implicits.
 instances *)
 Global Instance pair_ne {A B : ofe} : NonExpansive2 (@pair A B) := _.
 Global Instance pair_dist_inj {A B : ofe} n :
-  Inj2 (≡{n}≡) (≡{n}≡) (≡{n}≡) (@pair A B) := _.
+  Inj2 (≡{n}≡) (≡{n}≡) (≡{n}≡) (@pair A B).
+    apply _.
+  Defined.
+
 Global Instance fst_ne {A B : ofe} : NonExpansive (@fst A B) := _.
 Global Instance snd_ne {A B : ofe} : NonExpansive (@snd A B) := _.
 
@@ -952,6 +965,7 @@ Declare Scope oFunctor_scope.
 Delimit Scope oFunctor_scope with OF.
 Bind Scope oFunctor_scope with oFunctor.
 
+Elpi TC.Pending_mode !.
 Class oFunctorContractive (F : oFunctor) :=
   #[global] oFunctor_map_contractive `{!Cofe A1, !Cofe A2, !Cofe B1, !Cofe B2} ::
     Contractive (@oFunctor_map F A1 _ A2 _ B1 _ B2 _).
@@ -1070,7 +1084,7 @@ Section sum.
   Global Instance inl_ne : NonExpansive (@inl A B) := _.
   Global Instance inr_ne : NonExpansive (@inr A B) := _.
 
-Elpi Accumulate TC.Solver lp:{{
+Elpi Accumulate TC.Solver lp:{{ % unif
   tc-stdpp.base.tc-Inj A3 (app [{{@sum}}, A3, A1]) A2 
     (app [{{@dist}} | _] as T) 
     (app [{{@inl}}, A3, A1]) 
@@ -1815,6 +1829,10 @@ Section sigT.
     [stdpp.proof_irrel.eq_pi]). *)
   Section cofe.
     Context `{!∀ a b : A, ProofIrrel (a = b)} `{!∀ a, Cofe (P a)}.
+
+    Goal forall c i n, (∀ a b : A, ProofIrrel (a = b)) -> (ProofIrrel (projT1 (c i) = projT1 (c n))).
+      apply _.
+    Qed.
 
     Program Definition chain_map_snd c : chain (P (projT1 (c 0))) :=
       {| chain_car n := rew (sigT_chain_const_proj1 c n) in projT2 (c n) |}.

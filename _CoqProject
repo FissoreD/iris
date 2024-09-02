@@ -21,6 +21,7 @@
 -arg -w -arg -unknown-warning
 # Fixing this one requires Coq 8.19
 -arg -w -arg -argument-scope-delimiter
+-arg -w -arg -elpi.TC.hints
 
 iris/prelude/options.v
 iris/prelude/prelude.v

@@ -3,10 +3,12 @@ From iris.algebra Require Export ofe monoid.
 From iris.prelude Require Import options.
 Local Set Primitive Projections.
 
+Elpi TC.Pending_mode !.
 Class PCore (A : Type) := pcore : A → option A.
 Global Hint Mode PCore ! : typeclass_instances.
 Global Instance: Params (@pcore) 2 := {}.
 
+Elpi TC.Pending_mode !.
 Class Op (A : Type) := op : A → A → A.
 Global Hint Mode Op ! : typeclass_instances.
 Global Instance: Params (@op) 2 := {}.
@@ -33,12 +35,14 @@ Definition opM `{!Op A} (x : A) (my : option A) :=
   match my with Some y => x ⋅ y | None => x end.
 Infix "⋅?" := opM (at level 50, left associativity) : stdpp_scope.
 
+Elpi TC.Pending_mode !.
 Class ValidN (A : Type) := validN : nat → A → Prop.
 Global Hint Mode ValidN ! : typeclass_instances.
 Global Instance: Params (@validN) 3 := {}.
 Notation "✓{ n } x" := (validN n x)
   (at level 20, n at next level, format "✓{ n }  x").
 
+Elpi TC.Pending_mode !.
 Class Valid (A : Type) := valid : A → Prop.
 Global Hint Mode Valid ! : typeclass_instances.
 Global Instance: Params (@valid) 2 := {}.
@@ -88,6 +92,9 @@ Structure cmra := Cmra' {
   cmra_ofe_mixin : OfeMixin cmra_car;
   cmra_mixin : CmraMixin cmra_car;
 }.
+
+Elpi TC.AddRecordFields (cmra) (Cmra') 9.
+
 Global Arguments Cmra' _ {_ _ _ _ _ _} _ _.
 (* Given [m : CmraMixin A], the notation [Cmra A m] provides a smart
 constructor, which uses [ofe_mixin_of A] to infer the canonical OFE mixin of
@@ -106,14 +113,19 @@ Global Arguments cmra_mixin : simpl never.
 Add Printing Constructor cmra.
 (* FIXME(Coq #6294) : we need the new unification algorithm here. *)
 Global Hint Extern 0 (PCore _) => refine (cmra_pcore _); shelve : typeclass_instances.
-Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-PCore _ {{cmra_pcore _}}. }}.
 Global Hint Extern 0 (Op _) => refine (cmra_op _); shelve : typeclass_instances.
-Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-Op _ {{cmra_op _}}. }}.
 Global Hint Extern 0 (Valid _) => refine (cmra_valid _); shelve : typeclass_instances.
-Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-Valid _ {{cmra_valid _}}. }}.
 Global Hint Extern 0 (ValidN _) => refine (cmra_validN _); shelve : typeclass_instances.
-Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-ValidN _ {{cmra_validN _}}. }}.
+Elpi Accumulate TC.Solver lp:{{ % hints
+  tc-iris.algebra.cmra.tc-Valid _ {{cmra_valid _}}. 
+  tc-iris.algebra.cmra.tc-PCore _ {{cmra_pcore _}}.
+  tc-iris.algebra.cmra.tc-Op _ {{cmra_op _}}.
+  tc-iris.algebra.cmra.tc-ValidN _ {{cmra_validN _}}.
+}}.
 Coercion cmra_ofeO (A : cmra) : ofe := Ofe A (cmra_ofe_mixin A).
+Elpi Accumulate tc.db lp:{{ % coercion
+  tc.coercion-unify {{cmra_ofeO}}.
+}}.
 Canonical Structure cmra_ofeO.
 
 (** As explained more thoroughly in iris#539, Coq can run into trouble when
@@ -168,18 +180,21 @@ Section cmra_mixin.
 End cmra_mixin.
 
 (** * CoreId elements *)
+Elpi TC.Pending_mode + !.
 Class CoreId {A : cmra} (x : A) := core_id : pcore x ≡ Some x.
 Global Arguments core_id {_} _ {_}.
 Global Hint Mode CoreId + ! : typeclass_instances.
 Global Instance: Params (@CoreId) 1 := {}.
 
 (** * Exclusive elements (i.e., elements that cannot have a frame). *)
+Elpi TC.Pending_mode + !.
 Class Exclusive {A : cmra} (x : A) := exclusive0_l y : ✓{0} (x ⋅ y) → False.
 Global Arguments exclusive0_l {_} _ {_} _ _.
 Global Hint Mode Exclusive + ! : typeclass_instances.
 Global Instance: Params (@Exclusive) 1 := {}.
 
 (** * Cancelable elements. *)
+Elpi TC.Pending_mode + !.
 Class Cancelable {A : cmra} (x : A) :=
   cancelableN n y z : ✓{n}(x ⋅ y) → x ⋅ y ≡{n}≡ x ⋅ z → y ≡{n}≡ z.
 Global Arguments cancelableN {_} _ {_} _ _ _ _.
@@ -187,6 +202,7 @@ Global Hint Mode Cancelable + ! : typeclass_instances.
 Global Instance: Params (@Cancelable) 1 := {}.
 
 (** * Identity-free elements. *)
+Elpi TC.Pending_mode + !.
 Class IdFree {A : cmra} (x : A) :=
   id_free0_r y : ✓{0}x → x ⋅ y ≡{0}≡ x → False.
 Global Arguments id_free0_r {_} _ {_} _ _.
@@ -194,6 +210,7 @@ Global Hint Mode IdFree + ! : typeclass_instances.
 Global Instance: Params (@IdFree) 1 := {}.
 
 (** * CMRAs whose core is total *)
+Elpi TC.Pending_mode !.
 Class CmraTotal (A : cmra) := cmra_total (x : A) : is_Some (pcore x).
 Global Hint Mode CmraTotal ! : typeclass_instances.
 
@@ -204,6 +221,7 @@ Definition core {A} `{!PCore A} (x : A) : A := default x (pcore x).
 Global Instance: Params (@core) 2 := {}.
 
 (** * CMRAs with a unit element *)
+Elpi TC.Pending_mode !.
 Class Unit (A : Type) := ε : A.
 Global Hint Mode Unit ! : typeclass_instances.
 Global Arguments ε {_ _}.
@@ -230,6 +248,8 @@ Structure ucmra := Ucmra' {
   ucmra_mixin : UcmraMixin ucmra_car;
 }.
 Global Arguments Ucmra' _ {_ _ _ _ _ _ _} _ _ _.
+Elpi TC.AddRecordFields (ucmra) (Ucmra') 11.
+
 Notation Ucmra A m :=
   (Ucmra' A (ofe_mixin_of A%type) (cmra_mixin_of A%type) m) (only parsing).
 Global Arguments ucmra_car : simpl never.
@@ -245,12 +265,21 @@ Global Arguments ucmra_mixin : simpl never.
 Add Printing Constructor ucmra.
 (* FIXME(Coq #6294) : we need the new unification algorithm here. *)
 Global Hint Extern 0 (Unit _) => refine (ucmra_unit _); shelve : typeclass_instances.
-Elpi Accumulate TC.Solver lp:{{ tc-iris.algebra.cmra.tc-Unit _ {{ucmra_unit _}}. }}.
+
+Elpi Accumulate TC.Solver lp:{{ % hints
+  tc-iris.algebra.cmra.tc-Unit X {{ucmra_unit lp:U}} :- 
+    coq.unify-eq X {{ucmra_car lp:U}} ok. 
+}}.
+
 Coercion ucmra_ofeO (A : ucmra) : ofe := Ofe A (ucmra_ofe_mixin A).
 Canonical Structure ucmra_ofeO.
 Coercion ucmra_cmraR (A : ucmra) : cmra :=
   Cmra' A (ucmra_ofe_mixin A) (ucmra_cmra_mixin A).
 Canonical Structure ucmra_cmraR.
+Elpi Accumulate tc.db lp:{{ % coercion
+  tc.coercion-unify {{ucmra_cmraR}}.
+  tc.coercion-unify {{ucmra_ofeO}}.
+}}.
 
 (** As for CMRAs above, we instruct Coq to eagerly _expand_ all projections,
   except for the coercion to type (in this case, [ucmra_car]), since that causes
@@ -273,6 +302,7 @@ Section ucmra_mixin.
   Proof. apply (mixin_ucmra_pcore_unit _ (ucmra_mixin A)). Qed.
 End ucmra_mixin.
 
+Elpi TC.Pending_mode !.
 (** * Discrete CMRAs *)
 #[projections(primitive=no)] (* FIXME: making this primitive means we cannot use
 the projections with eauto any more (see https://github.com/coq/coq/issues/17561) *)
@@ -283,6 +313,7 @@ Class CmraDiscrete (A : cmra) := {
 Global Hint Mode CmraDiscrete ! : typeclass_instances.
 
 (** * Morphisms *)
+Elpi TC.Pending_mode - - !.
 Class CmraMorphism {A B : cmra} (f : A → B) := {
   #[global] cmra_morphism_ne :: NonExpansive f;
   cmra_morphism_validN n x : ✓{n} x → ✓{n} f x;
@@ -317,6 +348,13 @@ Proof.
 Qed.
 Global Instance cmra_pcore_proper' : Proper ((≡) ==> (≡)) (@pcore A _).
 Proof. apply (ne_proper _). Qed.
+
+Goal exists R, (@Comm (cmra_car A) (cmra_car A) R
+	              (@op (cmra_car A) (cmra_op A))) .
+      eexists.
+      apply _. (* cmra_comm *)
+Qed.
+
 Global Instance cmra_op_ne' : NonExpansive2 (@op A _).
 Proof. intros n x1 x2 Hx y1 y2 Hy. by rewrite Hy (comm _ x1) Hx (comm _ y2). Qed.
 Global Instance cmra_op_proper' : Proper ((≡) ==> (≡) ==> (≡)) (@op A _).
@@ -747,6 +785,19 @@ Section cmra_leibniz.
   Global Instance cmra_comm_L : Comm (=) (@op A _).
   Proof. intros x y. unfold_leibniz. by rewrite comm. Qed.
 
+  Goal Equiv (cmra_car A).
+    apply _.
+  Qed.
+
+  Goal forall A, cmra_equiv A = ofe_equiv A.
+    auto.
+  Qed.
+
+  Goal LeibnizEquiv A -> @LeibnizEquiv (option (cmra_car A)) (@option_equiv (cmra_car A) (@ofe_equiv (cmra_ofeO A))).
+    intros.
+    apply _.
+  Qed.
+
   Lemma cmra_pcore_l_L x cx : pcore x = Some cx → cx ⋅ x = x.
   Proof. unfold_leibniz. apply cmra_pcore_l'. Qed.
   Lemma cmra_pcore_idemp_L x cx : pcore x = Some cx → pcore cx = Some cx.
@@ -883,6 +934,7 @@ Declare Scope rFunctor_scope.
 Delimit Scope rFunctor_scope with RF.
 Bind Scope rFunctor_scope with rFunctor.
 
+Elpi TC.Pending_mode !.
 Class rFunctorContractive (F : rFunctor) :=
   #[global] rFunctor_map_contractive `{!Cofe A1, !Cofe A2, !Cofe B1, !Cofe B2} ::
     Contractive (@rFunctor_map F A1 _ A2 _ B1 _ B2 _).
@@ -946,11 +998,15 @@ Proof.
   f_equiv; split; simpl in *; f_contractive; destruct Hfg; by split.
 Qed.
 
-Elpi Accumulate TC.Solver lp:{{
-  tc-iris.algebra.cmra.tc-CmraMorphism X X R S :-
-    ID = {{@id _}}, not (R  = ID),
-    coq.unify-eq R ID ok,
-    tc-iris.algebra.cmra.tc-CmraMorphism X X ID S.
+Elpi Accumulate TC.Solver lp:{{ % unif
+  % Here we have a projection of a constant -> we unfold the constant to get the right value
+  tc-iris.algebra.cmra.tc-CmraMorphism X Y ({{ (lp:T).(ofe_mor_car _ _) }}) S :-
+    coq.safe-dest-app T (global (const C)) _,
+    coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.match, coq.redflags.delta, coq.redflags.const C] F,
+    @redflags! F => coq.reduction.lazy.norm T T1,
+    coq.safe-dest-app T1 (global (indc _)) A,
+    std.nth 2 A ID,
+    tc-iris.algebra.cmra.tc-CmraMorphism X Y ID S.
 }}.
 
 Goal forall (B : cmra), (forall (A1 : ofe) (Cofe0 : Cofe A1) 
@@ -978,7 +1034,7 @@ Goal forall (B : cmra), (forall (A1 : ofe) (Cofe0 : Cofe A1)
                         fg))).
 Proof.
   intros.
-  apply _.
+  apply _. (* apply cmra_morphism_id *)
 Qed.
 
 Program Definition constRF (B : cmra) : rFunctor :=
@@ -1012,6 +1068,7 @@ Declare Scope urFunctor_scope.
 Delimit Scope urFunctor_scope with URF.
 Bind Scope urFunctor_scope with urFunctor.
 
+Elpi TC.Pending_mode !.
 Class urFunctorContractive (F : urFunctor) :=
   #[global] urFunctor_map_contractive `{!Cofe A1, !Cofe A2, !Cofe B1, !Cofe B2} ::
     Contractive (@urFunctor_map F A1 _ A2 _ B1 _ B2 _).
@@ -1129,6 +1186,74 @@ Record RAMixin A `{Equiv A, PCore A, Op A, Valid A} := {
     x ≼ y → pcore x = Some cx → ∃ cy, pcore y = Some cy ∧ cx ≼ cy;
   ra_valid_op_l (x y : A) : ✓ (x ⋅ y) → ✓ x
 }.
+
+  Elpi Accumulate TC.Solver lp:{{ % unif
+    % tc-iris.algebra.ofe.tc-OfeDiscrete ({{ cmra_ofeO (Cmra' _ _ _)}} as T) R :-
+    %   T' = app [{{@Ofe}}, A, B, X, Y],
+    %   X = app [{{@discrete_dist}}, A, B],
+    %   Y = app [{{@discrete_ofe_mixin}}, A, B, _],
+    %   not (T = T'), coq.unify-eq T T' ok,
+    %   tc-iris.algebra.ofe.tc-OfeDiscrete T' R.
+
+    % pred is-proj-of i:term, i:term, i:constant.
+    % is-proj-of T (app[global (const P)|Args]) P :- std.last Args T.
+
+    % pred reduce-proj-of i:term, i:list constant, i:term, o:term.
+    % reduce-proj-of T Ps X X1 :-
+    %   coq.safe-dest-app T (global (const GR)) _,
+    %   std.exists Ps (is-proj-of T X), !,
+    %   std.map Ps (x\r\r = coq.redflags.const x) Red,
+    %   coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.match, coq.redflags.delta, coq.redflags.const GR|Red] F,
+    %   @redflags! F => coq.reduction.lazy.whd X X1.
+    % reduce-proj-of _ _ X X. 
+
+    % tc-iris.algebra.ofe.tc-OfeDiscrete ({{ cmra_ofeO lp:V}} as T) R :- std.spy-do! [
+    %   coq.reduction.lazy.whd {{ ofe_car lp:T }} K,
+    %   coq.unify-eq {{ ofe_car lp:T1 }} K ok,
+    %   tc-iris.algebra.ofe.tc-OfeDiscrete T1 R,
+    % ], !.
+    % tc-iris.algebra.cmra.tc-CmraMorphism X Y ({{ ucmra_cmraR lp:V}} as T) R :- std.spy-do! [
+    %   coq.reduction.lazy.whd {{ cmra_car lp:T }} K,
+    %   coq.unify-eq {{ cmra_car lp:T1 }} K ok,
+    %   tc-iris.algebra.cmra.tc-CmraMorphism X Y T1 R,
+    % ], !.
+
+    % tc-iris.algebra.ofe.tc-OfeDiscrete ({{ cmra_ofeO lp:V}} as T) R :- std.spy-do! [
+    %   coq.say "CANONICAL/TC",
+    %   coq.safe-dest-app V (global (const GR)) _,
+    %   {{ @cmra_ofeO }} = global (const C),
+    %   {{ @cmra }} = global (indt I),
+    %   coq.env.projections I P,
+    %   std.map-filter P (x\r\x = some r) Ps,
+    %   std.map Ps (x\r\r = coq.redflags.const x) Red,
+    %   coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.match, coq.redflags.delta, coq.redflags.const C,coq.redflags.const GR|Red] F,
+    %   @redflags! F => coq.reduction.lazy.whd T T',
+    %   if (T' = app L) (std.map L (reduce-proj-of V Ps) L1, T'' = app L1) (T'' = T'),
+    %   coq.say "CANONICAL HINT" T "--->" T'',
+    %   not(same_term T T''),
+    %   tc-iris.algebra.ofe.tc-OfeDiscrete T'' R,
+    % ].
+    tc-iris.algebra.ofe.tc-OfeDiscrete ({{ cmra_ofeO lp:V}} as T) R :-
+      coq.safe-dest-app V (global (indc _)) _,
+      {{ @cmra_ofeO }} = global (const C),
+      {{ @cmra }} = global (indt I),
+      coq.env.projections I P,
+      std.map-filter P (x\r\sigma c\x = some c,r = coq.redflags.const c) Red,
+      coq.redflags.add coq.redflags.nored [coq.redflags.beta, coq.redflags.match, coq.redflags.delta, coq.redflags.const C|Red] F,
+      @redflags! F => coq.reduction.lazy.norm T T',
+      % coq.say "CANONICAL HINT" P ":" T "--->" T',
+      not(same_term T T'),
+      tc-iris.algebra.ofe.tc-OfeDiscrete T' R.
+
+    % tc-iris.algebra.ofe.tc-OfeDiscrete ({{ ucmra_ofeO _}} as T) R :-
+    %   T' = app [{{@Ofe}}, A, B, X, Y],
+    %   X = app [{{@discrete_dist}}, A, B],
+    %   Y = app [{{@discrete_ofe_mixin}}, A, B, _],
+    %   not (T = T'), coq.unify-eq T T' ok,
+    %   tc-iris.algebra.ofe.tc-OfeDiscrete T' R.
+  }}.
+
+(* Elpi Typecheck TC.Solver. *)
 
 Section discrete.
   Local Set Default Proof Using "Type*".
@@ -1259,6 +1384,23 @@ Section prod.
     intros [[z1 Hz1] [z2 Hz2]]; exists (z1,z2); split; auto.
   Qed.
 
+  Goal @Assoc (prod (cmra_car A) (cmra_car B))
+	               (@equiv (prod (cmra_car A) (cmra_car B))
+                      (ofe_equiv (prodO (cmra_ofeO A) (cmra_ofeO B))))
+                   (@op (prod (cmra_car A) (cmra_car B)) prod_op_instance).
+  Proof.
+    Fail apply _.
+  Abort.
+
+  Goal @Comm (prod (cmra_car A) (cmra_car B))
+	              (prod (cmra_car A) (cmra_car B))
+                  (@equiv (prod (cmra_car A) (cmra_car B))
+                     (ofe_equiv (prodO (cmra_ofeO A) (cmra_ofeO B))))
+                  (@op (prod (cmra_car A) (cmra_car B)) prod_op_instance).
+    Fail apply _.
+  Abort.
+
+
   Definition prod_cmra_mixin : CmraMixin (A * B).
   Proof.
     split; try apply _.
@@ -1318,9 +1460,18 @@ Section prod.
     exists (ca,cb); by simplify_option_eq.
   Qed.
 
+  Goal CmraDiscrete A → CmraDiscrete B → OfeDiscrete (cmra_ofeO prodR).
+    intros.
+    apply _.
+    (* apply prod_ofe_discrete; apply _. *)
+  Qed.
+
+
   Global Instance prod_cmra_discrete :
     CmraDiscrete A → CmraDiscrete B → CmraDiscrete prodR.
-  Proof. split; [apply _|]. by intros ? []; split; apply cmra_discrete_valid. Qed.
+  Proof.
+    split; [apply _|]. 
+    by intros ? []; split; apply cmra_discrete_valid. Qed.
 
   (* FIXME(Coq #6294): This is not an instance because we need it to use the new
   unification. *)
@@ -1358,7 +1509,7 @@ Section prod_unit.
     split.
     - split; apply ucmra_unit_valid.
     - by split; rewrite /=left_id.
-    - rewrite prod_pcore_Some'; split; apply (core_id _).
+    - rewrite prod_pcore_Some'; split; simpl; apply (core_id _).
   Qed.
   Canonical Structure prodUR := Ucmra (prod A B) prod_ucmra_mixin.
 
@@ -1423,6 +1574,26 @@ Global Instance prodRF_contractive F1 F2 :
 Proof.
   intros ?? A1 ? A2 ? B1 ? B2 ? n ???;
     by apply prodO_map_ne; apply rFunctor_map_contractive.
+Qed.
+
+Goal forall (F1 F2 : urFunctor) (A1 : ofe) (Cofe0 : Cofe A1) (A2 : ofe) 
+  (Cofe1 : Cofe A2) (B1 : ofe) (Cofe2 : Cofe B1) (B2 : ofe) 
+  (Cofe3 : Cofe B2) (fg : prod (ofe_car (ofe_morO A2 A1)) (ofe_car (ofe_morO B1 B2))),
+@CmraMorphism
+  (ucmra_cmraR
+     (prodUR (@urFunctor_car F1 A1 Cofe0 B1 Cofe2)
+        (@urFunctor_car F2 A1 Cofe0 B1 Cofe2)))
+  (ucmra_cmraR
+     (prodUR (@urFunctor_car F1 A2 Cofe1 B2 Cofe3)
+        (@urFunctor_car F2 A2 Cofe1 B2 Cofe3)))
+  (@prod_map (ofe_car (ucmra_ofeO (@urFunctor_car F1 A1 Cofe0 B1 Cofe2)))
+     (ofe_car (ucmra_ofeO (@urFunctor_car F1 A2 Cofe1 B2 Cofe3)))
+     (ofe_car (ucmra_ofeO (@urFunctor_car F2 A1 Cofe0 B1 Cofe2)))
+     (ofe_car (ucmra_ofeO (@urFunctor_car F2 A2 Cofe1 B2 Cofe3)))
+     (ofe_mor_car _ _ (@urFunctor_map F1 A1 Cofe0 A2 Cofe1 B1 Cofe2 B2 Cofe3 fg))
+     (ofe_mor_car _ _ (@urFunctor_map F2 A1 Cofe0 A2 Cofe1 B1 Cofe2 B2 Cofe3 fg))).
+Proof.
+  apply _.
 Qed.
 
 Program Definition prodURF (F1 F2 : urFunctor) : urFunctor := {|
@@ -1524,6 +1695,22 @@ Section option.
 
   (* See below for more [included] lemmas. *)
 
+  Goal exists x, cmra_car A = x.(ofe_car).
+    eexists.
+    reflexivity.
+  Qed.
+
+  Goal exists R n, 
+    (@Inj (cmra_car A) (option (cmra_car A)) R (@dist (option (cmra_car A))
+    (ofe_dist (optionO (cmra_ofeO A))) n) (@Some (cmra_car A))).
+  Proof.
+    do 2 eexists.
+    apply _. 
+    (* apply Some_dist_inj. *)
+    Unshelve.
+    apply 0.
+  Qed.
+
   Lemma option_cmra_mixin : CmraMixin (option A).
   Proof.
     apply cmra_total_mixin.
@@ -1559,10 +1746,34 @@ Section option.
   Qed.
   Canonical Structure optionR := Cmra (option A) option_cmra_mixin.
 
+  Print cmra_ofeO.
+  Goal optionO A = cmra_ofeO optionR. f_equal. Qed.
+  Print optionO.
+
+  Goal CmraDiscrete A → True -> OfeDiscrete (cmra_ofeO A). apply _. Show Proof. Qed.
+  (* cmra_discrete_ofe_discrete : ∀ {A : cmra} {_ : CmraDiscrete A}, OfeDiscrete (cmra_ofeO A) *)
+
+  Goal CmraDiscrete A → True ->  OfeDiscrete (cmra_ofeO optionR).
+    intros.
+    apply _.
+  Qed.
+
   Global Instance option_cmra_discrete : CmraDiscrete A → CmraDiscrete optionR.
   Proof. split; [apply _|]. by intros [a|]; [apply (cmra_discrete_valid a)|]. Qed.
 
   Local Instance option_unit_instance : Unit (option A) := None.
+
+  Lemma xxx: PCore (cmra_car optionR).
+    refine (cmra_pcore _).
+  Defined.
+  Print xxx.
+  Check eq_refl : eq xxx option_pcore_instance.
+
+  Goal Unit (cmra_car optionR).
+    simpl.
+    apply _.
+  Qed.
+
   Lemma option_ucmra_mixin : UcmraMixin optionR.
   Proof. split; [done|  |done]. by intros []. Qed.
   Canonical Structure optionUR := Ucmra (option A) option_ucmra_mixin.
@@ -1586,6 +1797,14 @@ Section option.
   Proof. unfold_leibniz. apply cmra_opM_opM_assoc. Qed.
   Lemma cmra_opM_opM_swap a mb mc : a ⋅? mb ⋅? mc ≡ a ⋅? mc ⋅? mb.
   Proof. by rewrite !cmra_opM_opM_assoc (comm _ mb). Qed.
+
+  Goal @LeibnizEquiv (cmra_car A) (ofe_equiv (cmra_ofeO A)) -> 
+    Comm (=) (@op (option (cmra_car A)) option_op_instance).
+  Proof.
+    intros.
+    apply _.
+  Qed.
+
   Lemma cmra_opM_opM_swap_L `{!LeibnizEquiv A} a mb mc :
     a ⋅? mb ⋅? mc = a ⋅? mc ⋅? mb.
   Proof. by rewrite !cmra_opM_opM_assoc_L (comm_L _ mb). Qed.
@@ -1594,8 +1813,37 @@ Section option.
 
   Global Instance Some_core_id a : CoreId a → CoreId (Some a).
   Proof. by constructor. Qed.
+
+  Goal ucmra_car (optionUR) = optionR. reflexivity. Qed.
+
+  Goal @ε (ucmra_car optionUR) (ucmra_unit optionUR) = @None (cmra_car A).
+    unfold optionUR.
+    unfold ucmra_car.
+    unfold ucmra_unit.
+    unfold option_unit_instance.
+    unfold ε.
+    reflexivity.
+  Qed.
+
+  Elpi Accumulate TC.Solver lp:{{ % unif
+    tc-iris.algebra.cmra.tc-CoreId A1 (X) (app [{{@ucmra_unit_core_id}}, A0]) :- 
+      tc.link.cs A3  (app[{{@ucmra_unit}}, A0]),
+      tc.link.cs A2 (app [{{@ucmra_car}}, A0]),
+      tc.link.cs A1 (app [{{@ucmra_cmraR}}, A0]),
+      coq.unify-eq (app [{{@ε}}, A2, A3]) X ok.
+  }}.
+
+  Goal @CoreId optionR (@None (cmra_car A)).
+    apply _.
+  Qed.
+
+  (* 
+(tc-iris.algebra.cmra.tc-CoreId (global (const «unitR»)) A0 
+  (app [global (const «unit_core_id»), A0])) :- .
+  *)
+
   Global Instance option_core_id ma : (∀ x : A, CoreId x) → CoreId ma.
-  Proof. intros. destruct ma; apply _. Qed.
+  Proof. intros. destruct ma. - apply _. - idtac. apply _. Qed.
 
   Lemma exclusiveN_Some_l n a `{!Exclusive a} mb :
     ✓{n} (Some a ⋅ mb) → mb = None.
@@ -1678,10 +1926,32 @@ Section option.
     - done.
   Qed.
 
+  Elpi Accumulate TC.Solver lp:{{ % unif
+    tc-iris.algebra.cmra.tc-Cancelable A1 (X) (app [{{@empty_cancelable}}, A0]) :- 
+      tc.link.cs A3  (app[{{@ucmra_unit}}, A0]),
+      tc.link.cs A2 (app [{{@ucmra_car}}, A0]),
+      tc.link.cs A1 (app [{{@ucmra_cmraR}}, A0]),
+      coq.unify-eq (app [{{@ε}}, A2, A3]) X ok.
+  }}.
+
   Global Instance option_cancelable (ma : option A) :
     (∀ a : A, IdFree a) → (∀ a : A, Cancelable a) → Cancelable ma.
-  Proof. destruct ma; apply _. Qed.
+  Proof. destruct ma.
+    - apply _.
+    - intros. 
+      apply _ (*apply (@empty_cancelable optionUR). *).
+  Qed.
 End option.
+
+
+  Example xx (A: cmra): Unit (option A). 
+    intros.
+    apply _.
+  Qed.
+  Example yy (A: cmra): Unit (@optionR A). 
+    intros.
+    apply _.
+  Qed.
 
 Global Arguments optionR : clear implicits.
 Global Arguments optionUR : clear implicits.
@@ -1836,17 +2106,72 @@ Section discrete_fun_cmra.
     Cmra (discrete_fun B) discrete_fun_cmra_mixin.
 
   Local Instance discrete_fun_unit_instance : Unit (discrete_fun B) := λ x, ε.
+  Local Instance discrete_fun_unit_instance1 : Unit (forall x, B x) | 0 := λ x, ε.
   Definition discrete_fun_lookup_empty x : ε x = ε := eq_refl.
+
+  Elpi Accumulate TC.Solver lp:{{ % unif
+    :after "0"
+     tc-stdpp.base.tc-LeftId A R (app [{{@ε}}, _, UnitInstance, Y]) FFF Sol :- !,
+       coq.typecheck Y YT ok,
+       coq.unify-eq UnitInstance {{ fun x : lp:YT => lp:(F x) }} ok,
+       tc-stdpp.base.tc-LeftId A R (F Y) FFF Sol.
+
+    :after "0"
+      tc-iris.algebra.cmra.tc-CoreId A (app [{{@ε}}, _, UnitInstance, Y]) Sol :- !,
+       coq.typecheck Y YT ok,
+       coq.unify-eq UnitInstance {{ fun x : lp:YT => lp:(F x) }} ok,
+       tc-iris.algebra.cmra.tc-CoreId A (F Y) Sol.
+  }}.
+
+  Goal forall {A : Type} {_ : Unit A}, A.
+    intros.
+    eapply @ε.
+    auto.
+  Qed.
+
+
+  Goal forall x, exists R, @LeftId (ofe_car (ucmra_ofeO (B x))) R
+    (@ε (@discrete_fun A (fun elpi_ctx_entry_2_ : A => ucmra_ofeO (B elpi_ctx_entry_2_))) discrete_fun_unit_instance x)
+    (@op (ofe_car (ucmra_ofeO (B x))) (cmra_op (ucmra_cmraR (B x)))).
+  Proof. intros.
+    eexists.
+    (* unfold ε. unfold op. change (ofe_car (ucmra_ofeO (B x))) with (ucmra_car (B x)). *)
+    apply _.
+    (* apply ucmra_unit_left_id. *)
+  Qed.
+
+  Goal forall x, (@CoreId (ucmra_cmraR (B x))
+	              (@ε (@discrete_fun A (fun x : A => ucmra_ofeO (B x)))
+                     discrete_fun_unit_instance x)).
+  Proof.
+    intros.
+    apply _.
+  Qed.
 
   Lemma discrete_fun_ucmra_mixin : UcmraMixin (discrete_fun B).
   Proof.
     split.
     - intros x. apply ucmra_unit_valid.
-    - intros f x. by rewrite discrete_fun_lookup_op left_id.
-    - constructor=> x. apply core_id_core, _.
+    - intros f x.
+      by rewrite discrete_fun_lookup_op left_id.
+    - constructor=> x. apply core_id_core.
+      apply _.
   Qed.
   Canonical Structure discrete_funUR :=
     Ucmra (discrete_fun B) discrete_fun_ucmra_mixin.
+
+  Goal forall M, @Monoid (optionO (cmra_ofeO M))
+	              (@op (ofe_car (optionO (cmra_ofeO M)))
+                     (cmra_op (optionR M))).
+    apply _.
+  Qed.
+
+Elpi Accumulate TC.Solver lp:{{ % unif
+  :after "0"
+  tc-iris.algebra.ofe.tc-Discrete A {{ @ε _ lp:I lp:X }} S :- !,
+      coq.unify-eq I {{ fun x => lp:(F x)}} ok,
+      tc-iris.algebra.ofe.tc-Discrete A (F X) S.
+}}.
 
   Global Instance discrete_fun_unit_discrete :
     (∀ i, Discrete (ε : B i)) → Discrete (ε : discrete_fun B).

@@ -1,8 +1,0 @@
--Q prelude myiris.prelude
--Q algebra myiris.algebra
-
-prelude/prelude.v
-prelude/options.v
-algebra/ofe.v
-algebra/monoid.v
-algebra/cmra.v

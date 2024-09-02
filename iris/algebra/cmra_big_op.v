@@ -2,6 +2,21 @@ From stdpp Require Import gmap gmultiset.
 From iris.algebra Require Export big_op cmra.
 From iris.prelude Require Import options.
 
+Goal forall M : cmra, Op (optionO M).
+  apply _.
+Qed.
+
+Goal forall A, Lookup nat A (list A).
+  apply _.
+Qed.
+
+Goal forall M: cmra, @Monoid (optionO (cmra_ofeO M))
+   (@op (ofe_car (optionO (cmra_ofeO M))) (cmra_op (optionR M))).
+Proof. intros; apply _.
+  (* apply cmra_monoid. *)
+Qed.
+
+
 (** Option *)
 Lemma big_opL_None {M : cmra} {A} (f : nat → A → option M) l :
   ([^op list] k↦x ∈ l, f k x) = None ↔ ∀ k x, l !! k = Some x → f k x = None.

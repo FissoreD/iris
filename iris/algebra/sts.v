@@ -32,6 +32,7 @@ Local Arguments valid _ _ !_ /.
 Local Arguments op _ _ !_ !_ /.
 Local Arguments core _ _ !_ /.
 
+
 (** * Definition of STSs *)
 Module sts.
 Structure stsT := Sts {
